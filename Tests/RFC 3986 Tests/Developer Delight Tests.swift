@@ -1,4 +1,4 @@
-import Standards
+import Standard_Library_Extensions
 import Testing
 
 @testable import RFC_3986

@@ -17,16 +17,16 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/swift-standards/swift-standards", from: "0.10.0"),
-        .package(url: "https://github.com/swift-standards/swift-incits-4-1986", from: "0.6.3"),
-        .package(url: "https://github.com/swift-standards/swift-ipv4-standard", from: "0.1.3"),
-        .package(url: "https://github.com/swift-standards/swift-ipv6-standard", from: "0.1.3"),
+        .package(path: "../../swift-primitives/swift-standard-library-extensions"),
+        .package(path: "../swift-incits-4-1986"),
+        .package(path: "../swift-ipv4-standard"),
+        .package(path: "../swift-ipv6-standard"),
     ],
     targets: [
         .target(
             name: "RFC 3986",
             dependencies: [
-                .product(name: "Standards", package: "swift-standards"),
+                .product(name: "Standard Library Extensions", package: "swift-standard-library-extensions"),
                 .product(name: "INCITS 4 1986", package: "swift-incits-4-1986"),
                 .product(name: "IPv4 Standard", package: "swift-ipv4-standard"),
                 .product(name: "IPv6 Standard", package: "swift-ipv6-standard"),
