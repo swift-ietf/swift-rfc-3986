@@ -1,4 +1,4 @@
-public import INCITS_4_1986
+public import ASCII
 public import IPv4_Standard
 public import IPv6_Standard
 

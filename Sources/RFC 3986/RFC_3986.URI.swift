@@ -1,4 +1,4 @@
-public import INCITS_4_1986
+public import ASCII
 
 extension RFC_3986 {
     /// Errors that can occur when working with URIs
