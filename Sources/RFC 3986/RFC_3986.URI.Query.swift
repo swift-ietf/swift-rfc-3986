@@ -295,7 +295,7 @@ extension RFC_3986.URI.Query {
     public func appending(
         key: some StringProtocol,
         value: (some StringProtocol)?
-    ) throws -> RFC_3986.URI.Query {
+    ) throws(Error) -> RFC_3986.URI.Query {
         var newParameters = parameters
         newParameters.append((String(key), value.map { String($0) }))
         return try RFC_3986.URI.Query(newParameters)

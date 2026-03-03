@@ -306,7 +306,7 @@ extension RFC_3986.URI {
     ///
     /// - Parameter value: The URI string
     /// - Throws: RFC_3986.Error if the string is not a valid URI
-    public init(_ value: some StringProtocol) throws {
+    public init(_ value: some StringProtocol) throws(RFC_3986.Error) {
         let stringValue = String(value)
         guard RFC_3986.isValidURI(stringValue) else {
             throw RFC_3986.Error.invalidURI(stringValue)
@@ -700,7 +700,7 @@ extension RFC_3986.URI {
     /// - Parameter reference: The URI reference to resolve (may be relative or absolute)
     /// - Returns: The resolved absolute URI
     /// - Throws: RFC_3986.Error if resolution fails
-    public func resolve(_ reference: RFC_3986.URI) throws -> RFC_3986.URI {
+    public func resolve(_ reference: RFC_3986.URI) throws(RFC_3986.Error) -> RFC_3986.URI {
         try resolve(reference.value)
     }
 
@@ -712,7 +712,7 @@ extension RFC_3986.URI {
     /// - Parameter reference: The URI reference string to resolve
     /// - Returns: The resolved absolute URI
     /// - Throws: RFC_3986.Error if resolution fails
-    public func resolve(_ reference: some StringProtocol) throws -> RFC_3986.URI {
+    public func resolve(_ reference: some StringProtocol) throws(RFC_3986.Error) -> RFC_3986.URI {
         // TODO: Implement full RFC 3986 Section 5 resolution algorithm
         // For now, this is a simplified implementation
 
@@ -989,12 +989,12 @@ extension RFC_3986.URI {
     /// let resolved = try base / "../other"
     /// // resolved: https://example.com/other
     /// ```
-    public static func / (base: RFC_3986.URI, reference: String) throws -> RFC_3986.URI {
+    public static func / (base: RFC_3986.URI, reference: String) throws(RFC_3986.Error) -> RFC_3986.URI {
         try base.resolve(reference)
     }
 
     /// Resolves a relative URI reference using the `/` operator
-    public static func / (base: RFC_3986.URI, reference: RFC_3986.URI) throws -> RFC_3986.URI {
+    public static func / (base: RFC_3986.URI, reference: RFC_3986.URI) throws(RFC_3986.Error) -> RFC_3986.URI {
         try base.resolve(reference)
     }
 }

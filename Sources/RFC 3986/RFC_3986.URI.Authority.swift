@@ -217,14 +217,18 @@ extension RFC_3986.URI.Authority {
     ///
     /// This parses an authority string in the form:
     /// `[userinfo@]host[:port]`
-    public init(_ string: some StringProtocol) throws {
+    public init(_ string: some StringProtocol) throws(Error) {
         var remaining = String(string)
 
         // Extract userinfo if present (before @)
         let userinfo: RFC_3986.URI.Userinfo?
         if let atIndex = remaining.firstIndex(of: "@") {
             let userinfoString = String(remaining[..<atIndex])
-            userinfo = try RFC_3986.URI.Userinfo(userinfoString)
+            do {
+                userinfo = try RFC_3986.URI.Userinfo(userinfoString)
+            } catch {
+                throw Error.invalidUserinfo(userinfoString, underlying: error)
+            }
             remaining = String(remaining[remaining.index(after: atIndex)...])
         } else {
             userinfo = nil
@@ -238,7 +242,7 @@ extension RFC_3986.URI.Authority {
         if remaining.hasPrefix("[") {
             // IPv6 - find the closing bracket
             guard let closeBracket = remaining.firstIndex(of: "]") else {
-                throw RFC_3986.Error.invalidComponent("Unterminated IPv6 address")
+                throw Error.unterminatedIPv6(String(string))
             }
 
             let hostString = String(remaining[...closeBracket])
@@ -248,16 +252,20 @@ extension RFC_3986.URI.Authority {
             if remaining.hasPrefix(":") {
                 let portString = String(remaining.dropFirst())
                 guard let portValue = RFC_3986.URI.Port(portString) else {
-                    throw RFC_3986.Error.invalidComponent("Invalid port: \(portString)")
+                    throw Error.invalidPort(portString)
                 }
                 port = portValue
             } else if !remaining.isEmpty {
-                throw RFC_3986.Error.invalidComponent("Invalid characters after IPv6: \(remaining)")
+                throw Error.invalidCharactersAfterIPv6(remaining)
             } else {
                 port = nil
             }
 
-            host = try RFC_3986.URI.Host(hostString)
+            do {
+                host = try RFC_3986.URI.Host(hostString)
+            } catch {
+                throw Error.invalidHost(hostString, underlying: error)
+            }
         } else {
             // IPv4 or registered name - port is after last :
             if let colonIndex = remaining.lastIndex(of: ":") {
@@ -265,13 +273,21 @@ extension RFC_3986.URI.Authority {
                 let portString = String(remaining[remaining.index(after: colonIndex)...])
 
                 guard let portValue = RFC_3986.URI.Port(portString) else {
-                    throw RFC_3986.Error.invalidComponent("Invalid port: \(portString)")
+                    throw Error.invalidPort(portString)
                 }
 
-                host = try RFC_3986.URI.Host(hostString)
+                do {
+                    host = try RFC_3986.URI.Host(hostString)
+                } catch {
+                    throw Error.invalidHost(hostString, underlying: error)
+                }
                 port = portValue
             } else {
-                host = try RFC_3986.URI.Host(remaining)
+                do {
+                    host = try RFC_3986.URI.Host(remaining)
+                } catch {
+                    throw Error.invalidHost(remaining, underlying: error)
+                }
                 port = nil
             }
         }
