@@ -22,7 +22,7 @@ extension RFC_3986.URI.Query {
 }
 
 extension RFC_3986.URI.Query.Parse: Parser.`Protocol` {
-    public typealias ParseOutput = Input
+    public typealias Output = Input
     public typealias Failure = Never
 
     @inlinable

@@ -21,7 +21,7 @@ extension RFC_3986.URI.Userinfo {
 }
 
 extension RFC_3986.URI.Userinfo.Parse: Parser.`Protocol` {
-    public typealias ParseOutput = Input
+    public typealias Output = Input
     public typealias Failure = Never
 
     @inlinable

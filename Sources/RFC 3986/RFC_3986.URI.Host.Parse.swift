@@ -29,7 +29,7 @@ extension RFC_3986.URI.Host.Parse {
 }
 
 extension RFC_3986.URI.Host.Parse: Parser.`Protocol` {
-    public typealias ParseOutput = Input
+    public typealias Output = Input
     public typealias Failure = RFC_3986.URI.Host.Parse<Input>.Error
 
     @inlinable

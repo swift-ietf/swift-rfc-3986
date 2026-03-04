@@ -42,7 +42,6 @@ extension RFC_3986.URI.Authority.Parse {
 }
 
 extension RFC_3986.URI.Authority.Parse: Parser.`Protocol` {
-    public typealias ParseOutput = Output
     public typealias Failure = RFC_3986.URI.Authority.Parse<Input>.Error
 
     @inlinable

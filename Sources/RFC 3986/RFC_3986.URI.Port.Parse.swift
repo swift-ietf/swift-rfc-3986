@@ -28,7 +28,7 @@ extension RFC_3986.URI.Port.Parse {
 }
 
 extension RFC_3986.URI.Port.Parse: Parser.`Protocol` {
-    public typealias ParseOutput = UInt16
+    public typealias Output = UInt16
     public typealias Failure = RFC_3986.URI.Port.Parse<Input>.Error
 
     @inlinable

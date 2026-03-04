@@ -28,7 +28,7 @@ extension RFC_3986.Parse.PercentEncoded {
 }
 
 extension RFC_3986.Parse.PercentEncoded: Parser.`Protocol` {
-    public typealias ParseOutput = UInt8
+    public typealias Output = UInt8
     public typealias Failure = RFC_3986.Parse.PercentEncoded<Input>.Error
 
     @inlinable
