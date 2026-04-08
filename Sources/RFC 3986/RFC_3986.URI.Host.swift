@@ -1,4 +1,4 @@
-public import ASCII
+public import ASCII_Serializer_Primitives
 public import IPv4_Standard
 public import IPv6_Standard
 

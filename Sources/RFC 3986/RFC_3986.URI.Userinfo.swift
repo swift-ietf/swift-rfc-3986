@@ -1,4 +1,4 @@
-public import ASCII
+public import ASCII_Serializer_Primitives
 
 // MARK: - URI Userinfo
 

@@ -1,4 +1,4 @@
-public import ASCII
+public import ASCII_Serializer_Primitives
 
 extension RFC_3986 {
     /// Errors that can occur when working with URIs
