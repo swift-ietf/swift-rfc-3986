@@ -15,6 +15,8 @@
 //
 // Fragment-level validation errors
 
+public import ASCII_Serializer_Primitives
+
 extension RFC_3986.URI.Fragment {
     /// Errors that can occur during fragment validation
     ///
@@ -28,7 +30,7 @@ extension RFC_3986.URI.Fragment {
         case containsNewline(_ value: String)
 
         /// Fragment contains an invalid character
-        case invalidCharacter(_ value: String, byte: UInt8, reason: String)
+        case invalidCharacter(_ value: String, byte: ASCII.Code, reason: String)
     }
 }
 

@@ -265,7 +265,7 @@ extension RFC_3986.URI: Binary.ASCII.Serializable {
     static public func serialize<Buffer>(
         ascii uri: RFC_3986.URI,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == UInt8 {
+    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
         buffer.append(contentsOf: uri.value.utf8)
     }
 
@@ -277,7 +277,7 @@ extension RFC_3986.URI: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_3986.URI (structured data)
     ///
     /// ## RFC 3986 Section 3
@@ -290,7 +290,7 @@ extension RFC_3986.URI: Binary.ASCII.Serializable {
     /// - Parameter bytes: The ASCII byte representation of the URI
     /// - Throws: `RFC_3986.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(RFC_3986.Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         let string = String(decoding: bytes, as: UTF8.self)
         guard RFC_3986.isValidURI(string) else {
             throw RFC_3986.Error.invalidURI(string)

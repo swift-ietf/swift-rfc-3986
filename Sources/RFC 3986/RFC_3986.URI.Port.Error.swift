@@ -15,6 +15,8 @@
 //
 // Port-level validation errors
 
+public import ASCII_Serializer_Primitives
+
 extension RFC_3986.URI.Port {
     /// Errors that can occur during port validation
     ///
@@ -25,7 +27,7 @@ extension RFC_3986.URI.Port {
         case empty
 
         /// Port contains non-digit characters
-        case invalidCharacter(_ value: String, byte: UInt8)
+        case invalidCharacter(_ value: String, byte: ASCII.Code)
 
         /// Port value overflows UInt16 (max 65535)
         case overflow(_ value: String)

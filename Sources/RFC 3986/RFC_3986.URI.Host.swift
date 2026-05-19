@@ -71,26 +71,26 @@ extension RFC_3986.URI.Host: Binary.ASCII.Serializable {
     public static func serialize<Buffer>(
         ascii host: RFC_3986.URI.Host,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == UInt8 {
+    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
         switch host {
         case .ipv4(let address):
             buffer.append(ascii: address)
 
         case .ipv6(let scopedAddress):
-            buffer.append(.ascii.leftBracket)
+            buffer.append(ASCII.Code.leftBracket)
             buffer.append(ascii: scopedAddress.address)
 
             if let zone = scopedAddress.zone {
-                buffer.append(.ascii.percentSign)
-                buffer.append(.ascii.2)
-                buffer.append(.ascii.5)
+                buffer.append(ASCII.Code.percentSign)
+                buffer.append(ASCII.Code.`2`)
+                buffer.append(ASCII.Code.`5`)
                 buffer.append(contentsOf: zone.utf8)
             }
 
-            buffer.append(.ascii.rightBracket)
+            buffer.append(ASCII.Code.rightBracket)
 
         case .registeredName(let name):
-            buffer.append(utf8: name)
+            buffer.append(contentsOf: name.utf8)
         }
     }
 
@@ -102,7 +102,7 @@ extension RFC_3986.URI.Host: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_3986.URI.Host (structured data)
     ///
     /// ## RFC 3986 Section 3.2.2
@@ -115,41 +115,44 @@ extension RFC_3986.URI.Host: Binary.ASCII.Serializable {
     /// - Parameter bytes: The ASCII byte representation of the host
     /// - Throws: `RFC_3986.URI.Host.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         guard !bytes.isEmpty else {
             throw Error.empty
         }
 
         let string = String(decoding: bytes, as: UTF8.self)
 
+        // Type-up: lift to ASCII.Code at the entry boundary so the body works
+        // against ASCII.Code constants directly (RFC 3986 host grammar is strict ASCII).
+        let arr = Array<ASCII.Code>(bytes)
+
         // Check for IP-literal (enclosed in brackets)
-        if bytes.first == 0x5B {  // '['
+        if arr.first == ASCII.Code.leftBracket {
             // Check that it ends with ']'
-            let bytesArray = Array(bytes)
-            guard bytesArray.last == 0x5D else {  // ']'
+            guard arr.last == ASCII.Code.rightBracket else {
                 throw Error.invalidIPv6(string, reason: "Missing closing bracket")
             }
 
             // Extract content between brackets
-            let innerBytes = bytesArray.dropFirst().dropLast()
+            let innerCodes = arr.dropFirst().dropLast()
 
             // Check for zone identifier (% encoded as %25 in URIs per RFC 6874)
             // In URI format: [fe80::1%25eth0]
             // We need to decode %25 back to % for the scoped address parser
-            let innerArray = Array(innerBytes)
-            var decodedBytes: [UInt8] = []
+            let innerArray = Array(innerCodes)
+            var decodedBytes: [Byte] = []
             decodedBytes.reserveCapacity(innerArray.count)
 
             var i = 0
             while i < innerArray.count {
-                if innerArray[i] == 0x25 {  // '%'
+                if innerArray[i] == ASCII.Code.percentSign {
                     // Check for %25 (percent-encoded percent)
                     if i + 2 < innerArray.count
-                        && innerArray[i + 1] == 0x32  // '2'
-                        && innerArray[i + 2] == 0x35  // '5'
+                        && innerArray[i + 1] == ASCII.Code.`2`
+                        && innerArray[i + 2] == ASCII.Code.`5`
                     {
                         // Decode %25 to %
-                        decodedBytes.append(0x25)
+                        decodedBytes.append(ASCII.Code.percentSign)
                         i += 3
                         continue
                     }
@@ -164,7 +167,7 @@ extension RFC_3986.URI.Host: Binary.ASCII.Serializable {
                 self = .ipv6(scopedAddress)
                 return
             } catch {
-                let innerString = String(decoding: innerBytes, as: UTF8.self)
+                let innerString = String(decoding: innerCodes, as: UTF8.self)
                 throw Error.invalidIPv6(innerString, reason: "Invalid IPv6 address")
             }
         }
@@ -180,23 +183,27 @@ extension RFC_3986.URI.Host: Binary.ASCII.Serializable {
 
         // Otherwise treat as registered name
         // Validate registered name characters at byte level
-        for byte in bytes {
+        for code in arr {
             // unreserved: ALPHA / DIGIT / "-" / "." / "_" / "~"
             // sub-delims: "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
             // plus percent-encoding "%"
             let isUnreserved =
-                byte.ascii.isLetter || byte.ascii.isDigit
-                || byte == 0x2D || byte == 0x2E || byte == 0x5F || byte == 0x7E  // - . _ ~
+                code.isLetter || code.isDigit
+                || code == ASCII.Code.hyphen || code == ASCII.Code.period
+                || code == ASCII.Code.underline || code == ASCII.Code.tilde
             let isSubDelim =
-                byte == 0x21 || byte == 0x24 || byte == 0x26 || byte == 0x27  // ! $ & '
-                || byte == 0x28 || byte == 0x29 || byte == 0x2A || byte == 0x2B  // ( ) * +
-                || byte == 0x2C || byte == 0x3B || byte == 0x3D  // , ; =
-            let isPercent = byte == 0x25  // %
+                code == ASCII.Code.exclamationPoint || code == ASCII.Code.dollarSign
+                || code == ASCII.Code.ampersand || code == ASCII.Code.apostrophe
+                || code == ASCII.Code.leftParenthesis || code == ASCII.Code.rightParenthesis
+                || code == ASCII.Code.asterisk || code == ASCII.Code.plusSign
+                || code == ASCII.Code.comma || code == ASCII.Code.semicolon
+                || code == ASCII.Code.equalsSign
+            let isPercent = code == ASCII.Code.percentSign
 
             guard isUnreserved || isSubDelim || isPercent else {
                 throw Error.invalidCharacter(
                     string,
-                    byte: byte,
+                    byte: code,
                     reason:
                         "Only unreserved, sub-delims, and percent-encoded allowed in registered name"
                 )
@@ -224,7 +231,7 @@ extension RFC_3986.URI.Host {
     /// For IPv6, this includes the surrounding brackets and percent-encoded zone.
     /// For IPv4 and registered names, returns the value as-is.
     public var rawValue: String {
-        String(decoding: [UInt8](self), as: UTF8.self)
+        String(ascii: self)
     }
 
     /// Returns true if this is a loopback address

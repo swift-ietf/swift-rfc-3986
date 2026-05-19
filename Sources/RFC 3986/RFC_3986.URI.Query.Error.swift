@@ -15,6 +15,8 @@
 //
 // Query-level validation errors
 
+public import ASCII_Serializer_Primitives
+
 extension RFC_3986.URI.Query {
     /// Errors that can occur during query validation
     ///
@@ -31,7 +33,7 @@ extension RFC_3986.URI.Query {
         case valueContainsNewline(_ key: String, value: String)
 
         /// Query contains an invalid character
-        case invalidCharacter(_ value: String, byte: UInt8, reason: String)
+        case invalidCharacter(_ value: String, byte: ASCII.Code, reason: String)
 
         /// Query contains malformed percent-encoding
         case invalidPercentEncoding(_ value: String, reason: String)

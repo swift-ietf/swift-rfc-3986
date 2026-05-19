@@ -15,6 +15,8 @@
 //
 // Scheme-level validation errors
 
+public import ASCII_Serializer_Primitives
+
 extension RFC_3986.URI.Scheme {
     /// Errors that can occur during scheme validation
     ///
@@ -25,10 +27,10 @@ extension RFC_3986.URI.Scheme {
         case empty
 
         /// Scheme does not start with a letter (ALPHA)
-        case invalidStart(_ value: String, byte: UInt8)
+        case invalidStart(_ value: String, byte: ASCII.Code)
 
         /// Scheme contains an invalid character
-        case invalidCharacter(_ value: String, byte: UInt8, reason: String)
+        case invalidCharacter(_ value: String, byte: ASCII.Code, reason: String)
     }
 }
 

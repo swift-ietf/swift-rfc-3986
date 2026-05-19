@@ -79,7 +79,7 @@ extension RFC_3986.URI.Query: Binary.ASCII.Serializable {
     public static func serialize<Buffer: RangeReplaceableCollection>(
         ascii query: Self,
         into buffer: inout Buffer
-    ) where Buffer.Element == UInt8 {
+    ) where Buffer.Element == Byte {
         buffer.append(contentsOf: query.rawValue.utf8)
     }
 
@@ -91,7 +91,7 @@ extension RFC_3986.URI.Query: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_3986.URI.Query (structured data)
     ///
     /// ## RFC 3986 Section 3.4
@@ -103,101 +103,104 @@ extension RFC_3986.URI.Query: Binary.ASCII.Serializable {
     /// - Parameter bytes: The ASCII byte representation of the query
     /// - Throws: `RFC_3986.URI.Query.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         // Empty query is allowed
         if bytes.isEmpty {
             self.init(__unchecked: (), rawValue: "", parameters: [])
             return
         }
 
+        // Type-up: lift to ASCII.Code at the entry boundary so the body works
+        // against ASCII.Code constants directly (RFC 3986 query grammar is strict ASCII).
+        let arr = Array<ASCII.Code>(bytes)
+
         // Validate query characters at byte level
-        var i = bytes.startIndex
-        while i < bytes.endIndex {
-            let byte = bytes[i]
+        var i = 0
+        while i < arr.count {
+            let code = arr[i]
 
             // Check for percent-encoding
-            if byte == 0x25 {  // '%'
-                let next1 = bytes.index(after: i)
-                guard next1 < bytes.endIndex else {
+            if code == ASCII.Code.percentSign {
+                let next1 = i + 1
+                guard next1 < arr.count else {
                     throw Error.invalidPercentEncoding(
                         String(decoding: bytes, as: UTF8.self),
                         reason: "'%' must be followed by 2 hex digits"
                     )
                 }
-                let next2 = bytes.index(after: next1)
-                guard next2 < bytes.endIndex else {
+                let next2 = next1 + 1
+                guard next2 < arr.count else {
                     throw Error.invalidPercentEncoding(
                         String(decoding: bytes, as: UTF8.self),
                         reason: "'%' must be followed by 2 hex digits"
                     )
                 }
 
-                guard bytes[next1].ascii.isHexDigit && bytes[next2].ascii.isHexDigit else {
+                guard arr[next1].isHexDigit && arr[next2].isHexDigit else {
                     throw Error.invalidPercentEncoding(
                         String(decoding: bytes, as: UTF8.self),
                         reason: "Invalid hex digits after '%'"
                     )
                 }
 
-                i = bytes.index(after: next2)
+                i = next2 + 1
                 continue
             }
 
             // Check for newlines (invalid in queries)
-            if byte == 0x0A || byte == 0x0D {
+            if code == ASCII.Code.lf || code == ASCII.Code.cr {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: byte,
+                    byte: code,
                     reason: "Query cannot contain newlines"
                 )
             }
 
             // Check for hash (invalid in queries - separates fragment)
-            if byte == 0x23 {  // '#'
+            if code == ASCII.Code.numberSign {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: byte,
+                    byte: code,
                     reason: "Query cannot contain '#' (use for fragment instead)"
                 )
             }
 
-            i = bytes.index(after: i)
+            i += 1
         }
 
         let queryString = String(decoding: bytes, as: UTF8.self)
 
         // Parse parameters by scanning for '&' and '=' at byte level
-        let byteArray = Array(bytes)
         var parameters: [(String, String?)] = []
         var pairStart = 0
 
         func parsePair(_ lo: Int, _ hi: Int) throws(Error) {
             // Find '=' within this pair
             var eqIdx: Int? = nil
-            for j in lo..<hi where byteArray[j] == 0x3D {
+            for j in lo..<hi where arr[j] == ASCII.Code.equalsSign {
                 eqIdx = j
                 break
             }
 
             if let eq = eqIdx {
-                let key = String(decoding: byteArray[lo..<eq], as: UTF8.self)
+                let key = String(decoding: arr[lo..<eq], as: UTF8.self)
                 guard !key.isEmpty else { throw Error.emptyKey }
-                let value = String(decoding: byteArray[(eq &+ 1)..<hi], as: UTF8.self)
+                let value = String(decoding: arr[(eq &+ 1)..<hi], as: UTF8.self)
                 parameters.append((key, value))
             } else {
-                let key = String(decoding: byteArray[lo..<hi], as: UTF8.self)
+                let key = String(decoding: arr[lo..<hi], as: UTF8.self)
                 guard !key.isEmpty else { throw Error.emptyKey }
                 parameters.append((key, nil))
             }
         }
 
-        for idx in 0..<byteArray.count {
-            if byteArray[idx] == 0x26 {  // '&'
+        for idx in 0..<arr.count {
+            if arr[idx] == ASCII.Code.ampersand {
                 try parsePair(pairStart, idx)
                 pairStart = idx &+ 1
             }
         }
-        try parsePair(pairStart, byteArray.count)
+        try parsePair(pairStart, arr.count)
 
         self.init(__unchecked: (), rawValue: queryString, parameters: parameters)
     }
@@ -232,7 +235,7 @@ extension RFC_3986.URI.Query {
         }.joined(separator: "&")
 
         // Use byte parser for validation
-        try self.init(ascii: Array(queryString.utf8))
+        try self.init(ascii: Array<Byte>(queryString.utf8))
     }
 
     /// Creates a query without validation

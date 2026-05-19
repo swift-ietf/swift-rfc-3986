@@ -15,6 +15,8 @@
 //
 // Path-level validation errors
 
+public import ASCII_Serializer_Primitives
+
 extension RFC_3986.URI.Path {
     /// Errors that can occur during path validation
     ///
@@ -28,7 +30,7 @@ extension RFC_3986.URI.Path {
         case segmentContainsWhitespace(_ segment: String)
 
         /// Path contains an invalid character
-        case invalidCharacter(_ value: String, byte: UInt8, reason: String)
+        case invalidCharacter(_ value: String, byte: ASCII.Code, reason: String)
 
         /// Path contains malformed percent-encoding
         case invalidPercentEncoding(_ value: String, reason: String)

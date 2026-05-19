@@ -93,17 +93,17 @@ extension RFC_3986.URI.Authority: Binary.ASCII.Serializable {
     public static func serialize<Buffer>(
         ascii authority: RFC_3986.URI.Authority,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == UInt8 {
+    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
         if let userinfo = authority.userinfo {
             buffer.append(contentsOf: userinfo.rawValue.utf8)
-            buffer.append(.ascii.commercialAt)  // @
+            buffer.append(ASCII.Code.commercialAt)
         }
 
-        buffer.append(contentsOf: [UInt8](authority.host))
+        buffer.append(contentsOf: [Byte](ascii: authority.host))
 
         if let port = authority.port {
-            buffer.append(.ascii.colon)  // :
-            buffer.append(contentsOf: [UInt8](port))
+            buffer.append(ASCII.Code.colon)
+            buffer.append(contentsOf: [Byte](ascii: port))
         }
     }
 
@@ -115,7 +115,7 @@ extension RFC_3986.URI.Authority: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_3986.URI.Authority (structured data)
     ///
     /// ## RFC 3986 Section 3.2
@@ -127,7 +127,7 @@ extension RFC_3986.URI.Authority: Binary.ASCII.Serializable {
     /// - Parameter bytes: The ASCII byte representation of the authority
     /// - Throws: `RFC_3986.URI.Authority.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         let string = String(decoding: bytes, as: UTF8.self)
         var remaining = string
 

@@ -48,8 +48,8 @@ extension RFC_3986.URI.Port: Binary.ASCII.Serializable {
     static public func serialize<Buffer>(
         ascii port: RFC_3986.URI.Port,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == UInt8 {
-        buffer.append(contentsOf: Array(String(port.value).utf8))
+    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
+        buffer.append(contentsOf: String(port.value).utf8)
     }
 
     /// Parses port from ASCII bytes (CANONICAL PRIMITIVE)
@@ -60,7 +60,7 @@ extension RFC_3986.URI.Port: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII digit bytes)
+    /// - **Domain**: [Byte] (ASCII digit bytes)
     /// - **Codomain**: RFC_3986.URI.Port (structured data)
     ///
     /// ## RFC 3986 Section 3.2.3
@@ -72,7 +72,7 @@ extension RFC_3986.URI.Port: Binary.ASCII.Serializable {
     /// - Parameter bytes: The ASCII byte representation of the port
     /// - Throws: `RFC_3986.URI.Port.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         guard !bytes.isEmpty else {
             throw Error.empty
         }
@@ -80,12 +80,16 @@ extension RFC_3986.URI.Port: Binary.ASCII.Serializable {
         var result: UInt32 = 0
 
         for byte in bytes {
-            guard byte.ascii.isDigit else {
-                throw Error.invalidCharacter(String(decoding: bytes, as: UTF8.self), byte: byte)
+            // Type-up: lift to ASCII.Code at the boundary so the body works
+            // against ASCII.Code predicates directly (RFC 3986 port grammar is strict ASCII).
+            let code = ASCII.Code(byte)
+            guard code.isDigit else {
+                throw Error.invalidCharacter(String(decoding: bytes, as: UTF8.self), byte: code)
             }
 
+            // audit: underlying — pending byte-arithmetic decision
             // Convert ASCII digit to numeric value (0x30 = '0')
-            let digit = UInt32(byte) - 0x30
+            let digit = UInt32(code.underlying) - 0x30
             result = result * 10 + digit
 
             // Check for overflow

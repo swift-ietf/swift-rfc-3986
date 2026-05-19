@@ -69,7 +69,7 @@ extension RFC_3986.URI.Userinfo: Binary.ASCII.Serializable {
     public static func serialize<Buffer: RangeReplaceableCollection>(
         ascii userinfo: Self,
         into buffer: inout Buffer
-    ) where Buffer.Element == UInt8 {
+    ) where Buffer.Element == Byte {
         buffer.append(contentsOf: userinfo.rawValue.utf8)
     }
 
@@ -81,7 +81,7 @@ extension RFC_3986.URI.Userinfo: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_3986.URI.Userinfo (structured data)
     ///
     /// ## RFC 3986 Section 3.2.1
@@ -93,31 +93,35 @@ extension RFC_3986.URI.Userinfo: Binary.ASCII.Serializable {
     /// - Parameter bytes: The ASCII byte representation of the userinfo
     /// - Throws: `RFC_3986.URI.Userinfo.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
+        // Type-up: lift to ASCII.Code at the entry boundary so the body works
+        // against ASCII.Code constants directly (RFC 3986 userinfo grammar is strict ASCII).
+        let arr = Array<ASCII.Code>(bytes)
+
         // Validate userinfo characters at byte level
-        var i = bytes.startIndex
-        while i < bytes.endIndex {
-            let byte = bytes[i]
+        var i = 0
+        while i < arr.count {
+            let code = arr[i]
 
             // Check for percent-encoding
-            if byte == 0x25 {  // '%'
+            if code == ASCII.Code.percentSign {
                 // Validate percent-encoding: must have 2 hex digits following
-                let next1 = bytes.index(after: i)
-                guard next1 < bytes.endIndex else {
+                let next1 = i + 1
+                guard next1 < arr.count else {
                     throw Error.invalidPercentEncoding(
                         String(decoding: bytes, as: UTF8.self),
                         reason: "'%' must be followed by 2 hex digits"
                     )
                 }
-                let next2 = bytes.index(after: next1)
-                guard next2 < bytes.endIndex else {
+                let next2 = next1 + 1
+                guard next2 < arr.count else {
                     throw Error.invalidPercentEncoding(
                         String(decoding: bytes, as: UTF8.self),
                         reason: "'%' must be followed by 2 hex digits"
                     )
                 }
 
-                guard bytes[next1].ascii.isHexDigit && bytes[next2].ascii.isHexDigit else {
+                guard arr[next1].isHexDigit && arr[next2].isHexDigit else {
                     throw Error.invalidPercentEncoding(
                         String(decoding: bytes, as: UTF8.self),
                         reason: "Invalid hex digits after '%'"
@@ -125,7 +129,7 @@ extension RFC_3986.URI.Userinfo: Binary.ASCII.Serializable {
                 }
 
                 // Skip past the percent-encoded sequence
-                i = bytes.index(after: next2)
+                i = next2 + 1
                 continue
             }
 
@@ -134,23 +138,27 @@ extension RFC_3986.URI.Userinfo: Binary.ASCII.Serializable {
             // sub-delims: "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
             // plus ":"
             let isUnreserved =
-                byte.ascii.isLetter || byte.ascii.isDigit
-                || byte == 0x2D || byte == 0x2E || byte == 0x5F || byte == 0x7E  // - . _ ~
+                code.isLetter || code.isDigit
+                || code == ASCII.Code.hyphen || code == ASCII.Code.period
+                || code == ASCII.Code.underline || code == ASCII.Code.tilde
             let isSubDelim =
-                byte == 0x21 || byte == 0x24 || byte == 0x26 || byte == 0x27  // ! $ & '
-                || byte == 0x28 || byte == 0x29 || byte == 0x2A || byte == 0x2B  // ( ) * +
-                || byte == 0x2C || byte == 0x3B || byte == 0x3D  // , ; =
-            let isColon = byte == 0x3A  // :
+                code == ASCII.Code.exclamationPoint || code == ASCII.Code.dollarSign
+                || code == ASCII.Code.ampersand || code == ASCII.Code.apostrophe
+                || code == ASCII.Code.leftParenthesis || code == ASCII.Code.rightParenthesis
+                || code == ASCII.Code.asterisk || code == ASCII.Code.plusSign
+                || code == ASCII.Code.comma || code == ASCII.Code.semicolon
+                || code == ASCII.Code.equalsSign
+            let isColon = code == ASCII.Code.colon
 
             guard isUnreserved || isSubDelim || isColon else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: byte,
+                    byte: code,
                     reason: "Only unreserved, sub-delims, ':', and percent-encoded allowed"
                 )
             }
 
-            i = bytes.index(after: i)
+            i += 1
         }
 
         self.init(__unchecked: (), rawValue: String(decoding: bytes, as: UTF8.self))

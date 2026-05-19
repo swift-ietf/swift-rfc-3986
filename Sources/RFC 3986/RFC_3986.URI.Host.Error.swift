@@ -15,6 +15,8 @@
 //
 // Host-level validation errors
 
+public import ASCII_Serializer_Primitives
+
 extension RFC_3986.URI.Host {
     /// Errors that can occur during host validation
     ///
@@ -34,7 +36,7 @@ extension RFC_3986.URI.Host {
         case invalidRegisteredName(_ value: String, reason: String)
 
         /// Host contains an invalid character
-        case invalidCharacter(_ value: String, byte: UInt8, reason: String)
+        case invalidCharacter(_ value: String, byte: ASCII.Code, reason: String)
     }
 }
 

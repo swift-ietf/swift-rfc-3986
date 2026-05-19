@@ -67,7 +67,7 @@ extension RFC_3986.URI.Fragment: Binary.ASCII.Serializable {
     public static func serialize<Buffer: RangeReplaceableCollection>(
         ascii fragment: RFC_3986.URI.Fragment,
         into buffer: inout Buffer
-    ) where Buffer.Element == UInt8 {
+    ) where Buffer.Element == Byte {
         buffer.append(contentsOf: fragment.rawValue.utf8)
     }
 
@@ -79,7 +79,7 @@ extension RFC_3986.URI.Fragment: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_3986.URI.Fragment (structured data)
     ///
     /// ## RFC 3986 Section 3.5
@@ -91,17 +91,20 @@ extension RFC_3986.URI.Fragment: Binary.ASCII.Serializable {
     /// - Parameter bytes: The ASCII byte representation of the fragment
     /// - Throws: `RFC_3986.URI.Fragment.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         // Fragment can be empty per RFC 3986
-        // Check for invalid characters
+        // Type-up: lift to ASCII.Code at the entry boundary so the body works
+        // against ASCII.Code constants directly (RFC 3986 fragment grammar is strict ASCII).
         for byte in bytes {
-            // Fragments cannot contain '#' (0x23)
-            if byte == 0x23 {
+            let code = ASCII.Code(byte)
+
+            // Fragments cannot contain '#'
+            if code == ASCII.Code.numberSign {
                 throw Error.containsHash(String(decoding: bytes, as: UTF8.self))
             }
 
-            // Check for newlines (LF: 0x0A, CR: 0x0D)
-            if byte == 0x0A || byte == 0x0D {
+            // Check for newlines
+            if code == ASCII.Code.lf || code == ASCII.Code.cr {
                 throw Error.containsNewline(String(decoding: bytes, as: UTF8.self))
             }
         }

@@ -58,7 +58,7 @@ extension RFC_3986.URI.Scheme: Binary.ASCII.Serializable {
     public static func serialize<Buffer: RangeReplaceableCollection>(
         ascii scheme: Self,
         into buffer: inout Buffer
-    ) where Buffer.Element == UInt8 {
+    ) where Buffer.Element == Byte {
         buffer.append(contentsOf: scheme.rawValue.utf8)
     }
 
@@ -70,12 +70,12 @@ extension RFC_3986.URI.Scheme: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_3986.URI.Scheme (structured data)
     ///
     /// String-based parsing is derived as composition:
     /// ```
-    /// String → [UInt8] (UTF-8 bytes) → Scheme
+    /// String → [Byte] (UTF-8 bytes) → Scheme
     /// ```
     ///
     /// ## RFC 3986 Section 3.1
@@ -87,26 +87,30 @@ extension RFC_3986.URI.Scheme: Binary.ASCII.Serializable {
     /// - Parameter bytes: The ASCII byte representation of the scheme
     /// - Throws: `RFC_3986.URI.Scheme.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         guard let firstByte = bytes.first else {
             throw Error.empty
         }
 
-        guard firstByte.ascii.isLetter else {
-            throw Error.invalidStart(String(decoding: bytes, as: UTF8.self), byte: firstByte)
+        // Type-up: lift to ASCII.Code at the entry boundary so the body works
+        // against ASCII.Code constants directly (RFC 3986 scheme grammar is strict ASCII).
+        let firstCode = ASCII.Code(firstByte)
+        guard firstCode.isLetter else {
+            throw Error.invalidStart(String(decoding: bytes, as: UTF8.self), byte: firstCode)
         }
 
         for byte in bytes.dropFirst() {
+            let code = ASCII.Code(byte)
             let valid =
-                byte.ascii.isLetter
-                || byte.ascii.isDigit
-                || byte == .ascii.plusSign
-                || byte == .ascii.hyphen
-                || byte == .ascii.period
+                code.isLetter
+                || code.isDigit
+                || code == ASCII.Code.plusSign
+                || code == ASCII.Code.hyphen
+                || code == ASCII.Code.period
             guard valid else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: byte,
+                    byte: code,
                     reason: "Only letters, digits, +, -, . allowed"
                 )
             }

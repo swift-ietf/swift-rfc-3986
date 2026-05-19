@@ -74,14 +74,14 @@ extension RFC_3986.URI.Path: Binary.ASCII.Serializable {
     public static func serialize<Buffer>(
         ascii path: RFC_3986.URI.Path,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == UInt8 {
+    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
         if path.isAbsolute {
-            buffer.append(.ascii.solidus)
+            buffer.append(ASCII.Code.solidus)
         }
 
         for (index, segment) in path.segments.enumerated() {
             if index > 0 {
-                buffer.append(.ascii.solidus)
+                buffer.append(ASCII.Code.solidus)
             }
             buffer.append(contentsOf: segment.utf8)
         }
@@ -95,7 +95,7 @@ extension RFC_3986.URI.Path: Binary.ASCII.Serializable {
     /// ## Category Theory
     ///
     /// This is the fundamental parsing transformation:
-    /// - **Domain**: [UInt8] (ASCII bytes)
+    /// - **Domain**: [Byte] (ASCII bytes)
     /// - **Codomain**: RFC_3986.URI.Path (structured data)
     ///
     /// ## RFC 3986 Section 3.3
@@ -109,84 +109,88 @@ extension RFC_3986.URI.Path: Binary.ASCII.Serializable {
     /// - Parameter bytes: The ASCII byte representation of the path
     /// - Throws: `RFC_3986.URI.Path.Error` if the bytes are malformed
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
-    where Bytes.Element == UInt8 {
+    where Bytes.Element == Byte {
         // Empty path
         guard !bytes.isEmpty else {
             self.init(__unchecked: (), segments: [], isAbsolute: false)
             return
         }
 
-        let isAbsolute = bytes.first == 0x2F  // '/'
+        // Type-up: lift to ASCII.Code at the entry boundary so the body works
+        // against ASCII.Code constants directly (RFC 3986 path grammar is strict ASCII).
+        let arr = Array<ASCII.Code>(bytes)
+
+        let isAbsolute = arr.first == ASCII.Code.solidus
 
         // Path is just "/"
-        if bytes.count == 1 && isAbsolute {
+        if arr.count == 1 && isAbsolute {
             self.init(__unchecked: (), segments: [], isAbsolute: true)
             return
         }
 
         // Validate path characters (pchar / "/" / "?")
-        var i = bytes.startIndex
-        while i < bytes.endIndex {
-            let byte = bytes[i]
+        var i = 0
+        while i < arr.count {
+            let code = arr[i]
 
             // Check for percent-encoding
-            if byte == 0x25 {  // '%'
-                let next1 = bytes.index(after: i)
-                guard next1 < bytes.endIndex else {
+            if code == ASCII.Code.percentSign {
+                let next1 = i + 1
+                guard next1 < arr.count else {
                     throw Error.invalidPercentEncoding(
                         String(decoding: bytes, as: UTF8.self),
                         reason: "'%' must be followed by 2 hex digits"
                     )
                 }
-                let next2 = bytes.index(after: next1)
-                guard next2 < bytes.endIndex else {
+                let next2 = next1 + 1
+                guard next2 < arr.count else {
                     throw Error.invalidPercentEncoding(
                         String(decoding: bytes, as: UTF8.self),
                         reason: "'%' must be followed by 2 hex digits"
                     )
                 }
 
-                guard bytes[next1].ascii.isHexDigit && bytes[next2].ascii.isHexDigit else {
+                guard arr[next1].isHexDigit && arr[next2].isHexDigit else {
                     throw Error.invalidPercentEncoding(
                         String(decoding: bytes, as: UTF8.self),
                         reason: "Invalid hex digits after '%'"
                     )
                 }
 
-                i = bytes.index(after: next2)
+                i = next2 + 1
                 continue
             }
 
             // Check for newlines (invalid in paths)
-            if byte == 0x0A || byte == 0x0D {
+            if code == ASCII.Code.lf || code == ASCII.Code.cr {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: byte,
+                    byte: code,
                     reason: "Path cannot contain newlines"
                 )
             }
 
-            i = bytes.index(after: i)
+            i += 1
         }
 
         // Parse segments
-        let pathBytes = isAbsolute ? Array(bytes.dropFirst()) : Array(bytes)
+        let pathCodes: ArraySlice<ASCII.Code> = isAbsolute ? arr.dropFirst() : arr[...]
 
-        if pathBytes.isEmpty {
+        if pathCodes.isEmpty {
             self.init(__unchecked: (), segments: [], isAbsolute: isAbsolute)
             return
         }
 
-        // Split by '/' (0x2F)
+        // Split by '/'
         var segments: [String] = []
-        var currentSegment: [UInt8] = []
+        var currentSegment: [ASCII.Code] = []
 
-        for byte in pathBytes {
-            if byte == 0x2F {  // '/'
+        for code in pathCodes {
+            if code == ASCII.Code.solidus {
                 segments.append(String(decoding: currentSegment, as: UTF8.self))
                 currentSegment = []
             } else {
-                currentSegment.append(byte)
+                currentSegment.append(code)
             }
         }
         segments.append(String(decoding: currentSegment, as: UTF8.self))
@@ -224,7 +228,7 @@ extension RFC_3986.URI.Path {
     /// - Parameter string: The path string (e.g., "/users/123" or "docs/file.txt")
     /// - Throws: `RFC_3986.URI.Path.Error` if the path is invalid
     public init(_ string: some StringProtocol) throws(Error) {
-        try self.init(ascii: Array(string.utf8), in: ())
+        try self.init(ascii: Array<Byte>(string.utf8), in: ())
     }
 }
 
@@ -351,25 +355,25 @@ extension RFC_3986.URI.Path: Codable {
 
 // MARK: - Byte Serialization
 
-extension [UInt8] {
+extension [Byte] {
     /// Creates ASCII byte representation of an RFC 3986 URI path
     ///
     /// ## Category Theory
     ///
-    /// Natural transformation: RFC_3986.URI.Path → [UInt8]
+    /// Natural transformation: RFC_3986.URI.Path → [Byte]
     /// ```
-    /// Path → [UInt8] (ASCII) → String (UTF-8)
+    /// Path → [Byte] (ASCII) → String (UTF-8)
     /// ```
     public init(_ path: RFC_3986.URI.Path) {
-        var bytes: [UInt8] = []
+        var bytes: [Byte] = []
 
         if path.isAbsolute {
-            bytes.append(0x2F)  // '/'
+            bytes.append(ASCII.Code.solidus)
         }
 
         for (index, segment) in path.segments.enumerated() {
             if index > 0 {
-                bytes.append(0x2F)  // '/'
+                bytes.append(ASCII.Code.solidus)
             }
             bytes.append(contentsOf: segment.utf8)
         }
