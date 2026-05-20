@@ -93,10 +93,22 @@ extension RFC_3986.URI.Fragment: Binary.ASCII.Serializable {
     public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
     where Bytes.Element == Byte {
         // Fragment can be empty per RFC 3986
-        // Type-up: lift to ASCII.Code at the entry boundary so the body works
-        // against ASCII.Code constants directly (RFC 3986 fragment grammar is strict ASCII).
+        // Type-up: lift each byte to ASCII.Code (RFC 3986 fragment grammar is strict ASCII).
+        // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
         for byte in bytes {
-            let code = ASCII.Code(byte)
+            let code: ASCII.Code
+            do {
+                code = try ASCII.Code(byte)
+            } catch {
+                switch error {
+                case .notASCII(let badByte):
+                    throw Error.invalidCharacter(
+                        String(decoding: bytes, as: UTF8.self),
+                        byte: badByte,
+                        reason: "non-ASCII byte in fragment"
+                    )
+                }
+            }
 
             // Fragments cannot contain '#'
             if code == ASCII.Code.numberSign {

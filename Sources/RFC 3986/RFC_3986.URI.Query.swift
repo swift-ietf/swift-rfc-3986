@@ -112,7 +112,20 @@ extension RFC_3986.URI.Query: Binary.ASCII.Serializable {
 
         // Type-up: lift to ASCII.Code at the entry boundary so the body works
         // against ASCII.Code constants directly (RFC 3986 query grammar is strict ASCII).
-        let arr = Array<ASCII.Code>(bytes)
+        // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
+        let arr: [ASCII.Code]
+        do {
+            arr = try Array<ASCII.Code>(bytes)
+        } catch {
+            switch error {
+            case .notASCII(let byte):
+                throw Error.invalidCharacter(
+                    String(decoding: bytes, as: UTF8.self),
+                    byte: byte,
+                    reason: "non-ASCII byte in query"
+                )
+            }
+        }
 
         // Validate query characters at byte level
         var i = 0
@@ -151,7 +164,7 @@ extension RFC_3986.URI.Query: Binary.ASCII.Serializable {
             if code == ASCII.Code.lf || code == ASCII.Code.cr {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: code,
+                    byte: code.byte,
                     reason: "Query cannot contain newlines"
                 )
             }
@@ -160,7 +173,7 @@ extension RFC_3986.URI.Query: Binary.ASCII.Serializable {
             if code == ASCII.Code.numberSign {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: code,
+                    byte: code.byte,
                     reason: "Query cannot contain '#' (use for fragment instead)"
                 )
             }

@@ -27,10 +27,10 @@ extension RFC_3986.URI.Scheme {
         case empty
 
         /// Scheme does not start with a letter (ALPHA)
-        case invalidStart(_ value: String, byte: ASCII.Code)
+        case invalidStart(_ value: String, byte: Byte)
 
-        /// Scheme contains an invalid character
-        case invalidCharacter(_ value: String, byte: ASCII.Code, reason: String)
+        /// Scheme contains an invalid byte
+        case invalidCharacter(_ value: String, byte: Byte, reason: String)
     }
 }
 

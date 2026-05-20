@@ -82,9 +82,18 @@ extension RFC_3986.URI.Port: Binary.ASCII.Serializable {
         for byte in bytes {
             // Type-up: lift to ASCII.Code at the boundary so the body works
             // against ASCII.Code predicates directly (RFC 3986 port grammar is strict ASCII).
-            let code = ASCII.Code(byte)
+            // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
+            let code: ASCII.Code
+            do {
+                code = try ASCII.Code(byte)
+            } catch {
+                switch error {
+                case .notASCII(let badByte):
+                    throw Error.invalidCharacter(String(decoding: bytes, as: UTF8.self), byte: badByte)
+                }
+            }
             guard code.isDigit else {
-                throw Error.invalidCharacter(String(decoding: bytes, as: UTF8.self), byte: code)
+                throw Error.invalidCharacter(String(decoding: bytes, as: UTF8.self), byte: code.byte)
             }
 
             let digit = UInt32(code.digitValue!)

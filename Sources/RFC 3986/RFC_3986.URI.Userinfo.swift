@@ -96,7 +96,20 @@ extension RFC_3986.URI.Userinfo: Binary.ASCII.Serializable {
     where Bytes.Element == Byte {
         // Type-up: lift to ASCII.Code at the entry boundary so the body works
         // against ASCII.Code constants directly (RFC 3986 userinfo grammar is strict ASCII).
-        let arr = Array<ASCII.Code>(bytes)
+        // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
+        let arr: [ASCII.Code]
+        do {
+            arr = try Array<ASCII.Code>(bytes)
+        } catch {
+            switch error {
+            case .notASCII(let byte):
+                throw Error.invalidCharacter(
+                    String(decoding: bytes, as: UTF8.self),
+                    byte: byte,
+                    reason: "non-ASCII byte in userinfo"
+                )
+            }
+        }
 
         // Validate userinfo characters at byte level
         var i = 0
@@ -153,7 +166,7 @@ extension RFC_3986.URI.Userinfo: Binary.ASCII.Serializable {
             guard isUnreserved || isSubDelim || isColon else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: code,
+                    byte: code.byte,
                     reason: "Only unreserved, sub-delims, ':', and percent-encoded allowed"
                 )
             }

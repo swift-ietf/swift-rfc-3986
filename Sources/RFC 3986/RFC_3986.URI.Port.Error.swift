@@ -26,8 +26,8 @@ extension RFC_3986.URI.Port {
         /// Port is empty
         case empty
 
-        /// Port contains non-digit characters
-        case invalidCharacter(_ value: String, byte: ASCII.Code)
+        /// Port contains non-digit bytes
+        case invalidCharacter(_ value: String, byte: Byte)
 
         /// Port value overflows UInt16 (max 65535)
         case overflow(_ value: String)

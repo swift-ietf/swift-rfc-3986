@@ -118,7 +118,20 @@ extension RFC_3986.URI.Path: Binary.ASCII.Serializable {
 
         // Type-up: lift to ASCII.Code at the entry boundary so the body works
         // against ASCII.Code constants directly (RFC 3986 path grammar is strict ASCII).
-        let arr = Array<ASCII.Code>(bytes)
+        // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
+        let arr: [ASCII.Code]
+        do {
+            arr = try Array<ASCII.Code>(bytes)
+        } catch {
+            switch error {
+            case .notASCII(let byte):
+                throw Error.invalidCharacter(
+                    String(decoding: bytes, as: UTF8.self),
+                    byte: byte,
+                    reason: "non-ASCII byte in path"
+                )
+            }
+        }
 
         let isAbsolute = arr.first == ASCII.Code.solidus
 
@@ -165,7 +178,7 @@ extension RFC_3986.URI.Path: Binary.ASCII.Serializable {
             if code == ASCII.Code.lf || code == ASCII.Code.cr {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: code,
+                    byte: code.byte,
                     reason: "Path cannot contain newlines"
                 )
             }

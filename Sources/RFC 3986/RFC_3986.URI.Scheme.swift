@@ -94,13 +94,34 @@ extension RFC_3986.URI.Scheme: Binary.ASCII.Serializable {
 
         // Type-up: lift to ASCII.Code at the entry boundary so the body works
         // against ASCII.Code constants directly (RFC 3986 scheme grammar is strict ASCII).
-        let firstCode = ASCII.Code(firstByte)
+        // Non-ASCII bytes fail with `invalidStart` / `invalidCharacter` carrying the offending Byte.
+        let firstCode: ASCII.Code
+        do {
+            firstCode = try ASCII.Code(firstByte)
+        } catch {
+            switch error {
+            case .notASCII(let badByte):
+                throw Error.invalidStart(String(decoding: bytes, as: UTF8.self), byte: badByte)
+            }
+        }
         guard firstCode.isLetter else {
-            throw Error.invalidStart(String(decoding: bytes, as: UTF8.self), byte: firstCode)
+            throw Error.invalidStart(String(decoding: bytes, as: UTF8.self), byte: firstCode.byte)
         }
 
         for byte in bytes.dropFirst() {
-            let code = ASCII.Code(byte)
+            let code: ASCII.Code
+            do {
+                code = try ASCII.Code(byte)
+            } catch {
+                switch error {
+                case .notASCII(let badByte):
+                    throw Error.invalidCharacter(
+                        String(decoding: bytes, as: UTF8.self),
+                        byte: badByte,
+                        reason: "Only letters, digits, +, -, . allowed"
+                    )
+                }
+            }
             let valid =
                 code.isLetter
                 || code.isDigit
@@ -110,7 +131,7 @@ extension RFC_3986.URI.Scheme: Binary.ASCII.Serializable {
             guard valid else {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
-                    byte: code,
+                    byte: code.byte,
                     reason: "Only letters, digits, +, -, . allowed"
                 )
             }

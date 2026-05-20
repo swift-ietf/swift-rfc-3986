@@ -35,8 +35,8 @@ extension RFC_3986.URI.Host {
         /// Registered name is malformed
         case invalidRegisteredName(_ value: String, reason: String)
 
-        /// Host contains an invalid character
-        case invalidCharacter(_ value: String, byte: ASCII.Code, reason: String)
+        /// Host contains an invalid byte
+        case invalidCharacter(_ value: String, byte: Byte, reason: String)
     }
 }
 

@@ -29,8 +29,8 @@ extension RFC_3986.URI.Path {
         /// Path segment contains invalid whitespace
         case segmentContainsWhitespace(_ segment: String)
 
-        /// Path contains an invalid character
-        case invalidCharacter(_ value: String, byte: ASCII.Code, reason: String)
+        /// Path contains an invalid byte
+        case invalidCharacter(_ value: String, byte: Byte, reason: String)
 
         /// Path contains malformed percent-encoding
         case invalidPercentEncoding(_ value: String, reason: String)

@@ -32,8 +32,8 @@ extension RFC_3986.URI.Query {
         /// Query parameter value contains newline
         case valueContainsNewline(_ key: String, value: String)
 
-        /// Query contains an invalid character
-        case invalidCharacter(_ value: String, byte: ASCII.Code, reason: String)
+        /// Query contains an invalid byte
+        case invalidCharacter(_ value: String, byte: Byte, reason: String)
 
         /// Query contains malformed percent-encoding
         case invalidPercentEncoding(_ value: String, reason: String)

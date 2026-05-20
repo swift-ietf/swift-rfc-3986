@@ -29,8 +29,8 @@ extension RFC_3986.URI.Fragment {
         /// Fragment contains a newline character
         case containsNewline(_ value: String)
 
-        /// Fragment contains an invalid character
-        case invalidCharacter(_ value: String, byte: ASCII.Code, reason: String)
+        /// Fragment contains an invalid byte
+        case invalidCharacter(_ value: String, byte: Byte, reason: String)
     }
 }
 
