@@ -87,9 +87,7 @@ extension RFC_3986.URI.Port: Binary.ASCII.Serializable {
                 throw Error.invalidCharacter(String(decoding: bytes, as: UTF8.self), byte: code)
             }
 
-            // audit: underlying — pending byte-arithmetic decision
-            // Convert ASCII digit to numeric value (0x30 = '0')
-            let digit = UInt32(code.underlying) - 0x30
+            let digit = UInt32(code.digitValue!)
             result = result * 10 + digit
 
             // Check for overflow
