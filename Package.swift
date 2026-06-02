@@ -17,11 +17,11 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(path: "../../swift-primitives/swift-standard-library-extensions"),
-        .package(path: "../../swift-primitives/swift-parser-primitives"),
-        .package(path: "../../swift-primitives/swift-ascii-serializer-primitives"),
-        .package(path: "../../swift-standards/swift-ipv4-standard"),
-        .package(path: "../../swift-standards/swift-ipv6-standard")
+        .package(url: "https://github.com/swift-primitives/swift-standard-library-extensions.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-parser-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-primitives/swift-ascii-serializer-primitives.git", branch: "main"),
+        .package(url: "https://github.com/swift-standards/swift-ipv4-standard.git", branch: "main"),
+        .package(url: "https://github.com/swift-standards/swift-ipv6-standard.git", branch: "main")
     ],
     targets: [
         .target(
