@@ -20,8 +20,16 @@ extension RFC_3986.URI.Port {
     }
 }
 
-extension RFC_3986.URI.Port.Parse {
-    public enum Error: Swift.Error, Sendable, Equatable {
+extension RFC_3986.URI.Port {
+    /// Failures from the byte-level port ``Parse`` parser, distinct from
+    /// the validation ``Error``.
+    ///
+    /// Defined on the non-generic `Port` namespace, NOT nested in the
+    /// generic `Port.Parse<Input>`: a typed-throws error nested in a generic
+    /// type carries that type parameter, tripping `FunctionSignatureOpts`'
+    /// `!type.hasTypeParameter()` assertion on the typed-throws SIL argument
+    /// under `-c release` (SILArgument.cpp:40).
+    public enum Failure: Swift.Error, Sendable, Equatable {
         case expectedDigit
         case overflow
     }
@@ -29,7 +37,7 @@ extension RFC_3986.URI.Port.Parse {
 
 extension RFC_3986.URI.Port.Parse: Parser.`Protocol` {
     public typealias Output = UInt16
-    public typealias Failure = RFC_3986.URI.Port.Parse<Input>.Error
+    public typealias Failure = RFC_3986.URI.Port.Failure
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> UInt16 {

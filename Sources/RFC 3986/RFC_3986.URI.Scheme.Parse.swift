@@ -20,15 +20,23 @@ extension RFC_3986.URI.Scheme {
     }
 }
 
-extension RFC_3986.URI.Scheme.Parse {
-    public enum Error: Swift.Error, Sendable, Equatable {
+extension RFC_3986.URI.Scheme {
+    /// Failures from the byte-level scheme ``Parse`` parser, distinct from
+    /// the validation ``Error``.
+    ///
+    /// Defined on the non-generic `Scheme` namespace, NOT nested in the
+    /// generic `Scheme.Parse<Input>`: a typed-throws error nested in a
+    /// generic type carries that type parameter, tripping
+    /// `FunctionSignatureOpts`' `!type.hasTypeParameter()` assertion on the
+    /// typed-throws SIL argument under `-c release` (SILArgument.cpp:40).
+    public enum Failure: Swift.Error, Sendable, Equatable {
         case expectedAlpha
     }
 }
 
 extension RFC_3986.URI.Scheme.Parse: Parser.`Protocol` {
     public typealias Output = Input
-    public typealias Failure = RFC_3986.URI.Scheme.Parse<Input>.Error
+    public typealias Failure = RFC_3986.URI.Scheme.Failure
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Input {

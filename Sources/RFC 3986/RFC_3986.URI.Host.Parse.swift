@@ -22,15 +22,23 @@ extension RFC_3986.URI.Host {
     }
 }
 
-extension RFC_3986.URI.Host.Parse {
-    public enum Error: Swift.Error, Sendable, Equatable {
+extension RFC_3986.URI.Host {
+    /// Failures from the byte-level host ``Parse`` parser, distinct from
+    /// the validation ``Error``.
+    ///
+    /// Defined on the non-generic `Host` namespace, NOT nested in the
+    /// generic `Host.Parse<Input>`: a typed-throws error nested in a generic
+    /// type carries that type parameter, tripping `FunctionSignatureOpts`'
+    /// `!type.hasTypeParameter()` assertion on the typed-throws SIL argument
+    /// under `-c release` (SILArgument.cpp:40).
+    public enum Failure: Swift.Error, Sendable, Equatable {
         case unterminatedIPLiteral
     }
 }
 
 extension RFC_3986.URI.Host.Parse: Parser.`Protocol` {
     public typealias Output = Input
-    public typealias Failure = RFC_3986.URI.Host.Parse<Input>.Error
+    public typealias Failure = RFC_3986.URI.Host.Failure
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Input {

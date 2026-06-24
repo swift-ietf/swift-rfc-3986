@@ -35,14 +35,25 @@ extension RFC_3986.URI.Authority.Parse {
         }
     }
 
-    public enum Error: Swift.Error, Sendable, Equatable {
+}
+
+extension RFC_3986.URI.Authority {
+    /// Failures from the byte-level authority ``Parse`` parser, distinct
+    /// from the validation ``Error``.
+    ///
+    /// Defined on the non-generic `Authority` namespace, NOT nested in the
+    /// generic `Authority.Parse<Input>`, to avoid the typed-throws /
+    /// `FunctionSignatureOpts` `!type.hasTypeParameter()` crash under
+    /// `-c release` (SILArgument.cpp:40). `Output` stays nested in `Parse`
+    /// (it depends on `Input`).
+    public enum Failure: Swift.Error, Sendable, Equatable {
         case unterminatedIPLiteral
         case portOverflow
     }
 }
 
 extension RFC_3986.URI.Authority.Parse: Parser.`Protocol` {
-    public typealias Failure = RFC_3986.URI.Authority.Parse<Input>.Error
+    public typealias Failure = RFC_3986.URI.Authority.Failure
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Output {
