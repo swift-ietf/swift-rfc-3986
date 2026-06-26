@@ -50,7 +50,7 @@ extension RFC_3986.URI.Port.Parse: Parser.`Protocol` {
             return try ASCII.Decimal.Parser<Input, UInt16>().parse(&input)
         } catch {
             switch error {
-            case .noDigits: throw .expectedDigit
+            case .noDigits, .insufficientDigits, .invalidSign: throw .expectedDigit
             case .overflow: throw .overflow
             }
         }
