@@ -74,6 +74,6 @@ extension RFC_3986.Parse.PercentEncoded.Parse: Parser.`Protocol` {
     static func _hexValue(_ byte: UInt8) -> UInt8? {
         // Delegated to the L1 ASCII hex-digit table (single source of truth).
         // Byte-for-byte identical ranges: '0'–'9'→0–9, 'A'–'F'→10–15, 'a'–'f'→10–15.
-        ASCII.Parsing.hexDigit(byte)
+        ASCII.Parsing.hexDigit(ASCII.Code(byte))
     }
 }
