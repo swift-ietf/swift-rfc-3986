@@ -1,3 +1,5 @@
+public import ASCII_Primitives
+
 extension RFC_3986 {
     /// Character sets defined in RFC 3986
     ///
@@ -366,16 +368,9 @@ extension RFC_3986 {
     /// Converts a hex digit byte to its value (0-15), or nil if invalid
     @inlinable
     static func hexDigitValue(_ byte: UInt8) -> UInt8? {
-        switch byte {
-        case UInt8(ascii: "0")...UInt8(ascii: "9"):
-            return byte - UInt8(ascii: "0")
-        case UInt8(ascii: "A")...UInt8(ascii: "F"):
-            return byte - UInt8(ascii: "A") + 10
-        case UInt8(ascii: "a")...UInt8(ascii: "f"):
-            return byte - UInt8(ascii: "a") + 10
-        default:
-            return nil
-        }
+        // Delegated to the L1 ASCII hex-digit table (single source of truth).
+        // Byte-for-byte identical ranges: '0'–'9'→0–9, 'A'–'F'→10–15, 'a'–'f'→10–15.
+        ASCII.Parsing.hexDigit(byte)
     }
 }
 

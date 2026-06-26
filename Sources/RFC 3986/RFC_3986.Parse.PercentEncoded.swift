@@ -6,6 +6,7 @@
 //
 
 public import Parser_Primitives
+public import ASCII_Primitives
 
 extension RFC_3986.Parse {
     /// Percent-encoded triplet namespace per RFC 3986 Section 2.1.
@@ -71,11 +72,8 @@ extension RFC_3986.Parse.PercentEncoded.Parse: Parser.`Protocol` {
 
     @inlinable
     static func _hexValue(_ byte: UInt8) -> UInt8? {
-        switch byte {
-        case 0x30...0x39: byte &- 0x30
-        case 0x41...0x46: byte &- 0x37
-        case 0x61...0x66: byte &- 0x57
-        default: nil
-        }
+        // Delegated to the L1 ASCII hex-digit table (single source of truth).
+        // Byte-for-byte identical ranges: '0'–'9'→0–9, 'A'–'F'→10–15, 'a'–'f'→10–15.
+        ASCII.Parsing.hexDigit(byte)
     }
 }
