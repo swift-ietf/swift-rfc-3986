@@ -59,21 +59,21 @@ extension RFC_3986.Parse.PercentEncoded.Parse: Parser.`Protocol` {
 
         // First hex digit
         guard input.startIndex < input.endIndex else { throw .expectedHexDigit }
-        guard let high = Self._hexValue(input[input.startIndex]) else { throw .expectedHexDigit }
+        guard let high = Self._hexValue(ASCII.Code(input[input.startIndex])) else { throw .expectedHexDigit }
         input = input[input.index(after: input.startIndex)...]
 
         // Second hex digit
         guard input.startIndex < input.endIndex else { throw .expectedHexDigit }
-        guard let low = Self._hexValue(input[input.startIndex]) else { throw .expectedHexDigit }
+        guard let low = Self._hexValue(ASCII.Code(input[input.startIndex])) else { throw .expectedHexDigit }
         input = input[input.index(after: input.startIndex)...]
 
         return (high << 4) | low
     }
 
     @inlinable
-    static func _hexValue(_ byte: UInt8) -> UInt8? {
+    static func _hexValue(_ code: ASCII.Code) -> UInt8? {
         // Delegated to the L1 ASCII hex-digit table (single source of truth).
         // Byte-for-byte identical ranges: '0'–'9'→0–9, 'A'–'F'→10–15, 'a'–'f'→10–15.
-        ASCII.Parsing.hexDigit(ASCII.Code(byte))
+        ASCII.Parsing.hexDigit(code)
     }
 }

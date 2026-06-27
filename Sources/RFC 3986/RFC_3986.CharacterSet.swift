@@ -344,8 +344,8 @@ extension RFC_3986 {
             if byte == UInt8(ascii: "%"),
                 let hi = iterator.next(),
                 let lo = iterator.next(),
-                let hiVal = hexDigitValue(hi),
-                let loVal = hexDigitValue(lo)
+                let hiVal = hexDigitValue(ASCII.Code(hi)),
+                let loVal = hexDigitValue(ASCII.Code(lo))
             {
                 result.append((hiVal << 4) | loVal)
             } else {
@@ -365,12 +365,12 @@ extension RFC_3986 {
         }
     }
 
-    /// Converts a hex digit byte to its value (0-15), or nil if invalid
+    /// Converts a hex digit code to its value (0-15), or nil if invalid
     @inlinable
-    static func hexDigitValue(_ byte: UInt8) -> UInt8? {
+    static func hexDigitValue(_ code: ASCII.Code) -> UInt8? {
         // Delegated to the L1 ASCII hex-digit table (single source of truth).
         // Byte-for-byte identical ranges: '0'–'9'→0–9, 'A'–'F'→10–15, 'a'–'f'→10–15.
-        ASCII.Parsing.hexDigit(ASCII.Code(byte))
+        ASCII.Parsing.hexDigit(code)
     }
 }
 
