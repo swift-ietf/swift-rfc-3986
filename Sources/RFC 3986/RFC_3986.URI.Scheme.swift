@@ -1,4 +1,6 @@
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
 
 // MARK: - URI Scheme
 
@@ -53,13 +55,48 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Scheme: Binary.ASCII.Serializable {
-    /// Serialize scheme to ASCII bytes
+extension RFC_3986.URI.Scheme: Swift.RawRepresentable, Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Creates a scheme by validating `rawValue`, or `nil` if it is not a valid RFC 3986 scheme.
+    ///
+    /// Re-provides the `Swift.RawRepresentable` requirement (previously inherited
+    /// from the retired combined ASCII serializable protocol).
+    public init?(rawValue: String) {
+        try? self.init(rawValue)
+    }
+
+    /// Serializes `value` as ASCII bytes into `buffer`.
+    ///
+    /// Explicit `Binary.Serializable` witness: disambiguates the two
+    /// constraint-incomparable `serialize(_:into:)` defaults (the RawRepresentable
+    /// default vs the W0 ASCII bridge) — a conformer-declared member out-ranks both.
+    /// The bytes derive from the free `[ASCII.Code]` serializer supplied by the
+    /// `String`-RawRepresentable default (`.serialized`).
     public static func serialize<Buffer: RangeReplaceableCollection>(
-        ascii scheme: Self,
+        _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: scheme.rawValue.utf8)
+        buffer.append(contentsOf: value.serialized)
+    }
+}
+
+// MARK: - CustomStringConvertible
+
+extension RFC_3986.URI.Scheme: CustomStringConvertible {
+    /// The scheme's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+}
+
+// MARK: - Parseable
+
+extension RFC_3986.URI.Scheme: ASCII.Parseable {
+    /// Creates a scheme by validating `string`'s UTF-8 bytes as ASCII.
+    ///
+    /// Re-provides the string convenience initializer (previously inherited from
+    /// the retired combined ASCII serializable protocol, Void context).
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: [Byte](string.utf8))
     }
 
     /// Parses scheme from ASCII bytes (CANONICAL PRIMITIVE)
@@ -86,7 +123,7 @@ extension RFC_3986.URI.Scheme: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the scheme
     /// - Throws: `RFC_3986.URI.Scheme.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         guard let firstByte = bytes.first else {
             throw Error.empty
@@ -141,11 +178,6 @@ extension RFC_3986.URI.Scheme: Binary.ASCII.Serializable {
         self.init(__unchecked: (), rawValue: String(decoding: bytes, as: UTF8.self))
     }
 }
-
-// MARK: - Protocol Conformances
-
-extension RFC_3986.URI.Scheme: Binary.ASCII.RawRepresentable {}
-extension RFC_3986.URI.Scheme: CustomStringConvertible {}
 
 // MARK: - Common Schemes
 

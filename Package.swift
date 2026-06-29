@@ -34,6 +34,7 @@ let package = Package(
                 .product(name: "ASCII Primitives", package: "swift-ascii-primitives"),
                 .product(name: "ASCII Serializer Primitives", package: "swift-ascii-serializer-primitives"),
                 .product(name: "ASCII Decimal Parser Primitives", package: "swift-ascii-parser-primitives"),
+                .product(name: "Parseable ASCII Primitives", package: "swift-ascii-parser-primitives"),
                 .product(name: "IPv4 Standard", package: "swift-ipv4-standard"),
                 .product(name: "IPv6 Standard", package: "swift-ipv6-standard")
             ]
