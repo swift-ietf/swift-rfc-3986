@@ -370,7 +370,7 @@ extension RFC_3986 {
     static func hexDigitValue(_ code: ASCII.Code) -> UInt8? {
         // Delegated to the L1 ASCII hex-digit table (single source of truth).
         // Byte-for-byte identical ranges: '0'–'9'→0–9, 'A'–'F'→10–15, 'a'–'f'→10–15.
-        ASCII.Parsing.hexDigit(code)
+        code.hexValue
     }
 }
 
