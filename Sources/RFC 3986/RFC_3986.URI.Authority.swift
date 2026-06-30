@@ -1,4 +1,7 @@
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
+public import Serializer_Primitives
 
 // MARK: - URI Authority
 
@@ -89,24 +92,49 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Authority: Binary.ASCII.Serializable {
-    public static func serialize<Buffer>(
-        ascii authority: RFC_3986.URI.Authority,
+extension RFC_3986.URI.Authority: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Canonical ASCII serializer for the RFC 3986 authority
+    /// (`[ userinfo "@" ] host [ ":" port ]`).
+    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
+        Serializer_Primitives.Serializer.Pure { authority, buffer in
+            var bytes: [Byte] = []
+            serializeBytes(authority, into: &bytes)
+            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+        }
+    }
+
+    /// Explicit `Binary.Serializable` witness disambiguating the two
+    /// constraint-incomparable `serialize(_:into:)` defaults.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
+    ) where Buffer.Element == Byte {
+        serializeBytes(value, into: &buffer)
+    }
+
+    /// Byte-domain serialization body. The host/port sub-components serialize
+    /// via their own family-Codable `.serialized` ([Byte]).
+    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
+        _ authority: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
         if let userinfo = authority.userinfo {
             buffer.append(contentsOf: userinfo.rawValue.utf8)
             buffer.append(ASCII.Code.commercialAt)
         }
 
-        buffer.append(contentsOf: [Byte](ascii: authority.host))
+        buffer.append(contentsOf: authority.host.serialized)
 
         if let port = authority.port {
             buffer.append(ASCII.Code.colon)
-            buffer.append(contentsOf: [Byte](ascii: port))
+            buffer.append(contentsOf: port.serialized)
         }
     }
+}
 
+// MARK: - Parseable
+
+extension RFC_3986.URI.Authority: ASCII.Parseable {
     /// Parses authority from ASCII bytes (CANONICAL PRIMITIVE)
     ///
     /// This is the primitive parser that works at the byte level.
@@ -126,7 +154,7 @@ extension RFC_3986.URI.Authority: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the authority
     /// - Throws: `RFC_3986.URI.Authority.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         let string = String(decoding: bytes, as: UTF8.self)
         var remaining = string

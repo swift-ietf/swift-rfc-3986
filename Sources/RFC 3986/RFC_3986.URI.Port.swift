@@ -1,4 +1,7 @@
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
+public import Serializer_Primitives
 
 // MARK: - URI Port
 
@@ -44,14 +47,37 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Port: Binary.ASCII.Serializable {
-    static public func serialize<Buffer>(
-        ascii port: RFC_3986.URI.Port,
-        into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
-        buffer.append(contentsOf: String(port.value).utf8)
+extension RFC_3986.URI.Port: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Canonical ASCII serializer for the RFC 3986 port (decimal `*DIGIT`).
+    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
+        Serializer_Primitives.Serializer.Pure { port, buffer in
+            var bytes: [Byte] = []
+            serializeBytes(port, into: &bytes)
+            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+        }
     }
 
+    /// Explicit `Binary.Serializable` witness disambiguating the two
+    /// constraint-incomparable `serialize(_:into:)` defaults.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
+        serializeBytes(value, into: &buffer)
+    }
+
+    /// Byte-domain serialization body (decimal digits of the port value).
+    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
+        _ port: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
+        buffer.append(contentsOf: String(port.value).utf8)
+    }
+}
+
+// MARK: - Parseable
+
+extension RFC_3986.URI.Port: ASCII.Parseable {
     /// Parses port from ASCII bytes (CANONICAL PRIMITIVE)
     ///
     /// This is the primitive parser that works at the byte level.
@@ -71,7 +97,7 @@ extension RFC_3986.URI.Port: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the port
     /// - Throws: `RFC_3986.URI.Port.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         guard !bytes.isEmpty else {
             throw Error.empty
@@ -111,7 +137,7 @@ extension RFC_3986.URI.Port: Binary.ASCII.Serializable {
 
 // MARK: - Protocol Conformances
 
-extension RFC_3986.URI.Port: Binary.ASCII.RawRepresentable {
+extension RFC_3986.URI.Port: Swift.RawRepresentable {
     /// RawValue type for RawRepresentable conformance
     public typealias RawValue = UInt16
 

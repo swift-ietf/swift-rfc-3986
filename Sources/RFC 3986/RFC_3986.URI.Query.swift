@@ -1,4 +1,6 @@
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
 
 // MARK: - URI RFC_3986.URI.Query
 
@@ -74,13 +76,31 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Query: Binary.ASCII.Serializable {
-    /// Serialize query to ASCII bytes
+extension RFC_3986.URI.Query: Swift.RawRepresentable, Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Re-provides the `Swift.RawRepresentable` requirement (previously inherited
+    /// from the retired combined ASCII serializable protocol).
+    public init?(rawValue: String) {
+        try? self.init(rawValue)
+    }
+
+    /// Explicit `Binary.Serializable` witness: disambiguates the two
+    /// constraint-incomparable `serialize(_:into:)` defaults. The bytes derive
+    /// from the free `[ASCII.Code]` serializer supplied by the `String`-RawRepresentable default.
     public static func serialize<Buffer: RangeReplaceableCollection>(
-        ascii query: Self,
+        _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: query.rawValue.utf8)
+        buffer.append(contentsOf: value.serialized)
+    }
+}
+
+// MARK: - Parseable
+
+extension RFC_3986.URI.Query: ASCII.Parseable {
+    /// Re-provides the string convenience initializer (previously inherited from
+    /// the retired combined ASCII serializable protocol, Void context).
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: [Byte](string.utf8))
     }
 
     /// Parses query from ASCII bytes (CANONICAL PRIMITIVE)
@@ -102,7 +122,7 @@ extension RFC_3986.URI.Query: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the query
     /// - Throws: `RFC_3986.URI.Query.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         // Empty query is allowed
         if bytes.isEmpty {
@@ -219,10 +239,14 @@ extension RFC_3986.URI.Query: Binary.ASCII.Serializable {
     }
 }
 
-// MARK: - Protocol Conformances
+// MARK: - CustomStringConvertible
 
-extension RFC_3986.URI.Query: Binary.ASCII.RawRepresentable {}
-extension RFC_3986.URI.Query: CustomStringConvertible {}
+extension RFC_3986.URI.Query: CustomStringConvertible {
+    /// The query's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+}
 
 // MARK: - Public Initializers
 

@@ -1,4 +1,7 @@
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
+public import Serializer_Primitives
 public import IPv4_Standard
 public import IPv6_Standard
 
@@ -67,11 +70,36 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Host: Binary.ASCII.Serializable {
-    public static func serialize<Buffer>(
-        ascii host: RFC_3986.URI.Host,
+extension RFC_3986.URI.Host: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Canonical ASCII serializer for the RFC 3986 host.
+    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
+        Serializer_Primitives.Serializer.Pure { host, buffer in
+            var bytes: [Byte] = []
+            serializeBytes(host, into: &bytes)
+            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+        }
+    }
+
+    /// Explicit `Binary.Serializable` witness disambiguating the two
+    /// constraint-incomparable `serialize(_:into:)` defaults.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
+    ) where Buffer.Element == Byte {
+        serializeBytes(value, into: &buffer)
+    }
+
+    /// Byte-domain serialization body.
+    ///
+    /// Dual-D carve-out: the `.ipv4` / `.ipv6` arms serialize their address
+    /// payloads through the deprecated `append(ascii:)` path — `RFC_791.IPv4.Address`
+    /// and `RFC_4291.IPv6.Address` remain on `Binary.ASCII.Serializable` (rfc-791 /
+    /// rfc-4291 are not part of this cascade). Only the registered-name form is
+    /// byte-domain native.
+    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
+        _ host: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
         switch host {
         case .ipv4(let address):
             buffer.append(ascii: address)
@@ -92,6 +120,16 @@ extension RFC_3986.URI.Host: Binary.ASCII.Serializable {
         case .registeredName(let name):
             buffer.append(contentsOf: name.utf8)
         }
+    }
+}
+
+// MARK: - Parseable
+
+extension RFC_3986.URI.Host: ASCII.Parseable {
+    /// Re-provides the string convenience initializer (previously inherited from
+    /// the retired combined ASCII serializable protocol, Void context).
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: [Byte](string.utf8))
     }
 
     /// Parses host from ASCII bytes (CANONICAL PRIMITIVE)
@@ -114,7 +152,7 @@ extension RFC_3986.URI.Host: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the host
     /// - Throws: `RFC_3986.URI.Host.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         guard !bytes.isEmpty else {
             throw Error.empty
@@ -240,7 +278,7 @@ extension RFC_3986.URI.Host {
     /// For IPv6, this includes the surrounding brackets and percent-encoded zone.
     /// For IPv4 and registered names, returns the value as-is.
     public var rawValue: String {
-        String(ascii: self)
+        String(decoding: serialized, as: UTF8.self)
     }
 
     /// Returns true if this is a loopback address

@@ -1,4 +1,6 @@
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
 
 // MARK: - URI Userinfo
 
@@ -64,13 +66,31 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Userinfo: Binary.ASCII.Serializable {
-    /// Serialize userinfo to ASCII bytes
+extension RFC_3986.URI.Userinfo: Swift.RawRepresentable, Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Re-provides the `Swift.RawRepresentable` requirement (previously inherited
+    /// from the retired combined ASCII serializable protocol).
+    public init?(rawValue: String) {
+        try? self.init(rawValue)
+    }
+
+    /// Explicit `Binary.Serializable` witness: disambiguates the two
+    /// constraint-incomparable `serialize(_:into:)` defaults. The bytes derive
+    /// from the free `[ASCII.Code]` serializer supplied by the `String`-RawRepresentable default.
     public static func serialize<Buffer: RangeReplaceableCollection>(
-        ascii userinfo: Self,
+        _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: userinfo.rawValue.utf8)
+        buffer.append(contentsOf: value.serialized)
+    }
+}
+
+// MARK: - Parseable
+
+extension RFC_3986.URI.Userinfo: ASCII.Parseable {
+    /// Re-provides the string convenience initializer (previously inherited from
+    /// the retired combined ASCII serializable protocol, Void context).
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: [Byte](string.utf8))
     }
 
     /// Parses userinfo from ASCII bytes (CANONICAL PRIMITIVE)
@@ -92,7 +112,7 @@ extension RFC_3986.URI.Userinfo: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the userinfo
     /// - Throws: `RFC_3986.URI.Userinfo.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         // Type-up: lift to ASCII.Code at the entry boundary so the body works
         // against ASCII.Code constants directly (RFC 3986 userinfo grammar is strict ASCII).
@@ -178,10 +198,14 @@ extension RFC_3986.URI.Userinfo: Binary.ASCII.Serializable {
     }
 }
 
-// MARK: - Protocol Conformances
+// MARK: - CustomStringConvertible
 
-extension RFC_3986.URI.Userinfo: Binary.ASCII.RawRepresentable {}
-extension RFC_3986.URI.Userinfo: CustomStringConvertible {}
+extension RFC_3986.URI.Userinfo: CustomStringConvertible {
+    /// The userinfo's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+}
 
 // MARK: - Convenience Properties
 

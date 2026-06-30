@@ -1,4 +1,7 @@
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
+public import Serializer_Primitives
 
 extension RFC_3986 {
     /// Errors that can occur when working with URIs
@@ -261,14 +264,37 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI: Binary.ASCII.Serializable {
-    static public func serialize<Buffer>(
-        ascii uri: RFC_3986.URI,
-        into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
-        buffer.append(contentsOf: uri.value.utf8)
+extension RFC_3986.URI: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Canonical ASCII serializer for the RFC 3986 URI.
+    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
+        Serializer_Primitives.Serializer.Pure { uri, buffer in
+            var bytes: [Byte] = []
+            serializeBytes(uri, into: &bytes)
+            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+        }
     }
 
+    /// Explicit `Binary.Serializable` witness disambiguating the two
+    /// constraint-incomparable `serialize(_:into:)` defaults.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
+        serializeBytes(value, into: &buffer)
+    }
+
+    /// Byte-domain serialization body (the validated/cached URI string).
+    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
+        _ uri: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
+        buffer.append(contentsOf: uri.value.utf8)
+    }
+}
+
+// MARK: - Parseable
+
+extension RFC_3986.URI: ASCII.Parseable {
     /// Parses URI from ASCII bytes (CANONICAL PRIMITIVE)
     ///
     /// This is the primitive parser that works at the byte level.
@@ -289,7 +315,7 @@ extension RFC_3986.URI: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the URI
     /// - Throws: `RFC_3986.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(RFC_3986.Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(RFC_3986.Error)
     where Bytes.Element == Byte {
         let string = String(decoding: bytes, as: UTF8.self)
         guard RFC_3986.isValidURI(string) else {

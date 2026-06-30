@@ -1,4 +1,6 @@
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
 
 // MARK: - URI Fragment
 
@@ -63,12 +65,31 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Fragment: Binary.ASCII.Serializable {
+extension RFC_3986.URI.Fragment: Swift.RawRepresentable, Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Re-provides the `Swift.RawRepresentable` requirement (previously inherited
+    /// from the retired combined ASCII serializable protocol).
+    public init?(rawValue: String) {
+        try? self.init(rawValue)
+    }
+
+    /// Explicit `Binary.Serializable` witness: disambiguates the two
+    /// constraint-incomparable `serialize(_:into:)` defaults. The bytes derive
+    /// from the free `[ASCII.Code]` serializer supplied by the `String`-RawRepresentable default.
     public static func serialize<Buffer: RangeReplaceableCollection>(
-        ascii fragment: RFC_3986.URI.Fragment,
+        _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: fragment.rawValue.utf8)
+        buffer.append(contentsOf: value.serialized)
+    }
+}
+
+// MARK: - Parseable
+
+extension RFC_3986.URI.Fragment: ASCII.Parseable {
+    /// Re-provides the string convenience initializer (previously inherited from
+    /// the retired combined ASCII serializable protocol, Void context).
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: [Byte](string.utf8))
     }
 
     /// Parses fragment from ASCII bytes (CANONICAL PRIMITIVE)
@@ -90,7 +111,7 @@ extension RFC_3986.URI.Fragment: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the fragment
     /// - Throws: `RFC_3986.URI.Fragment.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         // Fragment can be empty per RFC 3986
         // Type-up: lift each byte to ASCII.Code (RFC 3986 fragment grammar is strict ASCII).
@@ -125,10 +146,14 @@ extension RFC_3986.URI.Fragment: Binary.ASCII.Serializable {
     }
 }
 
-// MARK: - Protocol Conformances
+// MARK: - CustomStringConvertible
 
-extension RFC_3986.URI.Fragment: Binary.ASCII.RawRepresentable {}
-extension RFC_3986.URI.Fragment: CustomStringConvertible {}
+extension RFC_3986.URI.Fragment: CustomStringConvertible {
+    /// The fragment's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+}
 
 // MARK: - Convenience Properties
 

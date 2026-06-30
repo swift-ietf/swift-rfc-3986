@@ -1,4 +1,7 @@
 public import ASCII_Serializer_Primitives
+public import Binary_Serializable_Primitives
+public import Parseable_ASCII_Primitives
+public import Serializer_Primitives
 
 // MARK: - URI Path
 
@@ -70,11 +73,31 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Path: Binary.ASCII.Serializable {
-    public static func serialize<Buffer>(
-        ascii path: RFC_3986.URI.Path,
+extension RFC_3986.URI.Path: Serializable, ASCII.Serializable, Binary.Serializable {
+    /// Canonical ASCII serializer for the RFC 3986 path.
+    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
+        Serializer_Primitives.Serializer.Pure { path, buffer in
+            var bytes: [Byte] = []
+            serializeBytes(path, into: &bytes)
+            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+        }
+    }
+
+    /// Explicit `Binary.Serializable` witness disambiguating the two
+    /// constraint-incomparable `serialize(_:into:)` defaults.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
         into buffer: inout Buffer
-    ) where Buffer: RangeReplaceableCollection, Buffer.Element == Byte {
+    ) where Buffer.Element == Byte {
+        serializeBytes(value, into: &buffer)
+    }
+
+    /// Byte-domain serialization body (`path` = optional leading `/` then
+    /// `/`-joined segments).
+    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
+        _ path: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == Byte {
         if path.isAbsolute {
             buffer.append(ASCII.Code.solidus)
         }
@@ -86,7 +109,11 @@ extension RFC_3986.URI.Path: Binary.ASCII.Serializable {
             buffer.append(contentsOf: segment.utf8)
         }
     }
+}
 
+// MARK: - Parseable
+
+extension RFC_3986.URI.Path: ASCII.Parseable {
     /// Parses path from ASCII bytes (CANONICAL PRIMITIVE)
     ///
     /// This is the primitive parser that works at the byte level.
@@ -108,7 +135,7 @@ extension RFC_3986.URI.Path: Binary.ASCII.Serializable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the path
     /// - Throws: `RFC_3986.URI.Path.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes, in context: Void) throws(Error)
+    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         // Empty path
         guard !bytes.isEmpty else {
@@ -241,7 +268,7 @@ extension RFC_3986.URI.Path {
     /// - Parameter string: The path string (e.g., "/users/123" or "docs/file.txt")
     /// - Throws: `RFC_3986.URI.Path.Error` if the path is invalid
     public init(_ string: some StringProtocol) throws(Error) {
-        try self.init(ascii: Array<Byte>(string.utf8), in: ())
+        try self.init(ascii: Array<Byte>(string.utf8))
     }
 }
 
@@ -342,7 +369,12 @@ extension RFC_3986.URI.Path: ExpressibleByArrayLiteral {
 
 // MARK: - CustomStringConvertible
 
-extension RFC_3986.URI.Path: CustomStringConvertible {}
+extension RFC_3986.URI.Path: CustomStringConvertible {
+    /// The path's ASCII serialization decoded as a `String`.
+    public var description: String {
+        String(decoding: serialized, as: UTF8.self)
+    }
+}
 
 // MARK: - Codable
 
