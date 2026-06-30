@@ -1,7 +1,6 @@
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Parseable_ASCII_Primitives
-public import Serializer_Primitives
 
 extension RFC_3986 {
     /// Errors that can occur when working with URIs
@@ -264,14 +263,16 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI: Serializable, ASCII.Serializable, Binary.Serializable {
-    /// Canonical ASCII serializer for the RFC 3986 URI.
-    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
-        Serializer_Primitives.Serializer.Pure { uri, buffer in
-            var bytes: [Byte] = []
-            serializeBytes(uri, into: &bytes)
-            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
-        }
+extension RFC_3986.URI: ASCII.Serializable, Binary.Serializable {
+    /// Own `ASCII.Serializable` verb ([FAM-012]) — emits the validated/cached
+    /// URI string directly onto the `ASCII.Code` substrate (the URI value is
+    /// ASCII-only per RFC 3986; no byte-detour). Output is identical to the
+    /// Binary witness body (`serializeBytes`).
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+        for byte in value.value.utf8 { buffer.append(ASCII.Code(byte)) }
     }
 
     /// Explicit `Binary.Serializable` witness disambiguating the two

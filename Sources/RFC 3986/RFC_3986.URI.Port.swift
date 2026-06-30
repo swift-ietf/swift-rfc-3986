@@ -1,7 +1,6 @@
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Parseable_ASCII_Primitives
-public import Serializer_Primitives
 
 // MARK: - URI Port
 
@@ -47,14 +46,15 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Port: Serializable, ASCII.Serializable, Binary.Serializable {
-    /// Canonical ASCII serializer for the RFC 3986 port (decimal `*DIGIT`).
-    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
-        Serializer_Primitives.Serializer.Pure { port, buffer in
-            var bytes: [Byte] = []
-            serializeBytes(port, into: &bytes)
-            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
-        }
+extension RFC_3986.URI.Port: ASCII.Serializable, Binary.Serializable {
+    /// Own `ASCII.Serializable` verb ([FAM-012]) — the decimal digits of the
+    /// port value (`*DIGIT`), emitted directly onto the `ASCII.Code` substrate.
+    /// Output is identical to the Binary witness body (`serializeBytes`).
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+        for byte in String(value.value).utf8 { buffer.append(ASCII.Code(byte)) }
     }
 
     /// Explicit `Binary.Serializable` witness disambiguating the two
