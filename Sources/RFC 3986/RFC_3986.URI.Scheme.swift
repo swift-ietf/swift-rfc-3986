@@ -55,13 +55,24 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Scheme: Swift.RawRepresentable, Serializable, ASCII.Serializable, Binary.Serializable {
+extension RFC_3986.URI.Scheme: Swift.RawRepresentable, ASCII.Serializable, Binary.Serializable {
     /// Creates a scheme by validating `rawValue`, or `nil` if it is not a valid RFC 3986 scheme.
     ///
     /// Re-provides the `Swift.RawRepresentable` requirement (previously inherited
     /// from the retired combined ASCII serializable protocol).
     public init?(rawValue: String) {
         try? self.init(rawValue)
+    }
+
+    /// Serializes `value` as ASCII bytes derived from its `String` `rawValue`.
+    ///
+    /// Conformer-declared `ASCII.Serializable` witness: re-homes the operational
+    /// tier onto this type's own ASCII verb, replacing the transitional default.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ value: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+        for byte in value.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
     }
 
     /// Serializes `value` as ASCII bytes into `buffer`.
