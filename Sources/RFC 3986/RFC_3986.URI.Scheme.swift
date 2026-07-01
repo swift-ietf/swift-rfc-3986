@@ -75,18 +75,18 @@ extension RFC_3986.URI.Scheme: Swift.RawRepresentable, ASCII.Serializable, Binar
         for byte in value.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
     }
 
-    /// Serializes `value` as ASCII bytes into `buffer`.
+    /// Serializes `value` as wire bytes into `buffer`.
     ///
-    /// Explicit `Binary.Serializable` witness: disambiguates the two
-    /// constraint-incomparable `serialize(_:into:)` defaults (the RawRepresentable
-    /// default vs the W0 ASCII bridge) — a conformer-declared member out-ranks both.
-    /// The bytes derive from the free `[ASCII.Code]` serializer supplied by the
-    /// `String`-RawRepresentable default (`.serialized`).
+    /// [FAM-012] binary sibling — an independent body re-emitting the scheme's
+    /// own `rawValue` storage directly into the `Byte` domain (no byte-detour
+    /// through the ASCII verb). Byte-equivalent to the ASCII verb (a scheme is
+    /// ASCII text); the `ascii.map(\.byte) == wire` equivalence test guards the
+    /// two bodies against drift.
     public static func serialize<Buffer: RangeReplaceableCollection>(
         _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: value.serialized)
+        for byte in value.rawValue.utf8 { buffer.append(Byte(byte)) }
     }
 }
 

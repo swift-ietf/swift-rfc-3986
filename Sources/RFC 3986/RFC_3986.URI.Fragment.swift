@@ -83,14 +83,16 @@ extension RFC_3986.URI.Fragment: Swift.RawRepresentable, ASCII.Serializable, Bin
         for byte in value.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
     }
 
-    /// Explicit `Binary.Serializable` witness: disambiguates the two
-    /// constraint-incomparable `serialize(_:into:)` defaults. The bytes derive
-    /// from the free `[ASCII.Code]` serializer supplied by the `String`-RawRepresentable default.
+    /// [FAM-012] binary sibling: an independent body re-emitting the fragment's
+    /// own `rawValue` storage directly into the `Byte` domain — not a byte-detour
+    /// through the ASCII verb. Byte-equivalent to the ASCII verb (a fragment is
+    /// ASCII text); the `ascii.map(\.byte) == wire` equivalence test guards the
+    /// two bodies against drift.
     public static func serialize<Buffer: RangeReplaceableCollection>(
         _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: value.serialized)
+        for byte in value.rawValue.utf8 { buffer.append(Byte(byte)) }
     }
 }
 

@@ -1,7 +1,6 @@
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Parseable_ASCII_Primitives
-public import Serializer_Primitives
 
 // MARK: - URI Authority
 
@@ -92,42 +91,45 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Authority: Serializable, ASCII.Serializable, Binary.Serializable {
-    /// Canonical ASCII serializer for the RFC 3986 authority
-    /// (`[ userinfo "@" ] host [ ":" port ]`).
-    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
-        Serializer_Primitives.Serializer.Pure { authority, buffer in
-            var bytes: [Byte] = []
-            serializeBytes(authority, into: &bytes)
-            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+extension RFC_3986.URI.Authority: ASCII.Serializable, Binary.Serializable {
+    /// [FAM-012] text sibling (`ASCII.Code`) — RFC 3986 §3.2
+    /// `[ userinfo "@" ] host [ ":" port ]`. Clause-9: each sub-component composes
+    /// its own `ASCII.Serializable` verb directly into the sink.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ authority: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+        if let userinfo = authority.userinfo {
+            RFC_3986.URI.Userinfo.serialize(userinfo, into: &buffer)
+            buffer.append(ASCII.Code.commercialAt)
+        }
+
+        RFC_3986.URI.Host.serialize(authority.host, into: &buffer)
+
+        if let port = authority.port {
+            buffer.append(ASCII.Code.colon)
+            RFC_3986.URI.Port.serialize(port, into: &buffer)
         }
     }
 
-    /// Explicit `Binary.Serializable` witness disambiguating the two
-    /// constraint-incomparable `serialize(_:into:)` defaults.
+    /// [FAM-012] binary sibling (`Byte`) — the authority text as wire bytes.
+    /// Clause-9: each sub-component composes its own `Binary.Serializable` verb
+    /// (each of which is itself text-as-bytes) directly into the sink. The
+    /// `ascii.map(\.byte) == wire` equivalence test guards the two bodies.
     public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        serializeBytes(value, into: &buffer)
-    }
-
-    /// Byte-domain serialization body. The host/port sub-components serialize
-    /// via their own family-Codable `.serialized` ([Byte]).
-    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
         _ authority: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
         if let userinfo = authority.userinfo {
-            buffer.append(contentsOf: userinfo.rawValue.utf8)
-            buffer.append(ASCII.Code.commercialAt)
+            RFC_3986.URI.Userinfo.serialize(userinfo, into: &buffer)
+            buffer.append(ASCII.Code.commercialAt.byte)
         }
 
-        buffer.append(contentsOf: authority.host.serialized)
+        RFC_3986.URI.Host.serialize(authority.host, into: &buffer)
 
         if let port = authority.port {
-            buffer.append(ASCII.Code.colon)
-            buffer.append(contentsOf: port.serialized)
+            buffer.append(ASCII.Code.colon.byte)
+            RFC_3986.URI.Port.serialize(port, into: &buffer)
         }
     }
 }

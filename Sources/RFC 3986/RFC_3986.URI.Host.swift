@@ -1,7 +1,6 @@
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Parseable_ASCII_Primitives
-public import Serializer_Primitives
 public import IPv4_Standard
 public import IPv6_Standard
 
@@ -70,55 +69,76 @@ extension RFC_3986.URI {
 
 // MARK: - Serializable
 
-extension RFC_3986.URI.Host: Serializable, ASCII.Serializable, Binary.Serializable {
-    /// Canonical ASCII serializer for the RFC 3986 host.
-    public static var serializer: Serializer_Primitives.Serializer.Pure<Self, [ASCII.Code]> {
-        Serializer_Primitives.Serializer.Pure { host, buffer in
-            var bytes: [Byte] = []
-            serializeBytes(host, into: &bytes)
-            buffer.append(contentsOf: bytes.map { ASCII.Code(unchecked: $0) })
+extension RFC_3986.URI.Host: ASCII.Serializable, Binary.Serializable {
+    /// [FAM-012] text sibling (`ASCII.Code`) — RFC 3986 §3.2.2 `host`.
+    ///
+    /// The `.ipv4` / `.ipv6` arms compose their address sub-parts' own canonical
+    /// text verbs directly into the `ASCII.Code` sink (clause-9): IPv4 → rfc-791's
+    /// dotted-decimal `ASCII.Serializable`; IPv6 → rfc-5952's canonical
+    /// `@retroactive` `ASCII.Serializable`, wrapped in Host's own `[`…`]` +
+    /// `%25`-zone URI framing (RFC 3986 §3.2.2 / RFC 6874 — Host's own escaping
+    /// codec, which the sub-part's address verb cannot provide).
+    public static func serialize<Buffer: RangeReplaceableCollection>(
+        _ host: Self,
+        into buffer: inout Buffer
+    ) where Buffer.Element == ASCII.Code {
+        switch host {
+        case .ipv4(let address):
+            RFC_791.IPv4.Address.serialize(address, into: &buffer)
+
+        case .ipv6(let scopedAddress):
+            buffer.append(ASCII.Code.leftBracket)
+            RFC_4291.IPv6.Address.serialize(scopedAddress.address, into: &buffer)
+            if let zone = scopedAddress.zone {
+                // RFC 6874: the zone id is percent-encoded (`%` → `%25`) in URIs.
+                buffer.append(ASCII.Code.percentSign)
+                buffer.append(ASCII.Code.`2`)
+                buffer.append(ASCII.Code.`5`)
+                for byte in zone.utf8 { buffer.append(ASCII.Code(byte)) }
+            }
+            buffer.append(ASCII.Code.rightBracket)
+
+        case .registeredName(let name):
+            for byte in name.utf8 { buffer.append(ASCII.Code(byte)) }
         }
     }
 
-    /// Explicit `Binary.Serializable` witness disambiguating the two
-    /// constraint-incomparable `serialize(_:into:)` defaults.
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        serializeBytes(value, into: &buffer)
-    }
-
-    /// Byte-domain serialization body.
+    /// [FAM-012] binary sibling (`Byte`) — the URI-host **text** as wire bytes.
     ///
-    /// Dual-D carve-out: the `.ipv4` / `.ipv6` arms serialize their address
-    /// payloads through the deprecated `append(ascii:)` path — `RFC_791.IPv4.Address`
-    /// and `RFC_4291.IPv6.Address` remain on `Binary.ASCII.Serializable` (rfc-791 /
-    /// rfc-4291 are not part of this cascade). Only the registered-name form is
-    /// byte-domain native.
-    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
+    /// A URI host travels as ASCII text on the wire (e.g. an HTTP request-target),
+    /// so its wire form is `ascii.map(\.byte)` — NOT the IP address's raw octets.
+    /// The `.ipv4` / `.ipv6` arms therefore compose the address sub-parts'
+    /// **ASCII** (canonical text) verbs into an `[ASCII.Code]` temp and lift to
+    /// `Byte` via `.map(\.byte)` — the ratified text-as-bytes realization (the IP's
+    /// `Binary` verb is the raw wire address, which is the wrong format here). The
+    /// `ascii.map(\.byte) == wire` equivalence test guards the two bodies against
+    /// drift.
+    public static func serialize<Buffer: RangeReplaceableCollection>(
         _ host: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
         switch host {
         case .ipv4(let address):
-            buffer.append(ascii: address)
+            var codes: [ASCII.Code] = []
+            RFC_791.IPv4.Address.serialize(address, into: &codes)
+            buffer.append(contentsOf: codes.map(\.byte))
 
         case .ipv6(let scopedAddress):
-            buffer.append(ASCII.Code.leftBracket)
-            buffer.append(ascii: scopedAddress.address)
-
+            buffer.append(ASCII.Code.leftBracket.byte)
+            var codes: [ASCII.Code] = []
+            RFC_4291.IPv6.Address.serialize(scopedAddress.address, into: &codes)
+            buffer.append(contentsOf: codes.map(\.byte))
             if let zone = scopedAddress.zone {
-                buffer.append(ASCII.Code.percentSign)
-                buffer.append(ASCII.Code.`2`)
-                buffer.append(ASCII.Code.`5`)
-                buffer.append(contentsOf: zone.utf8)
+                // RFC 6874: the zone id is percent-encoded (`%` → `%25`) in URIs.
+                buffer.append(ASCII.Code.percentSign.byte)
+                buffer.append(ASCII.Code.`2`.byte)
+                buffer.append(ASCII.Code.`5`.byte)
+                for byte in zone.utf8 { buffer.append(Byte(byte)) }
             }
-
-            buffer.append(ASCII.Code.rightBracket)
+            buffer.append(ASCII.Code.rightBracket.byte)
 
         case .registeredName(let name):
-            buffer.append(contentsOf: name.utf8)
+            for byte in name.utf8 { buffer.append(Byte(byte)) }
         }
     }
 }
