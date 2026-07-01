@@ -29,14 +29,14 @@ extension RFC_3986.URI.Scheme {
     /// generic type carries that type parameter, tripping
     /// `FunctionSignatureOpts`' `!type.hasTypeParameter()` assertion on the
     /// typed-throws SIL argument under `-c release` (SILArgument.cpp:40).
-    public enum Failure: Swift.Error, Sendable, Equatable {
+    public enum ParseFailure: Swift.Error, Sendable, Equatable {
         case expectedAlpha
     }
 }
 
 extension RFC_3986.URI.Scheme.Parse: Parser.`Protocol` {
     public typealias Output = Input
-    public typealias Failure = RFC_3986.URI.Scheme.Failure
+    public typealias Failure = RFC_3986.URI.Scheme.ParseFailure
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Input {

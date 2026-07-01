@@ -46,14 +46,14 @@ extension RFC_3986.URI.Authority {
     /// `FunctionSignatureOpts` `!type.hasTypeParameter()` crash under
     /// `-c release` (SILArgument.cpp:40). `Output` stays nested in `Parse`
     /// (it depends on `Input`).
-    public enum Failure: Swift.Error, Sendable, Equatable {
+    public enum ParseFailure: Swift.Error, Sendable, Equatable {
         case unterminatedIPLiteral
         case portOverflow
     }
 }
 
 extension RFC_3986.URI.Authority.Parse: Parser.`Protocol` {
-    public typealias Failure = RFC_3986.URI.Authority.Failure
+    public typealias Failure = RFC_3986.URI.Authority.ParseFailure
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Output {

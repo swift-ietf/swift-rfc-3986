@@ -31,7 +31,7 @@ extension RFC_3986.URI.Port {
     /// type carries that type parameter, tripping `FunctionSignatureOpts`'
     /// `!type.hasTypeParameter()` assertion on the typed-throws SIL argument
     /// under `-c release` (SILArgument.cpp:40).
-    public enum Failure: Swift.Error, Sendable, Equatable {
+    public enum ParseFailure: Swift.Error, Sendable, Equatable {
         case expectedDigit
         case overflow
     }
@@ -39,7 +39,7 @@ extension RFC_3986.URI.Port {
 
 extension RFC_3986.URI.Port.Parse: Parser.`Protocol` {
     public typealias Output = UInt16
-    public typealias Failure = RFC_3986.URI.Port.Failure
+    public typealias Failure = RFC_3986.URI.Port.ParseFailure
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> UInt16 {
