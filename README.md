@@ -1,6 +1,6 @@
 # swift-rfc-3986
 
-[![CI](https://github.com/swift-standards/swift-rfc-3986/workflows/CI/badge.svg)](https://github.com/swift-standards/swift-rfc-3986/actions/workflows/ci.yml)
+[![CI](https://github.com/swift-ietf/swift-rfc-3986/workflows/CI/badge.svg)](https://github.com/swift-ietf/swift-rfc-3986/actions/workflows/ci.yml)
 ![Development Status](https://img.shields.io/badge/status-active--development-blue.svg)
 
 Swift implementation of RFC 3986: Uniform Resource Identifier (URI) Generic Syntax
@@ -30,7 +30,7 @@ This package provides a Swift implementation of URIs (Uniform Resource Identifie
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/swift-standards/swift-rfc-3986.git", from: "0.1.0")
+    .package(url: "https://github.com/swift-ietf/swift-rfc-3986.git", from: "0.3.6")
 ]
 ```
 
