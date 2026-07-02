@@ -190,7 +190,7 @@ RFC_3986.CharacterSets.fragment
 - User-friendly for international audiences
 - Example: `https://例え.jp/寿司`
 
-For IRI support with Unicode characters, see [swift-rfc-3987](https://github.com/swift-web-standards/swift-rfc-3987).
+For IRI support with Unicode characters, see [swift-rfc-3987](https://github.com/swift-ietf/swift-rfc-3987).
 
 ## RFC 3986 Compliance
 
@@ -223,8 +223,8 @@ Per RFC 3986 Section 6, this implementation performs:
 
 ## Related Packages
 
-- [swift-rfc-3987](https://github.com/swift-web-standards/swift-rfc-3987) - Swift types for RFC 3987 (Internationalized Resource Identifiers)
-- [swift-rfc-4287](https://github.com/swift-web-standards/swift-rfc-4287) - Swift types for RFC 4287 (Atom Syndication Format)
+- [swift-rfc-3987](https://github.com/swift-ietf/swift-rfc-3987) - Swift types for RFC 3987 (Internationalized Resource Identifiers)
+- [swift-rfc-4287](https://github.com/swift-ietf/swift-rfc-4287) - Swift types for RFC 4287 (Atom Syndication Format)
 - [swift-atom](https://github.com/coenttb/swift-atom) - Atom feed generation and XML rendering
 
 ## Requirements
