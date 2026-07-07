@@ -5,8 +5,8 @@
 //  Percent-encoded triplet: "%" HEXDIG HEXDIG
 //
 
-public import Parser_Primitives
 public import ASCII_Primitives
+public import Parser_Primitives
 
 extension RFC_3986.Parse {
     /// Percent-encoded triplet namespace per RFC 3986 Section 2.1.
@@ -59,12 +59,16 @@ extension RFC_3986.Parse.PercentEncoded.Parse: Parser.`Protocol` {
 
         // First hex digit
         guard input.startIndex < input.endIndex else { throw .expectedHexDigit }
-        guard let high = Self._hexValue(ASCII.Code(input[input.startIndex])) else { throw .expectedHexDigit }
+        guard let high = Self._hexValue(ASCII.Code(input[input.startIndex])) else {
+            throw .expectedHexDigit
+        }
         input = input[input.index(after: input.startIndex)...]
 
         // Second hex digit
         guard input.startIndex < input.endIndex else { throw .expectedHexDigit }
-        guard let low = Self._hexValue(ASCII.Code(input[input.startIndex])) else { throw .expectedHexDigit }
+        guard let low = Self._hexValue(ASCII.Code(input[input.startIndex])) else {
+            throw .expectedHexDigit
+        }
         input = input[input.index(after: input.startIndex)...]
 
         return (high << 4) | low

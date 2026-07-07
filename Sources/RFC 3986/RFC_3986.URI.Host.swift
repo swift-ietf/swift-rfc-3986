@@ -1,8 +1,8 @@
 public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
-public import Parseable_ASCII_Primitives
 public import IPv4_Standard
 public import IPv6_Standard
+public import Parseable_ASCII_Primitives
 
 // MARK: - URI Host
 
@@ -185,7 +185,7 @@ extension RFC_3986.URI.Host: ASCII.Parseable {
         // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
         let arr: [ASCII.Code]
         do {
-            arr = try Array<ASCII.Code>(bytes)
+            arr = try [ASCII.Code](bytes)
         } catch {
             switch error {
             case .notASCII(let byte):

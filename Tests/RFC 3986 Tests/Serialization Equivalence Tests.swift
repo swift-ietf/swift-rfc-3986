@@ -89,7 +89,10 @@ struct `Serialization Equivalence` {
     @Test
     func `Authority verbs agree (registered name + port)`() throws {
         expectEquivalent(try RFC_3986.URI.Authority("example.com:8080"), "example.com:8080")
-        expectEquivalent(try RFC_3986.URI.Authority("user@example.com:8080"), "user@example.com:8080")
+        expectEquivalent(
+            try RFC_3986.URI.Authority("user@example.com:8080"),
+            "user@example.com:8080"
+        )
     }
 
     @Test

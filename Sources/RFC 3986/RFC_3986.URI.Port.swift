@@ -115,11 +115,17 @@ extension RFC_3986.URI.Port: ASCII.Parseable {
             } catch {
                 switch error {
                 case .notASCII(let badByte):
-                    throw Error.invalidCharacter(String(decoding: bytes, as: UTF8.self), byte: badByte)
+                    throw Error.invalidCharacter(
+                        String(decoding: bytes, as: UTF8.self),
+                        byte: badByte
+                    )
                 }
             }
             guard code.isDigit else {
-                throw Error.invalidCharacter(String(decoding: bytes, as: UTF8.self), byte: code.byte)
+                throw Error.invalidCharacter(
+                    String(decoding: bytes, as: UTF8.self),
+                    byte: code.byte
+                )
             }
 
             let digit = UInt32(code.digitValue!)

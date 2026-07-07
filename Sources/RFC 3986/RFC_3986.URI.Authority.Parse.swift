@@ -64,7 +64,7 @@ extension RFC_3986.URI.Authority.Parse: Parser.`Protocol` {
         var foundAt = false
         while scanIndex < input.endIndex {
             let byte = input[scanIndex]
-            if byte == 0x40 { // @
+            if byte == 0x40 {  // @
                 foundAt = true
                 break
             }
@@ -113,7 +113,9 @@ extension RFC_3986.URI.Authority.Parse: Parser.`Protocol` {
 
     @inlinable
     func _parsePort(
-        _ input: inout Input, userinfo: Input?, host: Input
+        _ input: inout Input,
+        userinfo: Input?,
+        host: Input
     ) throws(Failure) -> Output {
         var port: UInt16? = nil
         if input.startIndex < input.endIndex && input[input.startIndex] == 0x3A {

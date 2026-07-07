@@ -148,7 +148,7 @@ extension RFC_3986.URI.Query: ASCII.Parseable {
         // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
         let arr: [ASCII.Code]
         do {
-            arr = try Array<ASCII.Code>(bytes)
+            arr = try [ASCII.Code](bytes)
         } catch {
             switch error {
             case .notASCII(let byte):
@@ -285,7 +285,7 @@ extension RFC_3986.URI.Query {
         }.joined(separator: "&")
 
         // Use byte parser for validation
-        try self.init(ascii: Array<Byte>(queryString.utf8))
+        try self.init(ascii: [Byte](queryString.utf8))
     }
 
     /// Creates a query without validation

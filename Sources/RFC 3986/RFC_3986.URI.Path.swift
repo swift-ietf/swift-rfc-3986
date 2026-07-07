@@ -158,7 +158,7 @@ extension RFC_3986.URI.Path: ASCII.Parseable {
         // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
         let arr: [ASCII.Code]
         do {
-            arr = try Array<ASCII.Code>(bytes)
+            arr = try [ASCII.Code](bytes)
         } catch {
             switch error {
             case .notASCII(let byte):
@@ -278,7 +278,7 @@ extension RFC_3986.URI.Path {
     /// - Parameter string: The path string (e.g., "/users/123" or "docs/file.txt")
     /// - Throws: `RFC_3986.URI.Path.Error` if the path is invalid
     public init(_ string: some StringProtocol) throws(Error) {
-        try self.init(ascii: Array<Byte>(string.utf8))
+        try self.init(ascii: [Byte](string.utf8))
     }
 }
 

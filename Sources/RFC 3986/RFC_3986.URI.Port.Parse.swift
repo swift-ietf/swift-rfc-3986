@@ -5,9 +5,9 @@
 //  URI port: *DIGIT → UInt16
 //
 
-public import Parser_Primitives
 public import ASCII_Decimal_Parser_Primitives
 import Byte_Primitives
+public import Parser_Primitives
 
 extension RFC_3986.URI.Port {
     /// Parses a URI port number per RFC 3986 Section 3.2.3.

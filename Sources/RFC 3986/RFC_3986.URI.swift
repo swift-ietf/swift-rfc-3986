@@ -553,7 +553,7 @@ extension RFC_3986.URI {
         scheme == nil
     }
 
-    /// Returns `true` if this URI uses a secure scheme (https, wss, etc.)
+    /// Returns `true` if this URI uses a secure scheme (https, wss, and similar)
     public var isSecure: Bool {
         guard let uriScheme = scheme?.value else { return false }
         return ["https", "wss", "ftps"].contains(uriScheme)
@@ -1016,12 +1016,18 @@ extension RFC_3986.URI {
     /// let resolved = try base / "../other"
     /// // resolved: https://example.com/other
     /// ```
-    public static func / (base: RFC_3986.URI, reference: String) throws(RFC_3986.Error) -> RFC_3986.URI {
+    public static func / (
+        base: RFC_3986.URI,
+        reference: String
+    ) throws(RFC_3986.Error) -> RFC_3986.URI {
         try base.resolve(reference)
     }
 
     /// Resolves a relative URI reference using the `/` operator
-    public static func / (base: RFC_3986.URI, reference: RFC_3986.URI) throws(RFC_3986.Error) -> RFC_3986.URI {
+    public static func / (
+        base: RFC_3986.URI,
+        reference: RFC_3986.URI
+    ) throws(RFC_3986.Error) -> RFC_3986.URI {
         try base.resolve(reference)
     }
 }
