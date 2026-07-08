@@ -75,7 +75,7 @@ extension RFC_3986.Parse.PercentEncoded.Parse: Parser.`Protocol` {
     }
 
     @inlinable
-    static func _hexValue(_ code: ASCII.Code) -> UInt8? {
+    package static func _hexValue(_ code: ASCII.Code) -> UInt8? {
         // Delegated to the L1 ASCII hex-digit table (single source of truth).
         // Byte-for-byte identical ranges: '0'–'9'→0–9, 'A'–'F'→10–15, 'a'–'f'→10–15.
         code.hexValue

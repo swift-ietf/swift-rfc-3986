@@ -157,7 +157,7 @@ extension RFC_3986.URI.Path: ASCII.Parseable {
         // against ASCII.Code constants directly (RFC 3986 path grammar is strict ASCII).
         // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
         let arr: [ASCII.Code]
-        do {
+        do throws(ASCII.Code.Error) {
             arr = try [ASCII.Code](bytes)
         } catch {
             switch error {
@@ -392,7 +392,7 @@ extension RFC_3986.URI.Path: Codable {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)
-        do {
+        do throws(Error) {
             try self.init(string)
         } catch {
             throw DecodingError.dataCorruptedError(

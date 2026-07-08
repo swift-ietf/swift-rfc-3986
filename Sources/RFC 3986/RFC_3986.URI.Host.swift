@@ -184,7 +184,7 @@ extension RFC_3986.URI.Host: ASCII.Parseable {
         // against ASCII.Code constants directly (RFC 3986 host grammar is strict ASCII).
         // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
         let arr: [ASCII.Code]
-        do {
+        do throws(ASCII.Code.Error) {
             arr = try [ASCII.Code](bytes)
         } catch {
             switch error {
@@ -229,7 +229,7 @@ extension RFC_3986.URI.Host: ASCII.Parseable {
             }
 
             // Try to parse as IPv6 scoped address
-            do {
+            do throws(RFC_4007.IPv6.ScopedAddress.Error) {
                 let scopedAddress = try RFC_4007.IPv6.ScopedAddress(ascii: decodedBytes)
                 self = .ipv6(scopedAddress)
                 return
@@ -240,7 +240,7 @@ extension RFC_3986.URI.Host: ASCII.Parseable {
         }
 
         // Try to parse as IPv4 address
-        do {
+        do throws(RFC_791.IPv4.Address.Error) {
             let ipv4Address = try RFC_791.IPv4.Address(ascii: bytes)
             self = .ipv4(ipv4Address)
             return

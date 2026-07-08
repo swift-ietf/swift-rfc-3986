@@ -28,51 +28,55 @@ extension RFC_3986 {
         public init() {
             self.characters = []
         }
+    }
+}
 
-        public func contains(_ member: Character) -> Bool {
-            characters.contains(member)
-        }
+// MARK: - SetAlgebra Conformance
 
-        public func union(_ other: Self) -> Self {
-            Self(characters.union(other.characters))
-        }
+extension RFC_3986.CharacterSet {
+    public func contains(_ member: Character) -> Bool {
+        characters.contains(member)
+    }
 
-        public func intersection(_ other: Self) -> Self {
-            Self(characters.intersection(other.characters))
-        }
+    public func union(_ other: Self) -> Self {
+        Self(characters.union(other.characters))
+    }
 
-        public func symmetricDifference(_ other: Self) -> Self {
-            Self(characters.symmetricDifference(other.characters))
-        }
+    public func intersection(_ other: Self) -> Self {
+        Self(characters.intersection(other.characters))
+    }
 
-        @discardableResult
-        public mutating func insert(
-            _ newMember: Character
-        ) -> (inserted: Bool, memberAfterInsert: Character) {
-            characters.insert(newMember)
-        }
+    public func symmetricDifference(_ other: Self) -> Self {
+        Self(characters.symmetricDifference(other.characters))
+    }
 
-        @discardableResult
-        public mutating func remove(_ member: Character) -> Character? {
-            characters.remove(member)
-        }
+    @discardableResult
+    public mutating func insert(
+        _ newMember: Character
+    ) -> (inserted: Bool, memberAfterInsert: Character) {
+        characters.insert(newMember)
+    }
 
-        @discardableResult
-        public mutating func update(with newMember: Character) -> Character? {
-            characters.update(with: newMember)
-        }
+    @discardableResult
+    public mutating func remove(_ member: Character) -> Character? {
+        characters.remove(member)
+    }
 
-        public mutating func formUnion(_ other: Self) {
-            characters.formUnion(other.characters)
-        }
+    @discardableResult
+    public mutating func update(with newMember: Character) -> Character? {
+        characters.update(with: newMember)
+    }
 
-        public mutating func formIntersection(_ other: Self) {
-            characters.formIntersection(other.characters)
-        }
+    public mutating func formUnion(_ other: Self) {
+        characters.formUnion(other.characters)
+    }
 
-        public mutating func formSymmetricDifference(_ other: Self) {
-            characters.formSymmetricDifference(other.characters)
-        }
+    public mutating func formIntersection(_ other: Self) {
+        characters.formIntersection(other.characters)
+    }
+
+    public mutating func formSymmetricDifference(_ other: Self) {
+        characters.formSymmetricDifference(other.characters)
     }
 }
 
@@ -205,29 +209,31 @@ extension RFC_3986 {
             self.low = lo
             self.high = hi
         }
+    }
+}
 
-        /// Checks if the set contains the given byte
-        @inlinable
-        public func contains(_ byte: UInt8) -> Bool {
-            guard byte < 128 else { return false }
-            if byte < 64 {
-                return (low & (1 << UInt64(byte))) != 0
-            } else {
-                return (high & (1 << UInt64(byte - 64))) != 0
-            }
+extension RFC_3986.ByteSet {
+    /// Checks if the set contains the given byte
+    @inlinable
+    public func contains(_ byte: UInt8) -> Bool {
+        guard byte < 128 else { return false }
+        if byte < 64 {
+            return (low & (1 << UInt64(byte))) != 0
+        } else {
+            return (high & (1 << UInt64(byte - 64))) != 0
         }
+    }
 
-        /// Returns the union of two ByteSets
-        @inlinable
-        public func union(_ other: ByteSet) -> ByteSet {
-            ByteSet(low: low | other.low, high: high | other.high)
-        }
+    /// Returns the union of two ByteSets
+    @inlinable
+    public func union(_ other: RFC_3986.ByteSet) -> RFC_3986.ByteSet {
+        RFC_3986.ByteSet(low: low | other.low, high: high | other.high)
+    }
 
-        /// Returns the difference (self - other)
-        @inlinable
-        public func subtracting(_ other: ByteSet) -> ByteSet {
-            ByteSet(low: low & ~other.low, high: high & ~other.high)
-        }
+    /// Returns the difference (self - other)
+    @inlinable
+    public func subtracting(_ other: RFC_3986.ByteSet) -> RFC_3986.ByteSet {
+        RFC_3986.ByteSet(low: low & ~other.low, high: high & ~other.high)
     }
 }
 
@@ -357,7 +363,7 @@ extension RFC_3986 {
 
     /// Converts a nibble (0-15) to an uppercase hex digit byte
     @inlinable
-    static func hexDigit(_ nibble: UInt8) -> UInt8 {
+    package static func hexDigit(_ nibble: UInt8) -> UInt8 {
         if nibble < 10 {
             return UInt8(ascii: "0") + nibble
         } else {
@@ -367,7 +373,7 @@ extension RFC_3986 {
 
     /// Converts a hex digit code to its value (0-15), or nil if invalid
     @inlinable
-    static func hexDigitValue(_ code: ASCII.Code) -> UInt8? {
+    package static func hexDigitValue(_ code: ASCII.Code) -> UInt8? {
         // Delegated to the L1 ASCII hex-digit table (single source of truth).
         // Byte-for-byte identical ranges: '0'–'9'→0–9, 'A'–'F'→10–15, 'a'–'f'→10–15.
         code.hexValue

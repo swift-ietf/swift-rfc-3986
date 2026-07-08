@@ -110,7 +110,7 @@ extension RFC_3986.URI.Port: ASCII.Parseable {
             // against ASCII.Code predicates directly (RFC 3986 port grammar is strict ASCII).
             // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
             let code: ASCII.Code
-            do {
+            do throws(ASCII.Code.Error) {
                 code = try ASCII.Code(byte)
             } catch {
                 switch error {

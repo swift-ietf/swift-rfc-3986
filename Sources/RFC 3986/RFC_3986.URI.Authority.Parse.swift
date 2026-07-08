@@ -112,7 +112,7 @@ extension RFC_3986.URI.Authority.Parse: Parser.`Protocol` {
     }
 
     @inlinable
-    func _parsePort(
+    package func _parsePort(
         _ input: inout Input,
         userinfo: Input?,
         host: Input

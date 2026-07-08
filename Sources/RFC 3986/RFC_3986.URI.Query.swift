@@ -42,9 +42,6 @@ extension RFC_3986.URI {
     /// query = *( pchar / "/" / "?" )
     /// ```
     public struct Query: Sendable, Codable, Hashable, Equatable {
-        /// RawValue type for RawRepresentable conformance
-        public typealias RawValue = String
-
         /// The raw query string
         public let rawValue: String
 
@@ -72,6 +69,13 @@ extension RFC_3986.URI {
             self.parameters = parameters
         }
     }
+}
+
+// MARK: - RawValue
+
+extension RFC_3986.URI.Query {
+    /// RawValue type for RawRepresentable conformance
+    public typealias RawValue = String
 }
 
 // MARK: - Serializable
@@ -147,7 +151,7 @@ extension RFC_3986.URI.Query: ASCII.Parseable {
         // against ASCII.Code constants directly (RFC 3986 query grammar is strict ASCII).
         // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
         let arr: [ASCII.Code]
-        do {
+        do throws(ASCII.Code.Error) {
             arr = try [ASCII.Code](bytes)
         } catch {
             switch error {
@@ -453,7 +457,7 @@ extension RFC_3986.URI.Query {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)
-        do {
+        do throws(Error) {
             try self.init(string)
         } catch {
             throw DecodingError.dataCorruptedError(

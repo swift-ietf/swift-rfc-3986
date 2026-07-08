@@ -40,9 +40,6 @@ extension RFC_3986.URI {
     /// > are defined by the set of representations that might result from a
     /// > retrieval action on the primary resource.
     public struct Fragment: Sendable, Equatable, Hashable, Codable {
-        /// RawValue type for RawRepresentable conformance
-        public typealias RawValue = String
-
         /// The fragment value
         public let rawValue: String
 
@@ -61,6 +58,13 @@ extension RFC_3986.URI {
             self.rawValue = rawValue
         }
     }
+}
+
+// MARK: - RawValue
+
+extension RFC_3986.URI.Fragment {
+    /// RawValue type for RawRepresentable conformance
+    public typealias RawValue = String
 }
 
 // MARK: - Serializable
@@ -131,7 +135,7 @@ extension RFC_3986.URI.Fragment: ASCII.Parseable {
         // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
         for byte in bytes {
             let code: ASCII.Code
-            do {
+            do throws(ASCII.Code.Error) {
                 code = try ASCII.Code(byte)
             } catch {
                 switch error {

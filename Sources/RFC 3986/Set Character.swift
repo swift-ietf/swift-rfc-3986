@@ -12,56 +12,58 @@ extension Set<Character> {
     /// let query: Set<Character> = .uri.query
     /// let path: Set<Character> = .uri.pathSegment
     /// ```
-    public enum URI {
-        /// Unreserved characters per RFC 3986 Section 2.3
-        public static var unreserved: Set<Character> {
-            RFC_3986.CharacterSet.unreserved.characters
-        }
+    public enum URI {}
+}
 
-        /// Reserved characters per RFC 3986 Section 2.2
-        public static var reserved: Set<Character> {
-            RFC_3986.CharacterSet.reserved.characters
-        }
+extension Set<Character>.URI {
+    /// Unreserved characters per RFC 3986 Section 2.3
+    public static var unreserved: Set<Character> {
+        RFC_3986.CharacterSet.unreserved.characters
+    }
 
-        /// General delimiters per RFC 3986 Section 2.2
-        public static var genDelims: Set<Character> {
-            RFC_3986.CharacterSet.genDelims.characters
-        }
+    /// Reserved characters per RFC 3986 Section 2.2
+    public static var reserved: Set<Character> {
+        RFC_3986.CharacterSet.reserved.characters
+    }
 
-        /// Sub-delimiters per RFC 3986 Section 2.2
-        public static var subDelims: Set<Character> {
-            RFC_3986.CharacterSet.subDelims.characters
-        }
+    /// General delimiters per RFC 3986 Section 2.2
+    public static var genDelims: Set<Character> {
+        RFC_3986.CharacterSet.genDelims.characters
+    }
 
-        /// Characters allowed in scheme per RFC 3986 Section 3.1
-        public static var scheme: Set<Character> {
-            RFC_3986.CharacterSet.scheme.characters
-        }
+    /// Sub-delimiters per RFC 3986 Section 2.2
+    public static var subDelims: Set<Character> {
+        RFC_3986.CharacterSet.subDelims.characters
+    }
 
-        /// Characters allowed in userinfo per RFC 3986 Section 3.2.1
-        public static var userinfo: Set<Character> {
-            RFC_3986.CharacterSet.userinfo.characters
-        }
+    /// Characters allowed in scheme per RFC 3986 Section 3.1
+    public static var scheme: Set<Character> {
+        RFC_3986.CharacterSet.scheme.characters
+    }
 
-        /// Characters allowed in host per RFC 3986 Section 3.2.2
-        public static var host: Set<Character> {
-            RFC_3986.CharacterSet.host.characters
-        }
+    /// Characters allowed in userinfo per RFC 3986 Section 3.2.1
+    public static var userinfo: Set<Character> {
+        RFC_3986.CharacterSet.userinfo.characters
+    }
 
-        /// Characters allowed in path segments per RFC 3986 Section 3.3
-        public static var pathSegment: Set<Character> {
-            RFC_3986.CharacterSet.pathSegment.characters
-        }
+    /// Characters allowed in host per RFC 3986 Section 3.2.2
+    public static var host: Set<Character> {
+        RFC_3986.CharacterSet.host.characters
+    }
 
-        /// Characters allowed in query per RFC 3986 Section 3.4
-        public static var query: Set<Character> {
-            RFC_3986.CharacterSet.query.characters
-        }
+    /// Characters allowed in path segments per RFC 3986 Section 3.3
+    public static var pathSegment: Set<Character> {
+        RFC_3986.CharacterSet.pathSegment.characters
+    }
 
-        /// Characters allowed in fragment per RFC 3986 Section 3.5
-        public static var fragment: Set<Character> {
-            RFC_3986.CharacterSet.fragment.characters
-        }
+    /// Characters allowed in query per RFC 3986 Section 3.4
+    public static var query: Set<Character> {
+        RFC_3986.CharacterSet.query.characters
+    }
+
+    /// Characters allowed in fragment per RFC 3986 Section 3.5
+    public static var fragment: Set<Character> {
+        RFC_3986.CharacterSet.fragment.characters
     }
 }
 

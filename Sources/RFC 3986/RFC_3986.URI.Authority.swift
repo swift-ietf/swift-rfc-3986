@@ -165,7 +165,7 @@ extension RFC_3986.URI.Authority: ASCII.Parseable {
         let userinfo: RFC_3986.URI.Userinfo?
         if let atIndex = remaining.firstIndex(of: "@") {
             let userinfoString = String(remaining[..<atIndex])
-            do {
+            do throws(RFC_3986.URI.Userinfo.Error) {
                 userinfo = try RFC_3986.URI.Userinfo(userinfoString)
             } catch {
                 throw Error.invalidUserinfo(userinfoString, underlying: error)
@@ -202,7 +202,7 @@ extension RFC_3986.URI.Authority: ASCII.Parseable {
                 port = nil
             }
 
-            do {
+            do throws(RFC_3986.URI.Host.Error) {
                 host = try RFC_3986.URI.Host(hostString)
             } catch {
                 throw Error.invalidHost(hostString, underlying: error)
@@ -217,14 +217,14 @@ extension RFC_3986.URI.Authority: ASCII.Parseable {
                     throw Error.invalidPort(portString)
                 }
 
-                do {
+                do throws(RFC_3986.URI.Host.Error) {
                     host = try RFC_3986.URI.Host(hostString)
                 } catch {
                     throw Error.invalidHost(hostString, underlying: error)
                 }
                 port = portValue
             } else {
-                do {
+                do throws(RFC_3986.URI.Host.Error) {
                     host = try RFC_3986.URI.Host(remaining)
                 } catch {
                     throw Error.invalidHost(remaining, underlying: error)
@@ -254,7 +254,7 @@ extension RFC_3986.URI.Authority {
         let userinfo: RFC_3986.URI.Userinfo?
         if let atIndex = remaining.firstIndex(of: "@") {
             let userinfoString = String(remaining[..<atIndex])
-            do {
+            do throws(RFC_3986.URI.Userinfo.Error) {
                 userinfo = try RFC_3986.URI.Userinfo(userinfoString)
             } catch {
                 throw Error.invalidUserinfo(userinfoString, underlying: error)
@@ -291,7 +291,7 @@ extension RFC_3986.URI.Authority {
                 port = nil
             }
 
-            do {
+            do throws(RFC_3986.URI.Host.Error) {
                 host = try RFC_3986.URI.Host(hostString)
             } catch {
                 throw Error.invalidHost(hostString, underlying: error)
@@ -306,14 +306,14 @@ extension RFC_3986.URI.Authority {
                     throw Error.invalidPort(portString)
                 }
 
-                do {
+                do throws(RFC_3986.URI.Host.Error) {
                     host = try RFC_3986.URI.Host(hostString)
                 } catch {
                     throw Error.invalidHost(hostString, underlying: error)
                 }
                 port = portValue
             } else {
-                do {
+                do throws(RFC_3986.URI.Host.Error) {
                     host = try RFC_3986.URI.Host(remaining)
                 } catch {
                     throw Error.invalidHost(remaining, underlying: error)
@@ -391,31 +391,33 @@ extension RFC_3986.URI.Authority {
 
         /// Invalid characters after IPv6 address
         case invalidCharactersAfterIPv6(String)
+    }
+}
 
-        public var description: String {
-            switch self {
-            case .invalidUserinfo(let value, _):
-                return "Invalid userinfo: '\(value)'"
-            case .invalidHost(let value, _):
-                return "Invalid host: '\(value)'"
-            case .invalidPort(let value):
-                return "Invalid port: '\(value)'"
-            case .unterminatedIPv6(let value):
-                return "Unterminated IPv6 address in: '\(value)'"
-            case .invalidCharactersAfterIPv6(let value):
-                return "Invalid characters after IPv6 address: '\(value)'"
-            }
+extension RFC_3986.URI.Authority.Error {
+    public var description: String {
+        switch self {
+        case .invalidUserinfo(let value, _):
+            return "Invalid userinfo: '\(value)'"
+        case .invalidHost(let value, _):
+            return "Invalid host: '\(value)'"
+        case .invalidPort(let value):
+            return "Invalid port: '\(value)'"
+        case .unterminatedIPv6(let value):
+            return "Unterminated IPv6 address in: '\(value)'"
+        case .invalidCharactersAfterIPv6(let value):
+            return "Invalid characters after IPv6 address: '\(value)'"
         }
+    }
 
-        public static func == (lhs: Error, rhs: Error) -> Bool {
-            switch (lhs, rhs) {
-            case (.invalidUserinfo(let l, _), .invalidUserinfo(let r, _)): l == r
-            case (.invalidHost(let l, _), .invalidHost(let r, _)): l == r
-            case (.invalidPort(let l), .invalidPort(let r)): l == r
-            case (.unterminatedIPv6(let l), .unterminatedIPv6(let r)): l == r
-            case (.invalidCharactersAfterIPv6(let l), .invalidCharactersAfterIPv6(let r)): l == r
-            default: false
-            }
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        switch (lhs, rhs) {
+        case (.invalidUserinfo(let l, _), .invalidUserinfo(let r, _)): l == r
+        case (.invalidHost(let l, _), .invalidHost(let r, _)): l == r
+        case (.invalidPort(let l), .invalidPort(let r)): l == r
+        case (.unterminatedIPv6(let l), .unterminatedIPv6(let r)): l == r
+        case (.invalidCharactersAfterIPv6(let l), .invalidCharactersAfterIPv6(let r)): l == r
+        default: false
         }
     }
 }

@@ -63,7 +63,7 @@ extension RFC_3986.URI.Scheme.Parse: Parser.`Protocol` {
     }
 
     @inlinable
-    static func _isSchemeChar(_ byte: UInt8) -> Bool {
+    package static func _isSchemeChar(_ byte: UInt8) -> Bool {
         switch byte {
         case 0x41...0x5A: true  // A-Z
         case 0x61...0x7A: true  // a-z

@@ -46,7 +46,7 @@ extension RFC_3986.URI.Port.Parse: Parser.`Protocol` {
         // Delegate to the L1 ASCII decimal parser (single source of truth; it carries
         // the same checked overflow guard this site already used, via `T`-generic
         // `multipliedReportingOverflow`/`addingReportingOverflow`).
-        do {
+        do throws(ASCII.Decimal.Error) {
             return try ASCII.Decimal.Parser<Input, UInt16>().parse(&input)
         } catch {
             switch error {
