@@ -72,10 +72,12 @@ extension RFC_3986 {
     /// For protocol-oriented usage with types like `URL`, see the `RFC_3986.URIRepresentable` protocol.
     public struct URI: Hashable, Sendable, Codable {
         fileprivate let cache: Cache
-
-        /// The URI string
-        public var value: String { cache.value }
     }
+}
+
+extension RFC_3986.URI {
+    /// The URI string
+    public var value: String { cache.value }
 }
 
 extension RFC_3986.URI {
@@ -139,125 +141,127 @@ extension RFC_3986.URI {
             self.value = value
             self.components = Self.parseURI(value)
         }
+    }
+}
 
-        /// Parses a URI string according to RFC 3986 Appendix B
-        ///
-        /// Uses the regex from RFC 3986 Appendix B:
-        /// ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
-        ///
-        /// Groups:
-        /// - 2: scheme
-        /// - 4: authority
-        /// - 5: path
-        /// - 7: query
-        /// - 9: fragment
-        private static func parseURI(_ uri: String) -> ParsedComponents {
-            var scheme: String?
-            var authority: String?
-            var path: String?
-            var query: String?
-            var fragment: String?
+extension RFC_3986.URI.Cache {
+    /// Temporary struct to hold parsed URI components
+    struct ParsedComponents {
+        let scheme: String?
+        let host: String?
+        let port: UInt16?
+        let path: String?
+        let query: String?
+        let fragment: String?
+    }
 
-            var remaining = uri
+    /// Parses a URI string according to RFC 3986 Appendix B
+    ///
+    /// Uses the regex from RFC 3986 Appendix B:
+    /// ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
+    ///
+    /// Groups:
+    /// - 2: scheme
+    /// - 4: authority
+    /// - 5: path
+    /// - 7: query
+    /// - 9: fragment
+    fileprivate static func parseURI(_ uri: String) -> ParsedComponents {
+        var scheme: String?
+        var authority: String?
+        var path: String?
+        var query: String?
+        var fragment: String?
 
-            // Parse fragment: #(.*)
-            if let fragmentIndex = remaining.lastIndex(of: "#") {
-                fragment = String(remaining[remaining.index(after: fragmentIndex)...])
-                remaining = String(remaining[..<fragmentIndex])
-            }
+        var remaining = uri
 
-            // Parse query: \?([^#]*)
-            if let queryIndex = remaining.lastIndex(of: "?") {
-                query = String(remaining[remaining.index(after: queryIndex)...])
-                remaining = String(remaining[..<queryIndex])
-            }
+        // Parse fragment: #(.*)
+        if let fragmentIndex = remaining.lastIndex(of: "#") {
+            fragment = String(remaining[remaining.index(after: fragmentIndex)...])
+            remaining = String(remaining[..<fragmentIndex])
+        }
 
-            // Parse scheme: ([^:/?#]+):
-            if let colonIndex = remaining.firstIndex(of: ":"),
-                colonIndex > remaining.startIndex
+        // Parse query: \?([^#]*)
+        if let queryIndex = remaining.lastIndex(of: "?") {
+            query = String(remaining[remaining.index(after: queryIndex)...])
+            remaining = String(remaining[..<queryIndex])
+        }
+
+        // Parse scheme: ([^:/?#]+):
+        if let colonIndex = remaining.firstIndex(of: ":"),
+            colonIndex > remaining.startIndex
+        {
+            let schemeCandidate = String(remaining[..<colonIndex])
+            // Verify no /, ?, or # appear before the colon
+            if !schemeCandidate.contains("/") && !schemeCandidate.contains("?")
+                && !schemeCandidate.contains("#")
             {
-                let schemeCandidate = String(remaining[..<colonIndex])
-                // Verify no /, ?, or # appear before the colon
-                if !schemeCandidate.contains("/") && !schemeCandidate.contains("?")
-                    && !schemeCandidate.contains("#")
-                {
-                    scheme = schemeCandidate
-                    remaining = String(remaining[remaining.index(after: colonIndex)...])
-                }
+                scheme = schemeCandidate
+                remaining = String(remaining[remaining.index(after: colonIndex)...])
             }
+        }
 
-            // Parse authority: //([^/?#]*)
-            if remaining.hasPrefix("//") {
-                let afterSlashes = remaining.index(remaining.startIndex, offsetBy: 2)
-                var authorityEnd = remaining.endIndex
+        // Parse authority: //([^/?#]*)
+        if remaining.hasPrefix("//") {
+            let afterSlashes = remaining.index(remaining.startIndex, offsetBy: 2)
+            var authorityEnd = remaining.endIndex
 
-                // Find the first /, ?, or # after //
-                for char in ["/", "?", "#"] {
-                    if let index = remaining[afterSlashes...].firstIndex(of: Character(char)) {
-                        if index < authorityEnd {
-                            authorityEnd = index
-                        }
+            // Find the first /, ?, or # after //
+            for char in ["/", "?", "#"] {
+                if let index = remaining[afterSlashes...].firstIndex(of: Character(char)) {
+                    if index < authorityEnd {
+                        authorityEnd = index
                     }
                 }
-
-                authority = String(remaining[afterSlashes..<authorityEnd])
-                remaining = String(remaining[authorityEnd...])
             }
 
-            // What remains is the path
-            if !remaining.isEmpty {
-                path = remaining
-            }
-
-            // Parse authority into host and port
-            var host: String?
-            var port: UInt16?
-            if let auth = authority {
-                (host, port) = parseAuthority(auth)
-            }
-
-            return ParsedComponents(
-                scheme: scheme,
-                host: host,
-                port: port,
-                path: path,
-                query: query,
-                fragment: fragment
-            )
+            authority = String(remaining[afterSlashes..<authorityEnd])
+            remaining = String(remaining[authorityEnd...])
         }
 
-        /// Parses authority into host and port
-        /// authority = [ userinfo "@" ] host [ ":" port ]
-        private static func parseAuthority(_ authority: String) -> (host: String?, port: UInt16?) {
-            var remaining = authority
-
-            // Skip userinfo if present (everything before @)
-            if let atIndex = remaining.lastIndex(of: "@") {
-                remaining = String(remaining[remaining.index(after: atIndex)...])
-            }
-
-            // Check for port (: followed by digits at the end)
-            if let colonIndex = remaining.lastIndex(of: ":") {
-                let hostPart = String(remaining[..<colonIndex])
-                let portPart = String(remaining[remaining.index(after: colonIndex)...])
-
-                if let portValue = UInt16(portPart) {
-                    return (hostPart.isEmpty ? nil : hostPart, portValue)
-                }
-            }
-
-            return (remaining.isEmpty ? nil : remaining, nil)
+        // What remains is the path
+        if !remaining.isEmpty {
+            path = remaining
         }
 
-        /// Temporary struct to hold parsed URI components
-        struct ParsedComponents {
-            let scheme: String?
-            let host: String?
-            let port: UInt16?
-            let path: String?
-            let query: String?
-            let fragment: String?
+        // Parse authority into host and port
+        var host: String?
+        var port: UInt16?
+        if let auth = authority {
+            (host, port) = parseAuthority(auth)
         }
+
+        return ParsedComponents(
+            scheme: scheme,
+            host: host,
+            port: port,
+            path: path,
+            query: query,
+            fragment: fragment
+        )
+    }
+
+    /// Parses authority into host and port
+    /// authority = [ userinfo "@" ] host [ ":" port ]
+    fileprivate static func parseAuthority(_ authority: String) -> (host: String?, port: UInt16?) {
+        var remaining = authority
+
+        // Skip userinfo if present (everything before @)
+        if let atIndex = remaining.lastIndex(of: "@") {
+            remaining = String(remaining[remaining.index(after: atIndex)...])
+        }
+
+        // Check for port (: followed by digits at the end)
+        if let colonIndex = remaining.lastIndex(of: ":") {
+            let hostPart = String(remaining[..<colonIndex])
+            let portPart = String(remaining[remaining.index(after: colonIndex)...])
+
+            if let portValue = UInt16(portPart) {
+                return (hostPart.isEmpty ? nil : hostPart, portValue)
+            }
+        }
+
+        return (remaining.isEmpty ? nil : remaining, nil)
     }
 }
 

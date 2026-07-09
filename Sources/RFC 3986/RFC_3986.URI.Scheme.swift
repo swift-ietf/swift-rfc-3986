@@ -30,9 +30,6 @@ extension RFC_3986.URI {
     /// scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
     /// ```
     public struct Scheme: Sendable, Equatable, Hashable, Codable {
-        /// RawValue type for RawRepresentable conformance
-        public typealias RawValue = String
-
         /// The scheme value (normalized to lowercase)
         public let rawValue: String
 
@@ -51,6 +48,11 @@ extension RFC_3986.URI {
             self.rawValue = rawValue.lowercased()
         }
     }
+}
+
+extension RFC_3986.URI.Scheme {
+    /// RawValue type for RawRepresentable conformance
+    public typealias RawValue = String
 }
 
 // MARK: - Serializable
@@ -144,7 +146,7 @@ extension RFC_3986.URI.Scheme: ASCII.Parseable {
         // against ASCII.Code constants directly (RFC 3986 scheme grammar is strict ASCII).
         // Non-ASCII bytes fail with `invalidStart` / `invalidCharacter` carrying the offending Byte.
         let firstCode: ASCII.Code
-        do {
+        do throws(ASCII.Code.Error) {
             firstCode = try ASCII.Code(firstByte)
         } catch {
             switch error {
@@ -158,7 +160,7 @@ extension RFC_3986.URI.Scheme: ASCII.Parseable {
 
         for byte in bytes.dropFirst() {
             let code: ASCII.Code
-            do {
+            do throws(ASCII.Code.Error) {
                 code = try ASCII.Code(byte)
             } catch {
                 switch error {

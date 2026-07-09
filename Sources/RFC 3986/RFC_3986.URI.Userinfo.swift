@@ -41,9 +41,6 @@ extension RFC_3986.URI {
     /// sub-delims = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
     /// ```
     public struct Userinfo: Sendable, Equatable, Hashable, Codable {
-        /// RawValue type for RawRepresentable conformance
-        public typealias RawValue = String
-
         /// The raw userinfo string (may contain username:password)
         public let rawValue: String
 
@@ -62,6 +59,11 @@ extension RFC_3986.URI {
             self.rawValue = rawValue
         }
     }
+}
+
+extension RFC_3986.URI.Userinfo {
+    /// RawValue type for RawRepresentable conformance
+    public typealias RawValue = String
 }
 
 // MARK: - Serializable
@@ -131,7 +133,7 @@ extension RFC_3986.URI.Userinfo: ASCII.Parseable {
         // against ASCII.Code constants directly (RFC 3986 userinfo grammar is strict ASCII).
         // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
         let arr: [ASCII.Code]
-        do {
+        do throws(ASCII.Code.Error) {
             arr = try [ASCII.Code](bytes)
         } catch {
             switch error {
