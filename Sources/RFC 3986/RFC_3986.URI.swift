@@ -139,6 +139,21 @@ extension RFC_3986.URI {
             self.query = components.query.flatMap { try? Query($0) }
             self.fragment = components.fragment.flatMap { try? Fragment($0) }
         }
+
+        /// Constructs a `Cache` from components already produced by
+        /// ``RFC_3986/URI/Cache/_parseAndValidate(_:)``, so the throwing
+        /// string initializer parses the grammar exactly once instead of
+        /// parsing again here to populate the cache.
+        init(value: String, components: ParsedComponents) {
+            self.value = value
+            self.components = components
+            self.scheme = components.scheme.flatMap { try? Scheme($0) }
+            self.host = components.host.flatMap { try? Host($0) }
+            self.port = components.port.flatMap { Port($0) }
+            self.path = components.path.flatMap { try? Path($0) }
+            self.query = components.query.flatMap { try? Query($0) }
+            self.fragment = components.fragment.flatMap { try? Fragment($0) }
+        }
     }
 }
 
@@ -146,6 +161,7 @@ extension RFC_3986.URI.Cache {
     /// Temporary struct to hold parsed URI components
     struct ParsedComponents {
         let scheme: String?
+        let userinfo: String?
         let host: String?
         let port: UInt16?
         let path: String?
@@ -222,15 +238,17 @@ extension RFC_3986.URI.Cache {
             path = remaining
         }
 
-        // Parse authority into host and port
+        // Parse authority into userinfo, host, and port
+        var userinfo: String?
         var host: String?
         var port: UInt16?
         if let auth = authority {
-            (host, port) = parseAuthority(auth)
+            (userinfo, host, port) = parseAuthority(auth)
         }
 
         return ParsedComponents(
             scheme: scheme,
+            userinfo: userinfo,
             host: host,
             port: port,
             path: path,
@@ -239,13 +257,17 @@ extension RFC_3986.URI.Cache {
         )
     }
 
-    /// Parses authority into host and port
+    /// Parses authority into userinfo, host, and port
     /// authority = [ userinfo "@" ] host [ ":" port ]
-    fileprivate static func parseAuthority(_ authority: String) -> (host: String?, port: UInt16?) {
+    fileprivate static func parseAuthority(
+        _ authority: String
+    ) -> (userinfo: String?, host: String?, port: UInt16?) {
         var remaining = authority
+        var userinfo: String?
 
-        // Skip userinfo if present (everything before @)
+        // Capture userinfo if present (everything before the last @)
         if let atIndex = remaining.lastIndex(of: "@") {
+            userinfo = String(remaining[..<atIndex])
             remaining = String(remaining[remaining.index(after: atIndex)...])
         }
 
@@ -255,11 +277,110 @@ extension RFC_3986.URI.Cache {
             let portPart = String(remaining[remaining.index(after: colonIndex)...])
 
             if let portValue = UInt16(portPart) {
-                return (hostPart.isEmpty ? nil : hostPart, portValue)
+                return (userinfo, hostPart.isEmpty ? nil : hostPart, portValue)
             }
         }
 
-        return (remaining.isEmpty ? nil : remaining, nil)
+        return (userinfo, remaining.isEmpty ? nil : remaining, nil)
+    }
+}
+
+// MARK: - Grammar-Derived Validation
+
+extension RFC_3986.URI.Cache {
+    /// Parses `string` and validates it against the RFC 3986 `URI-reference`
+    /// grammar (Section 4.1), returning the split components only if the string is
+    /// actually grammatical — or `nil` if it is not.
+    ///
+    /// This replaces the historical approach of validating with an explicit
+    /// forbidden-character blocklist (`< > { } | \ ^ \`` plus space/control
+    /// characters) layered on top of a permissive ad hoc splitter. A blocklist can
+    /// only reject what someone remembered to list; it says nothing about whether
+    /// the string actually has the shape of a URI reference. Here, validity is
+    /// *derived* from the grammar instead:
+    ///
+    /// - Every non-empty component's raw bytes are checked against that
+    ///   production's actual RFC 3986 character class (composing the `_is*Char`
+    ///   grammars in ``RFC_3986/Parse``) plus well-formed `%HH` percent-encoding
+    ///   (Section 2.1) via ``RFC_3986/Parse/_isGrammarValid(_:allowedRawByte:)``.
+    /// - `host` is delegated to `Host`'s own typed, validating initializer, which
+    ///   already implements `IP-literal / IPv4address / reg-name` (Section 3.2.2)
+    ///   — a byte-class scan alone cannot distinguish those forms.
+    /// - The `path-noscheme` restriction (Section 3.3: when there is neither a
+    ///   scheme nor an authority, the first path segment must not contain an
+    ///   unencoded `:`, or it would be ambiguous with a scheme) is checked
+    ///   explicitly, since the splitter does not enforce it structurally.
+    ///
+    /// Any byte outside its production's grammar — including every character the
+    /// old blocklist enumerated by hand — fails to match and the whole string is
+    /// rejected, so this is a strict tightening, not a relaxation.
+    static func _parseAndValidate(_ string: String) -> ParsedComponents? {
+        // URI references are ASCII-only (RFC 3986 Section 3).
+        guard string.utf8.allSatisfy({ $0 < 0x80 }) else { return nil }
+
+        let components = parseURI(string)
+
+        // scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) — no pct-encoded
+        // alternative, so this is a raw byte-class check, not `_isGrammarValid`.
+        if let scheme = components.scheme {
+            guard RFC_3986.Parse._isValidScheme(scheme.utf8) else { return nil }
+        }
+
+        // userinfo = *( unreserved / pct-encoded / sub-delims / ":" )
+        if let userinfo = components.userinfo {
+            guard
+                RFC_3986.Parse._isGrammarValid(
+                    userinfo.utf8,
+                    allowedRawByte: RFC_3986.Parse._isUserinfoChar
+                )
+            else { return nil }
+        }
+
+        // host = IP-literal / IPv4address / reg-name (Section 3.2.2) — delegate to
+        // the typed validator; a byte-class scan cannot tell IP-literal brackets
+        // and IPv4 dotted-decimal apart from an invalid reg-name.
+        if let host = components.host {
+            guard (try? RFC_3986.URI.Host(host)) != nil else { return nil }
+        }
+
+        // path = *( pchar / "/" )
+        if let path = components.path {
+            guard
+                RFC_3986.Parse._isGrammarValid(
+                    path.utf8,
+                    allowedRawByte: { RFC_3986.Parse._isPchar($0) || $0 == 0x2F }
+                )
+            else { return nil }
+
+            // path-noscheme: without a scheme and without an authority, the first
+            // segment must not contain an unencoded ":" (Section 3.3).
+            if components.scheme == nil, components.host == nil, !path.hasPrefix("/") {
+                let firstSegment = path.prefix(while: { $0 != "/" })
+                guard !firstSegment.contains(":") else { return nil }
+            }
+        }
+
+        // query = *( pchar / "/" / "?" )
+        if let query = components.query {
+            guard
+                RFC_3986.Parse._isGrammarValid(
+                    query.utf8,
+                    allowedRawByte: RFC_3986.Parse._isQueryOrFragmentChar
+                )
+            else { return nil }
+        }
+
+        // fragment = *( pchar / "/" / "?" )
+        if let fragment = components.fragment {
+            guard
+                RFC_3986.Parse._isGrammarValid(
+                    fragment.utf8,
+                    allowedRawByte: RFC_3986.Parse._isQueryOrFragmentChar
+                )
+            else { return nil }
+        }
+
+        return components
     }
 }
 
@@ -337,10 +458,22 @@ extension RFC_3986.URI {
     /// - Throws: RFC_3986.Error if the string is not a valid URI
     public init(_ value: some StringProtocol) throws(RFC_3986.Error) {
         let stringValue = String(value)
-        guard RFC_3986.isValidURI(stringValue) else {
+
+        // Same-document reference (RFC 3986 Section 4.4): the empty string is not
+        // itself matched by the URI-reference grammar, but is explicitly valid.
+        if stringValue.isEmpty {
+            self.cache = Cache(value: stringValue)
+            return
+        }
+
+        // Parses the full `URI-reference` grammar once into typed components,
+        // deriving validity from the parse itself (see `Cache._parseAndValidate`)
+        // instead of gating on a character blocklist. The resulting components are
+        // handed straight to `Cache` so the grammar is not parsed a second time.
+        guard let components = Cache._parseAndValidate(stringValue) else {
             throw RFC_3986.Error.invalidURI(stringValue)
         }
-        self.cache = Cache(value: stringValue)
+        self.cache = Cache(value: stringValue, components: components)
     }
 
     /// Creates a URI WITHOUT validation
@@ -1179,54 +1312,26 @@ extension RFC_3986 {
 extension RFC_3986 {
     /// Validates if a string is a valid URI reference
     ///
-    /// This performs basic validation using Foundation's URL validation.
     /// A valid URI reference (per RFC 3986 Section 4.1) is either:
     /// - An absolute URI with a scheme (e.g., `https://example.com/path`)
     /// - A relative reference without a scheme (e.g., `/path`, `?query`, `#fragment`)
     /// - An empty string (representing "same document reference")
     ///
-    /// Requirements:
-    /// - Must be parseable as a URL by Foundation
-    /// - Must contain only ASCII characters (per RFC 3986)
-    /// - Must not contain unencoded spaces or other invalid characters
-    ///
-    /// Note: Empty strings are allowed as they represent a valid "same document reference"
-    /// commonly used in href attributes and by RFC 6570 URI Template expansion.
-    ///
-    /// Note: This is a lenient validation suitable for most use cases.
-    /// Full RFC 3986 compliance would require more strict validation
-    /// of character ranges and syntax rules.
+    /// This parses `string` once against the RFC 3986 `URI-reference` grammar
+    /// (composing the `scheme` / `userinfo` / `host` / `path` / `query` /
+    /// `fragment` productions — see `URI.Cache._parseAndValidate`) and derives
+    /// validity from whether that parse succeeds, rather than from an explicit
+    /// forbidden-character blocklist. `URI.init(_:)` calls this same underlying
+    /// parse so a string is validated and split exactly once on the throwing
+    /// construction path.
     ///
     /// - Parameter string: The string to validate
-    /// - Returns: true if the string appears to be a valid URI reference
+    /// - Returns: true if the string matches the RFC 3986 URI-reference grammar
     public static func isValidURI(_ string: String) -> Bool {
-        // Empty strings are allowed (same document reference)
+        // Empty strings are allowed (same document reference, Section 4.4)
         if string.isEmpty { return true }
 
-        // URI references must be ASCII-only per RFC 3986
-        guard string.allSatisfy({ $0.isASCII }) else { return false }
-
-        // Reject strings with unencoded spaces or control characters
-        if string.contains(" ")
-            || string.contains(where: {
-                $0.isASCII && $0.asciiValue! < 0x20 || $0.asciiValue == 0x7F
-            })
-        {
-            return false
-        }
-
-        // Reject strings with invalid characters like < > { } | \ ^ `
-        let invalidChars: Set<Character> = ["<", ">", "{", "}", "|", "\\", "^", "`", "\""]
-        if string.contains(where: { invalidChars.contains($0) }) {
-            return false
-        }
-
-        // TODO: Replace with pure RFC 3986 parser
-        // For now, we do basic validation without Foundation
-        // A proper implementation should parse according to RFC 3986 ABNF grammar
-
-        // Very basic validation: allow most ASCII except the explicitly forbidden characters above
-        return true
+        return RFC_3986.URI.Cache._parseAndValidate(string) != nil
     }
 
     /// Validates if a URI is a valid HTTP(S) URI

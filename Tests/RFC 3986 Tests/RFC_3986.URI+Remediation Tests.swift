@@ -119,3 +119,38 @@ extension RFC_3986.URI.Remediation.Unit {
         #expect(appended.query?.description == "a%26injected%3D1=x")
     }
 }
+
+// MARK: - F-002 — isValidURI blocklist vs. RFC 3986 grammar (correctness-high)
+
+extension RFC_3986.URI.Remediation.`Edge Case` {
+    /// F-002: the character blocklist had no rule about "%", so malformed
+    /// percent-encoding (`pct-encoded = "%" HEXDIG HEXDIG`, RFC 3986 Section
+    /// 2.1 is not satisfied by "%of" — "o" is not a hex digit) passed
+    /// validation. The grammar-derived validator rejects it.
+    @Test
+    func `isValidURI rejects malformed percent-encoding that the blocklist allowed`() {
+        #expect(!RFC_3986.isValidURI("http://example.com/100%offsale"))
+    }
+
+    /// F-002: an authority whose port fails to parse (non-digit) falls back
+    /// to folding the literal ":" and trailing text into the host string. A
+    /// blocklist has no opinion on ":"; `Host`'s own grammar
+    /// (`reg-name = *( unreserved / pct-encoded / sub-delims )`, no ":")
+    /// rejects it.
+    @Test
+    func `isValidURI rejects a colon folded into host by an unparseable port`() {
+        #expect(!RFC_3986.isValidURI("http://example.com:notaport/path"))
+    }
+
+    /// F-002: `URI.init` gates on the same grammar-derived validity as
+    /// `isValidURI`, so it must throw for the same inputs.
+    @Test
+    func `URI init throws for the same grammar violations isValidURI rejects`() {
+        #expect(throws: RFC_3986.Error.self) {
+            try RFC_3986.URI("http://example.com/100%offsale")
+        }
+        #expect(throws: RFC_3986.Error.self) {
+            try RFC_3986.URI("http://example.com:notaport/path")
+        }
+    }
+}
