@@ -159,6 +159,17 @@ extension RFC_3986.CharacterSet {
     /// Query characters include path segment characters plus `/` and `?`.
     public static let query: Self = pathSegment.union(.init(Set(["/", "?"])))
 
+    /// Characters allowed when percent-encoding a single query item's name or
+    /// value per RFC 3986 Section 3.4.
+    ///
+    /// A stricter set than `.query`: excludes `&`, `=`, and `#`. `.query` permits
+    /// those because they are valid delimiters *within* an already-structured
+    /// query string, but a caller-supplied name/value is unstructured text being
+    /// inserted into one query-pair slot — leaving `&`/`=` unencoded would let it
+    /// terminate its own pair and inject additional `name=value` pairs (or, via
+    /// `#`, truncate the query into a fragment) into an otherwise-validated URI.
+    public static let queryComponent: Self = query.subtracting(.init(Set(["&", "=", "#"])))
+
     /// Characters allowed in fragment per RFC 3986 Section 3.5
     ///
     /// Fragment characters are the same as query characters.

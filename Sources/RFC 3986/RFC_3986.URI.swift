@@ -855,10 +855,18 @@ extension RFC_3986.URI {
             }
         }
 
+        // Percent-encode the caller-supplied component with a pchar-safe set
+        // (RFC 3986 Section 3.3: pchar = unreserved / pct-encoded / sub-delims /
+        // ":" / "@") before appending. `component` is untrusted, unstructured
+        // text — without this, an unencoded "/", "?", or "#" in it would inject
+        // extra path segments, a query, or a fragment into what was previously a
+        // validated URI.
+        let encodedComponent = RFC_3986.percentEncode(String(component), allowing: .pathSegment)
+
         // Append to path
         let currentPath = path?.description ?? ""
         let separator = currentPath.hasSuffix("/") ? "" : "/"
-        result += currentPath + separator + component
+        result += currentPath + separator + encodedComponent
 
         // Add query and fragment
         if let uriQuery = query {
@@ -902,9 +910,13 @@ extension RFC_3986.URI {
             result += uriPath.description
         }
 
-        // Add query with new item
-        let encodedName = RFC_3986.percentEncode(String(name), allowing: .query)
-        let encodedValue = value.map { RFC_3986.percentEncode(String($0), allowing: .query) }
+        // Add query with new item. `name`/`value` are untrusted, unstructured
+        // text for a single query pair, so they are percent-encoded with
+        // `.queryComponent` — a set narrower than `.query` that also encodes
+        // "&", "=", and "#" — so they cannot inject additional query pairs or
+        // truncate the query into a fragment (see `.queryComponent`'s doc).
+        let encodedName = RFC_3986.percentEncode(String(name), allowing: .queryComponent)
+        let encodedValue = value.map { RFC_3986.percentEncode(String($0), allowing: .queryComponent) }
 
         if let currentQuery = query?.description {
             result += "?\(currentQuery)&\(encodedName)"
