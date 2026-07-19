@@ -97,49 +97,47 @@ extension RFC_3986.URI {
 
     /// Internal cache for parsed URI components
     ///
-    /// Uses a class for reference semantics, enabling lazy caching while maintaining
-    /// value semantics for the URI struct. Components are parsed once on first access
-    /// and cached for O(1) subsequent access.
+    /// Uses a class for reference semantics, enabling shared storage while maintaining
+    /// value semantics for the URI struct. Components are parsed once, eagerly, in
+    /// `init`, and cached for O(1) subsequent access.
     ///
-    /// This is marked @unchecked Sendable because:
-    /// - The cache is immutable after initialization
-    /// - Lazy properties are thread-safe in Swift
-    /// - Multiple URI copies share the same cache (COW-like behavior)
+    /// This is marked `@unchecked Sendable` because every stored property is a `let`
+    /// assigned exactly once during `init`, before the instance can escape to any
+    /// other thread (the `URI` struct that holds it is itself only handed across
+    /// threads afterward, subject to the ordinary happens-before guarantees Swift's
+    /// concurrency runtime already provides for publishing an object reference).
+    /// There is no post-init mutation for two threads to race on.
+    ///
+    /// Previously these were `lazy var`s computed on first access. `lazy` in Swift is
+    /// **not** thread-safe: two threads racing on first access to the same `lazy var`
+    /// can both observe the uninitialized state and both run the initializer
+    /// concurrently, or one thread can observe a torn (partially-initialized) write —
+    /// undefined behavior on a type claimed `Sendable`. `ParsedComponents` already
+    /// computes every raw substring in one pass, so wrapping each into its typed
+    /// component is cheap; there is no meaningful laziness to preserve.
     fileprivate final class Cache: @unchecked Sendable {
         let value: String
         let components: ParsedComponents
 
-        // Lazy cached components - parsed once on first access
-        lazy var scheme: Scheme? = {
-            components.scheme.flatMap { try? Scheme($0) }
-        }()
-
-        lazy var host: Host? = {
-            components.host.flatMap { try? Host($0) }
-        }()
-
-        lazy var port: Port? = {
-            components.port.flatMap { Port($0) }
-        }()
-
-        lazy var path: Path? = {
-            guard let pathString = components.path else { return nil }
-            // Empty paths are valid in RFC 3986 - they serialize to ""
-            // Only return nil if there was no path component at all
-            return try? Path(pathString)
-        }()
-
-        lazy var query: Query? = {
-            components.query.flatMap { try? Query($0) }
-        }()
-
-        lazy var fragment: Fragment? = {
-            components.fragment.flatMap { try? Fragment($0) }
-        }()
+        let scheme: Scheme?
+        let host: Host?
+        let port: Port?
+        let path: Path?
+        let query: Query?
+        let fragment: Fragment?
 
         init(value: String) {
             self.value = value
-            self.components = Self.parseURI(value)
+            let components = Self.parseURI(value)
+            self.components = components
+            self.scheme = components.scheme.flatMap { try? Scheme($0) }
+            self.host = components.host.flatMap { try? Host($0) }
+            self.port = components.port.flatMap { Port($0) }
+            // Empty paths are valid in RFC 3986 - they serialize to ""
+            // Only nil if there was no path component at all.
+            self.path = components.path.flatMap { try? Path($0) }
+            self.query = components.query.flatMap { try? Query($0) }
+            self.fragment = components.fragment.flatMap { try? Fragment($0) }
         }
     }
 }
