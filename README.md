@@ -34,6 +34,17 @@ dependencies: [
 ]
 ```
 
+Add the product to a target that needs it:
+
+```swift
+.target(
+    name: "YourTarget",
+    dependencies: [
+        .product(name: "RFC 3986", package: "swift-rfc-3986")
+    ]
+)
+```
+
 ## Usage
 
 ### Creating URIs
