@@ -1,4 +1,5 @@
 import Dispatch
+import Synchronization
 import Testing
 
 @testable import RFC_3986
@@ -44,9 +45,8 @@ extension RFC_3986.URI.Remediation.Unit {
         // its cooperative pool) to maximize genuine simultaneous first-access
         // contention on `uri`'s cached components.
         let iterations = 2_000
-        let mutex = DispatchSemaphore(value: 1)
-        var snapshots: [Snapshot] = []
-        snapshots.reserveCapacity(iterations)
+        let snapshots = Mutex<[Snapshot]>([])
+        snapshots.withLock { $0.reserveCapacity(iterations) }
 
         DispatchQueue.concurrentPerform(iterations: iterations) { _ in
             let snapshot: Snapshot = (
@@ -57,17 +57,16 @@ extension RFC_3986.URI.Remediation.Unit {
                 uri.query?.description,
                 uri.fragment?.value
             )
-            mutex.wait()
-            snapshots.append(snapshot)
-            mutex.signal()
+            snapshots.withLock { $0.append(snapshot) }
         }
 
         let expected: Snapshot = (
             "https", "example.com", 8080, "/path/to/thing", "key=value", "frag"
         )
 
-        #expect(snapshots.count == iterations)
-        for snapshot in snapshots {
+        let collected = snapshots.withLock { $0 }
+        #expect(collected.count == iterations)
+        for snapshot in collected {
             #expect(snapshot.scheme == expected.scheme)
             #expect(snapshot.host == expected.host)
             #expect(snapshot.port == expected.port)
