@@ -335,13 +335,13 @@ extension RFC_3986.URI.Authority {
     public var rawValue: String {
         var result = ""
 
-        if let userinfo = userinfo {
+        if let userinfo {
             result += "\(userinfo.rawValue)@"
         }
 
         result += host.rawValue
 
-        if let port = port {
+        if let port {
             result += ":\(port.value)"
         }
 
@@ -360,12 +360,16 @@ extension RFC_3986.URI.Authority: CustomStringConvertible {
 // MARK: - Codable
 
 extension RFC_3986.URI.Authority: Codable {
+    // reason: Decodable's `init(from:) throws` requirement is fixed by the stdlib protocol — `any Decoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    // swiftlint:disable:next no_any_protocol_existential typed_throws_required
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)
         try self.init(string)
     }
 
+    // reason: Encodable's `encode(to:) throws` requirement is fixed by the stdlib protocol — `any Encoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    // swiftlint:disable:next no_any_protocol_existential typed_throws_required
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(rawValue)
@@ -378,9 +382,13 @@ extension RFC_3986.URI.Authority {
     /// Errors that can occur when parsing an authority component
     public enum Error: Swift.Error, Sendable, Equatable, CustomStringConvertible {
         /// The userinfo component is invalid
+        // reason: boxes whichever concrete error the userinfo validator produced; a generic parameter can't unify with `invalidHost`'s independently-typed underlying error on the same enum.
+        // swiftlint:disable:next no_any_protocol_existential
         case invalidUserinfo(String, underlying: any Swift.Error)
 
         /// The host component is invalid
+        // reason: boxes whichever concrete error the host validator produced; a generic parameter can't unify with `invalidUserinfo`'s independently-typed underlying error on the same enum.
+        // swiftlint:disable:next no_any_protocol_existential
         case invalidHost(String, underlying: any Swift.Error)
 
         /// The port component is invalid
@@ -399,12 +407,16 @@ extension RFC_3986.URI.Authority.Error {
         switch self {
         case .invalidUserinfo(let value, _):
             return "Invalid userinfo: '\(value)'"
+
         case .invalidHost(let value, _):
             return "Invalid host: '\(value)'"
+
         case .invalidPort(let value):
             return "Invalid port: '\(value)'"
+
         case .unterminatedIPv6(let value):
             return "Unterminated IPv6 address in: '\(value)'"
+
         case .invalidCharactersAfterIPv6(let value):
             return "Invalid characters after IPv6 address: '\(value)'"
         }

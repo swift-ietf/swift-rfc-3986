@@ -47,12 +47,16 @@ extension RFC_3986.URI.Query.Error: CustomStringConvertible {
         switch self {
         case .emptyKey:
             return "Query parameter key cannot be empty"
+
         case .keyContainsNewline(let key):
             return "Query parameter key '\(key)' contains newline"
+
         case .valueContainsNewline(let key, let value):
             return "Query parameter '\(key)' has value '\(value)' containing newline"
+
         case .invalidCharacter(let value, let byte, let reason):
             return "Query '\(value)' has invalid byte 0x\(String(byte, radix: 16)): \(reason)"
+
         case .invalidPercentEncoding(let value, let reason):
             return "Query '\(value)' has invalid percent-encoding: \(reason)"
         }

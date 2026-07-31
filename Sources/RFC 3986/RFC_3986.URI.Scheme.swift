@@ -63,7 +63,11 @@ extension RFC_3986.URI.Scheme: Swift.RawRepresentable, ASCII.Serializable, Binar
     /// Re-provides the `Swift.RawRepresentable` requirement (previously inherited
     /// from the retired combined ASCII serializable protocol).
     public init?(rawValue: String) {
-        try? self.init(rawValue)
+        do throws(Error) {
+            try self.init(rawValue)
+        } catch {
+            return nil
+        }
     }
 
     /// Serializes `value` as ASCII bytes derived from its `String` `rawValue`.
@@ -234,6 +238,7 @@ extension RFC_3986.URI.Scheme {
         switch rawValue {
         case "https", "wss", "ftps":
             return true
+
         default:
             return false
         }
@@ -261,12 +266,16 @@ extension RFC_3986.URI.Scheme {
 // MARK: - Codable
 
 extension RFC_3986.URI.Scheme {
+    // reason: Decodable's `init(from:) throws` requirement is fixed by the stdlib protocol — `any Decoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    // swiftlint:disable:next no_any_protocol_existential typed_throws_required
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)
         try self.init(string)
     }
 
+    // reason: Encodable's `encode(to:) throws` requirement is fixed by the stdlib protocol — `any Encoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    // swiftlint:disable:next no_any_protocol_existential typed_throws_required
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(rawValue)

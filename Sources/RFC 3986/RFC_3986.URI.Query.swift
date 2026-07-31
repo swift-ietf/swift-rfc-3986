@@ -84,7 +84,11 @@ extension RFC_3986.URI.Query: Swift.RawRepresentable, ASCII.Serializable, Binary
     /// Re-provides the `Swift.RawRepresentable` requirement (previously inherited
     /// from the retired combined ASCII serializable protocol).
     public init?(rawValue: String) {
-        try? self.init(rawValue)
+        do throws(Error) {
+            try self.init(rawValue)
+        } catch {
+            return nil
+        }
     }
 
     /// Serializes `value` as ASCII bytes derived from its `String` `rawValue`.
@@ -281,7 +285,7 @@ extension RFC_3986.URI.Query {
     public init(_ parameters: [(String, String?)] = []) throws(Error) {
         // Build query string from parameters
         let queryString = parameters.map { key, value in
-            if let value = value {
+            if let value {
                 return "\(key)=\(value)"
             } else {
                 return key
@@ -301,7 +305,7 @@ extension RFC_3986.URI.Query {
     ///   the throwing initializer to make the risk explicit.
     internal init(unchecked parameters: [(String, String?)]) {
         let queryString = parameters.map { key, value in
-            if let value = value {
+            if let value {
                 return "\(key)=\(value)"
             } else {
                 return key
@@ -316,7 +320,7 @@ extension RFC_3986.URI.Query {
     /// Keys without values are rendered as just the key name.
     public var string: String {
         parameters.map { key, value in
-            if let value = value {
+            if let value {
                 return "\(key)=\(value)"
             } else {
                 return key
@@ -347,7 +351,7 @@ extension RFC_3986.URI.Query {
     /// - Parameter key: The parameter key to look up
     /// - Returns: The first value for that key, or nil if not found
     public func first(for key: some StringProtocol) -> String? {
-        parameters.first { $0.key == key }?.value ?? nil
+        parameters.first { $0.key == key }?.value
     }
 
     /// Adds a parameter to the query
@@ -454,6 +458,8 @@ extension RFC_3986.URI.Query {
 // MARK: - Codable
 
 extension RFC_3986.URI.Query {
+    // reason: Decodable's `init(from:) throws` requirement is fixed by the stdlib protocol — `any Decoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    // swiftlint:disable:next no_any_protocol_existential typed_throws_required
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)
@@ -467,6 +473,8 @@ extension RFC_3986.URI.Query {
         }
     }
 
+    // reason: Encodable's `encode(to:) throws` requirement is fixed by the stdlib protocol — `any Encoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    // swiftlint:disable:next no_any_protocol_existential typed_throws_required
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(rawValue)

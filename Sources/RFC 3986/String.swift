@@ -56,6 +56,10 @@ extension String {
     /// }
     /// ```
     public var uri: RFC_3986.URI? {
-        try? RFC_3986.URI(self)
+        do throws(RFC_3986.Error) {
+            return try RFC_3986.URI(self)
+        } catch {
+            return nil
+        }
     }
 }

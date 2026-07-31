@@ -307,8 +307,10 @@ extension RFC_3986.URI.Host {
         case .ipv4(let address):
             // IPv4 loopback: 127.0.0.0/8 (any 127.x.x.x)
             return address.octets.0 == 127
+
         case .ipv6(let scopedAddress):
             return scopedAddress.address.is.loopback
+
         case .registeredName(let name):
             return name == "localhost"
         }
@@ -350,12 +352,16 @@ extension RFC_3986.URI.Host {
 // MARK: - Codable
 
 extension RFC_3986.URI.Host: Codable {
+    // reason: Decodable's `init(from:) throws` requirement is fixed by the stdlib protocol — `any Decoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    // swiftlint:disable:next no_any_protocol_existential typed_throws_required
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)
         try self.init(string)
     }
 
+    // reason: Encodable's `encode(to:) throws` requirement is fixed by the stdlib protocol — `any Encoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    // swiftlint:disable:next no_any_protocol_existential typed_throws_required
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(rawValue)

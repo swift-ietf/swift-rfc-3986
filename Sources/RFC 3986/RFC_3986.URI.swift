@@ -22,8 +22,10 @@ extension RFC_3986.Error: CustomStringConvertible {
         case .invalidURI(let value):
             return
                 "Invalid URI: '\(value)'. URIs must follow RFC 3986 syntax and contain only ASCII characters."
+
         case .invalidComponent(let component):
             return "Invalid URI component: '\(component)'"
+
         case .conversionFailed(let reason):
             return "URI conversion failed: \(reason)"
         }
@@ -130,14 +132,14 @@ extension RFC_3986.URI {
             self.value = value
             let components = Self.parseURI(value)
             self.components = components
-            self.scheme = components.scheme.flatMap { try? Scheme($0) }
-            self.host = components.host.flatMap { try? Host($0) }
+            self.scheme = Self.parsed(components.scheme) { try Scheme($0) }
+            self.host = Self.parsed(components.host) { try Host($0) }
             self.port = components.port.flatMap { Port($0) }
             // Empty paths are valid in RFC 3986 - they serialize to ""
             // Only nil if there was no path component at all.
-            self.path = components.path.flatMap { try? Path($0) }
-            self.query = components.query.flatMap { try? Query($0) }
-            self.fragment = components.fragment.flatMap { try? Fragment($0) }
+            self.path = Self.parsed(components.path) { try Path($0) }
+            self.query = Self.parsed(components.query) { try Query($0) }
+            self.fragment = Self.parsed(components.fragment) { try Fragment($0) }
         }
 
         /// Constructs a `Cache` from components already produced by
@@ -147,12 +149,28 @@ extension RFC_3986.URI {
         init(value: String, components: ParsedComponents) {
             self.value = value
             self.components = components
-            self.scheme = components.scheme.flatMap { try? Scheme($0) }
-            self.host = components.host.flatMap { try? Host($0) }
+            self.scheme = Self.parsed(components.scheme) { try Scheme($0) }
+            self.host = Self.parsed(components.host) { try Host($0) }
             self.port = components.port.flatMap { Port($0) }
-            self.path = components.path.flatMap { try? Path($0) }
-            self.query = components.query.flatMap { try? Query($0) }
-            self.fragment = components.fragment.flatMap { try? Fragment($0) }
+            self.path = Self.parsed(components.path) { try Path($0) }
+            self.query = Self.parsed(components.query) { try Query($0) }
+            self.fragment = Self.parsed(components.fragment) { try Fragment($0) }
+        }
+
+        /// Converts a typed-throws component parse into an optional: `nil`
+        /// input yields `nil`, and a thrown error is swallowed to `nil` —
+        /// exactly the former `try?` behavior, but with the catch made
+        /// explicit per [IMPL-108] instead of silently discarding the error.
+        private static func parsed<Value, Failure: Swift.Error>(
+            _ string: String?,
+            _ makeValue: (String) throws(Failure) -> Value
+        ) -> Value? {
+            guard let string else { return nil }
+            do throws(Failure) {
+                return try makeValue(string)
+            } catch {
+                return nil
+            }
         }
     }
 }
@@ -340,7 +358,11 @@ extension RFC_3986.URI.Cache {
         // the typed validator; a byte-class scan cannot tell IP-literal brackets
         // and IPv4 dotted-decimal apart from an invalid reg-name.
         if let host = components.host {
-            guard (try? RFC_3986.URI.Host(host)) != nil else { return nil }
+            do throws(RFC_3986.URI.Host.Error) {
+                _ = try RFC_3986.URI.Host(host)
+            } catch {
+                return nil
+            }
         }
 
         // path = *( pchar / "/" )
@@ -551,11 +573,11 @@ extension RFC_3986.URI {
 
         uriString += path.description
 
-        if let query = query {
+        if let query {
             uriString += "?\(query.description)"
         }
 
-        if let fragment = fragment {
+        if let fragment {
             uriString += "#\(fragment.value)"
         }
 
@@ -621,7 +643,11 @@ extension RFC_3986.URI {
         guard let atIndex = authority.firstIndex(of: "@") else { return nil }
         let userinfoString = String(authority[..<atIndex])
 
-        return try? Userinfo(userinfoString)
+        do throws(Userinfo.Error) {
+            return try Userinfo(userinfoString)
+        } catch {
+            return nil
+        }
     }
 
     /// The host component of this URI
@@ -836,7 +862,7 @@ extension RFC_3986.URI {
                 result += "\(userinfo)@"
             }
             result += host
-            if let port = port {
+            if let port {
                 result += ":\(port)"
             }
         }
@@ -925,7 +951,7 @@ extension RFC_3986.URI {
         // Merge paths according to RFC 3986 Section 5.2.3
         let refPath = refURI.path?.description
         var mergedPath = ""
-        if let refPath = refPath, !refPath.isEmpty {
+        if let refPath, !refPath.isEmpty {
             if refPath.hasPrefix("/") {
                 // Absolute path - use reference path as-is
                 mergedPath = refPath
@@ -1049,7 +1075,9 @@ extension RFC_3986.URI {
         // "&", "=", and "#" — so they cannot inject additional query pairs or
         // truncate the query into a fragment (see `.queryComponent`'s doc).
         let encodedName = RFC_3986.percentEncode(String(name), allowing: .queryComponent)
-        let encodedValue = value.map { RFC_3986.percentEncode(String($0), allowing: .queryComponent) }
+        let encodedValue = value.map {
+            RFC_3986.percentEncode(String($0), allowing: .queryComponent)
+        }
 
         if let currentQuery = query?.description {
             result += "?\(currentQuery)&\(encodedName)"
@@ -1139,6 +1167,8 @@ extension RFC_3986.URI {
 
 extension RFC_3986.URI {
     /// Decode a URI from a string
+    // reason: Decodable's `init(from:) throws` requirement is fixed by the stdlib protocol — `any Decoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    // swiftlint:disable:next no_any_protocol_existential typed_throws_required
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)
@@ -1146,6 +1176,8 @@ extension RFC_3986.URI {
     }
 
     /// Encode the URI as a string
+    // reason: Encodable's `encode(to:) throws` requirement is fixed by the stdlib protocol — `any Encoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    // swiftlint:disable:next no_any_protocol_existential typed_throws_required
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(value)
@@ -1206,22 +1238,22 @@ extension RFC_3986.URI: CustomDebugStringConvertible {
     public var debugDescription: String {
         var parts: [String] = ["RFC 3986.URI"]
 
-        if let scheme = scheme {
+        if let scheme {
             parts.append("scheme: \(scheme)")
         }
-        if let host = host {
+        if let host {
             parts.append("host: \(host)")
         }
-        if let port = port {
+        if let port {
             parts.append("port: \(port)")
         }
-        if let path = path, !path.isEmpty {
+        if let path, !path.isEmpty {
             parts.append("path: \(path)")
         }
-        if let query = query {
+        if let query {
             parts.append("query: \(query)")
         }
-        if let fragment = fragment {
+        if let fragment {
             parts.append("fragment: \(fragment)")
         }
 
@@ -1338,7 +1370,7 @@ extension RFC_3986 {
     ///
     /// - Parameter uri: The URI to validate
     /// - Returns: true if the URI is an HTTP or HTTPS URI
-    public static func isValidHTTP(_ uri: any URIRepresentable) -> Bool {
+    public static func isValidHTTP<Representable: URIRepresentable>(_ uri: Representable) -> Bool {
         guard let scheme = uri.uri.scheme else { return false }
         return scheme.value == "http" || scheme.value == "https"
     }
@@ -1349,7 +1381,12 @@ extension RFC_3986 {
     /// - Returns: true if the string is an HTTP or HTTPS URI
     public static func isValidHTTP(_ string: String) -> Bool {
         guard isValidURI(string) else { return false }
-        guard let uri = try? URI(string) else { return false }
+        let uri: URI
+        do throws(RFC_3986.Error) {
+            uri = try URI(string)
+        } catch {
+            return false
+        }
         return uri.scheme?.value == "http" || uri.scheme?.value == "https"
     }
 }

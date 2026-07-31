@@ -41,8 +41,10 @@ extension RFC_3986.URI.Fragment.Error: CustomStringConvertible {
         switch self {
         case .containsHash(let value):
             return "Fragment '\(value)' cannot contain '#' character"
+
         case .containsNewline(let value):
             return "Fragment '\(value)' cannot contain newline characters"
+
         case .invalidCharacter(let value, let byte, let reason):
             return "Fragment '\(value)' has invalid byte 0x\(String(byte, radix: 16)): \(reason)"
         }
