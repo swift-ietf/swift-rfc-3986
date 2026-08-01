@@ -145,7 +145,7 @@ extension RFC_3986.URI.Path: ASCII.Parseable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the path
     /// - Throws: `RFC_3986.URI.Path.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         // Empty path
         guard !bytes.isEmpty else {
@@ -340,7 +340,7 @@ extension RFC_3986.URI.Path {
 
 // MARK: - Collection
 
-extension RFC_3986.URI.Path: Collection {
+extension RFC_3986.URI.Path: Swift.Collection {
     public typealias Index = Array<String>.Index
     public typealias Element = String
 

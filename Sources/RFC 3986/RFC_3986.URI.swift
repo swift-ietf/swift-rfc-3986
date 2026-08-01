@@ -461,7 +461,7 @@ extension RFC_3986.URI: ASCII.Parseable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the URI
     /// - Throws: `RFC_3986.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes) throws(RFC_3986.Error)
+    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(RFC_3986.Error)
     where Bytes.Element == Byte {
         let string = String(decoding: bytes, as: UTF8.self)
         guard RFC_3986.isValidURI(string) else {

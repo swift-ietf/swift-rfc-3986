@@ -301,7 +301,7 @@ extension RFC_3986 {
     ///   - allowed: The set of bytes that should not be encoded
     /// - Returns: The percent-encoded bytes
     @inlinable
-    public static func percentEncode<Bytes: Collection>(
+    public static func percentEncode<Bytes: Swift.Collection>(
         _ bytes: Bytes,
         allowing allowed: ByteSet = .unreserved
     ) -> [UInt8] where Bytes.Element == UInt8 {
@@ -327,7 +327,7 @@ extension RFC_3986 {
     ///   - buffer: The buffer to append encoded bytes to
     ///   - allowed: The set of bytes that should not be encoded
     @inlinable
-    public static func percentEncode<Bytes: Collection, Buffer: RangeReplaceableCollection>(
+    public static func percentEncode<Bytes: Swift.Collection, Buffer: RangeReplaceableCollection>(
         _ bytes: Bytes,
         into buffer: inout Buffer,
         allowing allowed: ByteSet = .unreserved
@@ -350,7 +350,7 @@ extension RFC_3986 {
     /// - Parameter bytes: The percent-encoded bytes
     /// - Returns: The decoded bytes
     @inlinable
-    public static func percentDecode<Bytes: Collection>(
+    public static func percentDecode<Bytes: Swift.Collection>(
         _ bytes: Bytes
     ) -> [UInt8] where Bytes.Element == UInt8 {
         var result: [UInt8] = []

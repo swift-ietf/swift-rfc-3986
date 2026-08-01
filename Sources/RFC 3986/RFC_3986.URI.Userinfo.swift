@@ -131,7 +131,7 @@ extension RFC_3986.URI.Userinfo: ASCII.Parseable {
     ///
     /// - Parameter bytes: The ASCII byte representation of the userinfo
     /// - Throws: `RFC_3986.URI.Userinfo.Error` if the bytes are malformed
-    public init<Bytes: Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         // Type-up: lift to ASCII.Code at the entry boundary so the body works
         // against ASCII.Code constants directly (RFC 3986 userinfo grammar is strict ASCII).
