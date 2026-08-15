@@ -103,11 +103,11 @@ struct `Developer Delight - Convenience APIs` {
     @Test
     func `settingFragment()`() throws {
         let base = try RFC_3986.URI("https://example.com/path")
-        let withFragment = base.settingFragment(try! RFC_3986.URI.Fragment("section"))
+        let withFragment = base.settingFragment(try RFC_3986.URI.Fragment("section"))
         #expect(withFragment.fragment?.value == "section")
 
         // Replace existing fragment
-        let replaced = withFragment.settingFragment(try! RFC_3986.URI.Fragment("other"))
+        let replaced = withFragment.settingFragment(try RFC_3986.URI.Fragment("other"))
         #expect(replaced.fragment?.value == "other")
     }
 }
@@ -125,7 +125,7 @@ struct `Developer Delight - Operators` {
     @Test
     func `/ operator for URI resolution - URI`() throws {
         let base = try RFC_3986.URI("https://example.com/path/")
-        let reference = try! RFC_3986.URI("file.txt")
+        let reference = try RFC_3986.URI("file.txt")
         let resolved = try base / reference
         #expect(resolved.value.hasSuffix("file.txt"))
     }
@@ -222,7 +222,7 @@ struct `Developer Delight - Fluent Chains` {
             .appendingPathComponent("users")
             .appendingQueryItem(name: "page", value: "1")
             .appendingQueryItem(name: "limit", value: "10")
-            .settingFragment(try! RFC_3986.URI.Fragment("results"))
+            .settingFragment(try RFC_3986.URI.Fragment("results"))
 
         #expect(uri.value.contains("/api/users"))
         #expect(uri.query?.string.contains("page=1") == true)

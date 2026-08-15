@@ -1166,16 +1166,16 @@ extension RFC_3986.URI {
 // MARK: - Codable
 
 extension RFC_3986.URI {
-    /// Decode a URI from a string
     // reason: Decodable's `init(from:) throws` requirement is fixed by the stdlib protocol — `any Decoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    /// Decode a URI from a string
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)
         try self.init(string)
     }
 
-    /// Encode the URI as a string
     // reason: Encodable's `encode(to:) throws` requirement is fixed by the stdlib protocol — `any Encoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+    /// Encode the URI as a string
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(value)
@@ -1271,6 +1271,7 @@ extension RFC_3986.URI: Comparable {
 // MARK: - Path Normalization
 
 extension RFC_3986 {
+    // swiftlint:disable cyclomatic_complexity
     /// Removes dot segments from a path per RFC 3986 Section 5.2.4
     ///
     /// This algorithm removes "." and ".." segments from paths to produce
@@ -1282,7 +1283,6 @@ extension RFC_3986 {
     /// - Returns: The path with dot segments removed
     ///
     /// - Note: Cyclomatic complexity inherent to RFC 3986 Section 5.2.4 algorithm
-    // swiftlint:disable cyclomatic_complexity
     public static func removeDotSegments(from path: String) -> String {
         var input = path
         var output = ""

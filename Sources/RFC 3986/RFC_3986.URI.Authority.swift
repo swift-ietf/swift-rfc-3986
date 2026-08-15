@@ -379,15 +379,20 @@ extension RFC_3986.URI.Authority: Codable {
 extension RFC_3986.URI.Authority {
     /// Errors that can occur when parsing an authority component
     public enum Error: Swift.Error, Sendable, Equatable, CustomStringConvertible {
-        /// The userinfo component is invalid
         // reason: boxes whichever concrete error the userinfo validator produced; a generic parameter can't unify with `invalidHost`'s independently-typed underlying error on the same enum.
-        // swiftlint:disable:next no_any_protocol_existential
+        // The block form is used here instead of `disable:next` because this declaration
+        // carries a doc comment: a directive between the doc comment and the declaration
+        // trips `orphaned_doc_comment`.
+        // swiftlint:disable no_any_protocol_existential
+        /// The userinfo component is invalid
         case invalidUserinfo(String, underlying: any Swift.Error)
+        // swiftlint:enable no_any_protocol_existential
 
-        /// The host component is invalid
         // reason: boxes whichever concrete error the host validator produced; a generic parameter can't unify with `invalidUserinfo`'s independently-typed underlying error on the same enum.
-        // swiftlint:disable:next no_any_protocol_existential
+        // swiftlint:disable no_any_protocol_existential
+        /// The host component is invalid
         case invalidHost(String, underlying: any Swift.Error)
+        // swiftlint:enable no_any_protocol_existential
 
         /// The port component is invalid
         case invalidPort(String)

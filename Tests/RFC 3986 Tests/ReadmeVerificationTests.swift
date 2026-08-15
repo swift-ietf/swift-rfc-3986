@@ -6,9 +6,9 @@ import Testing
 struct `README Verification` {
 
     @Test
-    func `Creating URIs - from string literal`() {
-        // From README example - now requires explicit try!
-        let uri = try! RFC_3986.URI("https://example.com/path")
+    func `Creating URIs - from string literal`() throws {
+        // From README example - now requires explicit try
+        let uri = try RFC_3986.URI("https://example.com/path")
 
         #expect(uri.value == "https://example.com/path")
     }

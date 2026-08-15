@@ -57,7 +57,7 @@ struct `URI Validation` {
         // Can create a URI from empty string
         let uri = try? RFC_3986.URI("")
         #expect(uri != nil)
-        #expect(uri?.value == "")
+        #expect(uri?.value.isEmpty == true)
     }
 
     @Test
@@ -78,8 +78,8 @@ struct `URI Validation` {
 struct `URI Creation` {
 
     @Test
-    func `Create URI from string literal`() {
-        let uri = try! RFC_3986.URI("https://example.com")
+    func `Create URI from string literal`() throws {
+        let uri = try RFC_3986.URI("https://example.com")
         #expect(uri.value == "https://example.com")
     }
 
