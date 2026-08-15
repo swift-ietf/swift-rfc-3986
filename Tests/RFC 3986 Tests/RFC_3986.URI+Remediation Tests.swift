@@ -11,7 +11,7 @@ import Testing
 /// the post-fix source (see `O/remediation/swift-rfc-3986/REPORT.md` for the
 /// captured before/after `swift test` output).
 extension RFC_3986.URI {
-    @Suite("Remediation")
+    @Suite
     struct Remediation {
         @Suite struct Unit {}
         @Suite struct `Edge Case` {}

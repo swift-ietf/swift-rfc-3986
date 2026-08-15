@@ -83,7 +83,7 @@ struct `RFC_3986 percentEncode()` {
     @Test
     func `Empty string`() {
         let encoded = RFC_3986.percentEncode("")
-        #expect(encoded == "")
+        #expect(encoded.isEmpty)
     }
 
     @Test
@@ -125,7 +125,7 @@ struct `RFC_3986 percentDecode()` {
     @Test
     func `Empty string`() {
         let decoded = RFC_3986.percentDecode("")
-        #expect(decoded == "")
+        #expect(decoded.isEmpty)
     }
 
     @Test(arguments: [
