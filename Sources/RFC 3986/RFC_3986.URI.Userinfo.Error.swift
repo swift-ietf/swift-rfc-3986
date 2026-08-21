@@ -1,37 +1,14 @@
-// ===----------------------------------------------------------------------===//
-//
-// Copyright (c) 2025 Coen ten Thije Boonkkamp
-// Licensed under Apache License v2.0
-//
-// See LICENSE.txt for license information
-// See CONTRIBUTORS.txt for the list of project contributors
-//
-// SPDX-License-Identifier: Apache-2.0
-//
-// ===----------------------------------------------------------------------===//
-
-// URI.Userinfo.Error.swift
-// swift-rfc-3986
-//
-// Userinfo-level validation errors
-
 public import ASCII_Serializer_Primitives
 
 extension RFC_3986.URI.Userinfo {
-    /// Errors that can occur during userinfo validation
-    ///
-    /// These represent constraint violations for URI userinfo,
-    /// as defined by RFC 3986 Section 3.2.1.
+
     public enum Error: Swift.Error, Sendable, Equatable {
-        /// Userinfo contains an invalid byte
+
         case invalidCharacter(_ value: String, byte: Byte, reason: String)
 
-        /// Userinfo contains malformed percent-encoding
         case invalidPercentEncoding(_ value: String, reason: String)
     }
 }
-
-// MARK: - CustomStringConvertible
 
 extension RFC_3986.URI.Userinfo.Error: CustomStringConvertible {
     public var description: String {

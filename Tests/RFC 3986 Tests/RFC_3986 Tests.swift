@@ -10,17 +10,16 @@ struct `RFC_3986 percentEncode()` {
         let input = "hello world"
         let encoded = RFC_3986.percentEncode(input)
 
-        // RFC 3986 should use UPPERCASE
         #expect(encoded.contains("%20"))
-        #expect(!encoded.contains("%2a"))  // Should never have lowercase
+        #expect(!encoded.contains("%2a"))
     }
 
     @Test
     func `Encode special characters`() {
         let input = "hello?world#test"
         let encoded = RFC_3986.percentEncode(input)
-        #expect(encoded.contains("%3F"))  // ?
-        #expect(encoded.contains("%23"))  // #
+        #expect(encoded.contains("%3F"))
+        #expect(encoded.contains("%23"))
     }
 
     @Test
@@ -35,11 +34,9 @@ struct `RFC_3986 percentEncode()` {
         let input = "hello 🌍 world"
         let encoded = RFC_3986.percentEncode(input)
 
-        // Should be percent-encoded
         #expect(encoded.contains("%"))
         #expect(!encoded.contains("🌍"))
 
-        // Decode should restore emoji
         let decoded = RFC_3986.percentDecode(encoded)
         #expect(decoded == input)
     }
@@ -49,11 +46,9 @@ struct `RFC_3986 percentEncode()` {
         let input = "café"
         let encoded = RFC_3986.percentEncode(input)
 
-        // é should be encoded
         #expect(encoded.contains("%"))
         #expect(encoded.contains("caf"))
 
-        // Decode should restore
         let decoded = RFC_3986.percentDecode(encoded)
         #expect(decoded == input)
     }
@@ -63,17 +58,15 @@ struct `RFC_3986 percentEncode()` {
         let input = "寿司"
         let encoded = RFC_3986.percentEncode(input)
 
-        // Should be fully percent-encoded
         #expect(encoded.allSatisfy { $0 == "%" || $0.isASCII })
 
-        // Decode should restore
         let decoded = RFC_3986.percentDecode(encoded)
         #expect(decoded == input)
     }
 
     @Test
     func `Multi-byte UTF-8 sequences`() {
-        let input = "a\u{0301}"  // a with combining acute accent
+        let input = "a\u{0301}"
         let encoded = RFC_3986.percentEncode(input)
         let decoded = RFC_3986.percentDecode(encoded)
 
@@ -88,10 +81,9 @@ struct `RFC_3986 percentEncode()` {
 
     @Test
     func `String that is 100% percent-encoded`() {
-        let input = "   "  // Three spaces
+        let input = "   "
         let encoded = RFC_3986.percentEncode(input)
 
-        // Should be all percent-encoded
         #expect(encoded == "%20%20%20")
 
         let decoded = RFC_3986.percentDecode(encoded)
@@ -129,10 +121,10 @@ struct `RFC_3986 percentDecode()` {
     }
 
     @Test(arguments: [
-        ("hello%2", "hello%2"),  // Incomplete encoding
-        ("hello%G0", "hello%G0"),  // Non-hex digit
-        ("test%", "test%"),  // Incomplete at end
-        ("%ZZ", "%ZZ"),  // Invalid hex digits
+        ("hello%2", "hello%2"),
+        ("hello%G0", "hello%G0"),
+        ("test%", "test%"),
+        ("%ZZ", "%ZZ"),
     ])
     func `Invalid percent-encoding returns original`(input: String, expected: String) {
         let decoded = RFC_3986.percentDecode(input)
@@ -149,7 +141,7 @@ struct `RFC_3986 percentDecode()` {
 
     @Test
     func `Consecutive percent signs`() {
-        let input = "test%25%25"  // Encoded percent signs
+        let input = "test%25%25"
         let decoded = RFC_3986.percentDecode(input)
 
         #expect(decoded == "test%%")
@@ -161,24 +153,23 @@ struct `RFC_3986 normalizePercentEncoding()` {
 
     @Test
     func `Normalize percent-encoding - uppercase hex`() {
-        let input = "hello%2fworld"  // lowercase hex
+        let input = "hello%2fworld"
         let normalized = RFC_3986.normalizePercentEncoding(input)
-        #expect(normalized == "hello%2Fworld")  // uppercase hex
+        #expect(normalized == "hello%2Fworld")
     }
 
     @Test
     func `Normalize percent-encoding - decode unreserved`() {
-        let input = "hello%2Dworld"  // encoded hyphen (unreserved)
+        let input = "hello%2Dworld"
         let normalized = RFC_3986.normalizePercentEncoding(input)
-        #expect(normalized == "hello-world")  // decoded
+        #expect(normalized == "hello-world")
     }
 
     @Test
     func `Already percent-encoded unreserved characters`() {
-        let input = "hello%2Dworld"  // Encoded hyphen (unreserved)
+        let input = "hello%2Dworld"
         let normalized = RFC_3986.normalizePercentEncoding(input)
 
-        // Should decode unreserved characters
         #expect(normalized == "hello-world")
     }
 }

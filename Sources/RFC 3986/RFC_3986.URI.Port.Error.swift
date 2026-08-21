@@ -1,40 +1,16 @@
-// ===----------------------------------------------------------------------===//
-//
-// Copyright (c) 2025 Coen ten Thije Boonkkamp
-// Licensed under Apache License v2.0
-//
-// See LICENSE.txt for license information
-// See CONTRIBUTORS.txt for the list of project contributors
-//
-// SPDX-License-Identifier: Apache-2.0
-//
-// ===----------------------------------------------------------------------===//
-
-// URI.Port.Error.swift
-// swift-rfc-3986
-//
-// Port-level validation errors
-
 public import ASCII_Serializer_Primitives
 
 extension RFC_3986.URI.Port {
-    /// Errors that can occur during port validation
-    ///
-    /// These represent constraint violations for URI ports,
-    /// as defined by RFC 3986 Section 3.2.3.
+
     public enum Error: Swift.Error, Sendable, Equatable {
-        /// Port is empty
+
         case empty
 
-        /// Port contains non-digit bytes
         case invalidCharacter(_ value: String, byte: Byte)
 
-        /// Port value overflows UInt16 (max 65535)
         case overflow(_ value: String)
     }
 }
-
-// MARK: - CustomStringConvertible
 
 extension RFC_3986.URI.Port.Error: CustomStringConvertible {
     public var description: String {

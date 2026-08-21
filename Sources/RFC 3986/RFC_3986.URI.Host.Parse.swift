@@ -1,20 +1,7 @@
-//
-//  RFC_3986.URI.Host.Parse.swift
-//  swift-rfc-3986
-//
-//  URI host: IP-literal / IPv4address / reg-name
-//
-
 public import Parser_Primitives
 
 extension RFC_3986.URI.Host {
-    /// Parses a URI host per RFC 3986 Section 3.2.2.
-    ///
-    /// `host = IP-literal / IPv4address / reg-name`
-    ///
-    /// Returns the raw byte slice including brackets for IP-literals.
-    /// Does not distinguish between IPv4 and reg-name (both consume the same
-    /// character set at the byte level).
+
     public struct Parse<Input: Collection.Slice.`Protocol`>: Sendable
     where Input: Sendable, Input.Element == UInt8 {
         @inlinable
@@ -23,14 +10,7 @@ extension RFC_3986.URI.Host {
 }
 
 extension RFC_3986.URI.Host {
-    /// Failures from the byte-level host ``Parse`` parser, distinct from
-    /// the validation ``Error``.
-    ///
-    /// Defined on the non-generic `Host` namespace, NOT nested in the
-    /// generic `Host.Parse<Input>`: a typed-throws error nested in a generic
-    /// type carries that type parameter, tripping `FunctionSignatureOpts`'
-    /// `!type.hasTypeParameter()` assertion on the typed-throws SIL argument
-    /// under `-c release` (SILArgument.cpp:40).
+
     public enum ParseFailure: Swift.Error, Sendable, Equatable {
         case unterminatedIPLiteral
     }
@@ -47,7 +27,7 @@ extension RFC_3986.URI.Host.Parse: Parser.`Protocol` {
         }
 
         if input[input.startIndex] == 0x5B {
-            // IP-literal: "[" ( IPv6address / IPvFuture ) "]"
+
             var index = input.startIndex
             input.formIndex(after: &index)
             while index < input.endIndex {
@@ -61,7 +41,7 @@ extension RFC_3986.URI.Host.Parse: Parser.`Protocol` {
             }
             throw .unterminatedIPLiteral
         } else {
-            // reg-name / IPv4address: *( unreserved / pct-encoded / sub-delims )
+
             var index = input.startIndex
             while index < input.endIndex {
                 let byte = input[index]

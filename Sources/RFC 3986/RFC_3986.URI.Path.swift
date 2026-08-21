@@ -2,63 +2,14 @@ public import ASCII_Serializer_Primitives
 public import Binary_Serializable_Primitives
 public import Parseable_ASCII_Primitives
 
-// MARK: - URI Path
-
 extension RFC_3986.URI {
-    /// URI path component per RFC 3986 Section 3.3
-    ///
-    /// The path component contains data, usually organized in hierarchical form,
-    /// that identifies a resource within the scope of the URI's scheme and authority.
-    ///
-    /// ## Example
-    /// ```swift
-    /// // Absolute path
-    /// let absolute = try RFC_3986.URI.Path(
-    ///     segments: ["users", "123", "profile"],
-    ///     isAbsolute: true
-    /// )
-    /// print(absolute.string) // "/users/123/profile"
-    ///
-    /// // Relative path
-    /// let relative = try RFC_3986.URI.Path(
-    ///     segments: ["docs", "readme.md"],
-    ///     isAbsolute: false
-    /// )
-    /// print(relative.string) // "docs/readme.md"
-    ///
-    /// // Parse from string
-    /// let parsed = try RFC_3986.URI.Path("/api/v1/users")
-    /// print(parsed.segments) // ["api", "v1", "users"]
-    /// ```
-    ///
-    /// ## RFC 3986 Reference
-    /// ```
-    /// path = path-abempty    ; begins with "/" or is empty
-    ///      / path-absolute   ; begins with "/" but not "//"
-    ///      / path-noscheme   ; begins with a non-colon segment
-    ///      / path-rootless   ; begins with a segment
-    ///      / path-empty      ; zero characters
-    /// ```
+
     public struct Path: Sendable, Equatable, Hashable {
-        /// The path segments (without separators)
-        ///
-        /// For example, "/users/123" has segments ["users", "123"]
+
         public let segments: [String]
 
-        /// Whether this is an absolute path (starts with /)
-        ///
-        /// Absolute paths start with "/" while relative paths do not.
         public let isAbsolute: Bool
 
-        /// Creates a path WITHOUT validation
-        ///
-        /// **Warning**: Bypasses RFC 3986 validation.
-        /// Only use with compile-time constants or pre-validated values.
-        ///
-        /// - Parameters:
-        ///   - unchecked: Void parameter to prevent accidental use
-        ///   - segments: The path segments (unchecked)
-        ///   - isAbsolute: Whether this is an absolute path
         init(
             __unchecked _: Void,
             segments: [String],
@@ -70,13 +21,8 @@ extension RFC_3986.URI {
     }
 }
 
-// MARK: - Serializable
-
 extension RFC_3986.URI.Path: ASCII.Serializable, Binary.Serializable {
-    /// Own `ASCII.Serializable` verb ([FAM-012]) — optional leading `/` then
-    /// `/`-joined segments, emitted directly onto the `ASCII.Code` substrate
-    /// (segment bytes are ASCII per the RFC 3986 path grammar; no byte-detour).
-    /// Output is identical to the Binary witness body (`serializeBytes`).
+
     public static func serialize<Buffer: RangeReplaceableCollection>(
         _ value: Self,
         into buffer: inout Buffer
@@ -93,8 +39,6 @@ extension RFC_3986.URI.Path: ASCII.Serializable, Binary.Serializable {
         }
     }
 
-    /// Explicit `Binary.Serializable` witness disambiguating the two
-    /// constraint-incomparable `serialize(_:into:)` defaults.
     public static func serialize<Buffer: RangeReplaceableCollection>(
         _ value: Self,
         into buffer: inout Buffer
@@ -102,8 +46,6 @@ extension RFC_3986.URI.Path: ASCII.Serializable, Binary.Serializable {
         serializeBytes(value, into: &buffer)
     }
 
-    /// Byte-domain serialization body (`path` = optional leading `/` then
-    /// `/`-joined segments).
     private static func serializeBytes<Buffer: RangeReplaceableCollection>(
         _ path: Self,
         into buffer: inout Buffer
@@ -121,41 +63,16 @@ extension RFC_3986.URI.Path: ASCII.Serializable, Binary.Serializable {
     }
 }
 
-// MARK: - Parseable
-
 extension RFC_3986.URI.Path: ASCII.Parseable {
-    /// Parses path from ASCII bytes (CANONICAL PRIMITIVE)
-    ///
-    /// This is the primitive parser that works at the byte level.
-    /// RFC 3986 paths follow one of: path-abempty / path-absolute / path-noscheme / path-rootless / path-empty
-    ///
-    /// ## Category Theory
-    ///
-    /// This is the fundamental parsing transformation:
-    /// - **Domain**: [Byte] (ASCII bytes)
-    /// - **Codomain**: RFC_3986.URI.Path (structured data)
-    ///
-    /// ## RFC 3986 Section 3.3
-    ///
-    /// ```
-    /// path = path-abempty / path-absolute / path-noscheme / path-rootless / path-empty
-    /// segment = *pchar
-    /// pchar = unreserved / pct-encoded / sub-delims / ":" / "@"
-    /// ```
-    ///
-    /// - Parameter bytes: The ASCII byte representation of the path
-    /// - Throws: `RFC_3986.URI.Path.Error` if the bytes are malformed
+
     public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
-        // Empty path
+
         guard !bytes.isEmpty else {
             self.init(__unchecked: (), segments: [], isAbsolute: false)
             return
         }
 
-        // Type-up: lift to ASCII.Code at the entry boundary so the body works
-        // against ASCII.Code constants directly (RFC 3986 path grammar is strict ASCII).
-        // Non-ASCII bytes fail with `invalidCharacter` carrying the offending Byte.
         let arr: [ASCII.Code]
         do throws(ASCII.Code.Error) {
             arr = try [ASCII.Code](bytes)
@@ -172,18 +89,15 @@ extension RFC_3986.URI.Path: ASCII.Parseable {
 
         let isAbsolute = arr.first == ASCII.Code.solidus
 
-        // Path is just "/"
         if arr.count == 1 && isAbsolute {
             self.init(__unchecked: (), segments: [], isAbsolute: true)
             return
         }
 
-        // Validate path characters (pchar / "/" / "?")
         var i = 0
         while i < arr.count {
             let code = arr[i]
 
-            // Check for percent-encoding
             if code == ASCII.Code.percentSign {
                 let next1 = i + 1
                 guard next1 < arr.count else {
@@ -211,7 +125,6 @@ extension RFC_3986.URI.Path: ASCII.Parseable {
                 continue
             }
 
-            // Check for newlines (invalid in paths)
             if code == ASCII.Code.lf || code == ASCII.Code.cr {
                 throw Error.invalidCharacter(
                     String(decoding: bytes, as: UTF8.self),
@@ -223,7 +136,6 @@ extension RFC_3986.URI.Path: ASCII.Parseable {
             i += 1
         }
 
-        // Parse segments
         let pathCodes: ArraySlice<ASCII.Code> = isAbsolute ? arr.dropFirst() : arr[...]
 
         if pathCodes.isEmpty {
@@ -231,7 +143,6 @@ extension RFC_3986.URI.Path: ASCII.Parseable {
             return
         }
 
-        // Split by '/'
         var segments: [String] = []
         var currentSegment: [ASCII.Code] = []
 
@@ -249,22 +160,15 @@ extension RFC_3986.URI.Path: ASCII.Parseable {
     }
 }
 
-// MARK: - Public Initializers
-
 extension RFC_3986.URI.Path {
-    /// Creates a path from segments
-    ///
-    /// - Parameters:
-    ///   - segments: The path segments (should not contain "/" or be percent-encoded)
-    ///   - isAbsolute: Whether this is an absolute path (defaults to true)
-    /// - Throws: `RFC_3986.URI.Path.Error` if segments contain invalid characters
+
     public init(segments: [String], isAbsolute: Bool = true) throws(Error) {
-        // Validate segments don't contain path separators
+
         for segment in segments {
             if segment.contains("/") {
                 throw Error.segmentContainsSeparator(segment)
             }
-            // Check for invalid whitespace
+
             if segment.contains(where: { $0.isNewline || ($0.isWhitespace && $0 != " ") }) {
                 throw Error.segmentContainsWhitespace(segment)
             }
@@ -273,53 +177,33 @@ extension RFC_3986.URI.Path {
         self.init(__unchecked: (), segments: segments, isAbsolute: isAbsolute)
     }
 
-    /// Creates a path from a string
-    ///
-    /// - Parameter string: The path string (e.g., "/users/123" or "docs/file.txt")
-    /// - Throws: `RFC_3986.URI.Path.Error` if the path is invalid
     public init(_ string: some StringProtocol) throws(Error) {
         try self.init(ascii: [Byte](string.utf8))
     }
 }
 
-// MARK: - Convenience Properties
-
 extension RFC_3986.URI.Path {
-    /// Returns true if this path is empty (no segments)
+
     public var isEmpty: Bool {
         segments.isEmpty
     }
 
-    /// The number of path segments
     public var count: Int {
         segments.count
     }
 
-    /// Appends a path segment
-    ///
-    /// - Parameter segment: The segment to append
-    /// - Returns: A new path with the segment appended
-    /// - Throws: `RFC_3986.URI.Path.Error` if the segment is invalid
     public func appending(_ segment: some StringProtocol) throws(Error) -> Self {
         var newSegments = segments
         newSegments.append(String(segment))
         return try Self(segments: newSegments, isAbsolute: isAbsolute)
     }
 
-    /// Appends multiple path segments
-    ///
-    /// - Parameter segments: The segments to append
-    /// - Returns: A new path with the segments appended
-    /// - Throws: `RFC_3986.URI.Path.Error` if any segment is invalid
     public func appending(contentsOf segments: [String]) throws(Error) -> Self {
         var newSegments = self.segments
         newSegments.append(contentsOf: segments)
         return try Self(segments: newSegments, isAbsolute: isAbsolute)
     }
 
-    /// Returns a new path with the last segment removed
-    ///
-    /// - Returns: A path with the last segment removed, or self if empty
     public func deletingLastSegment() -> Self {
         guard !segments.isEmpty else { return self }
         var newSegments = segments
@@ -327,18 +211,14 @@ extension RFC_3986.URI.Path {
         return Self(__unchecked: (), segments: newSegments, isAbsolute: isAbsolute)
     }
 
-    /// The last segment of the path, if any
     public var lastSegment: String? {
         segments.last
     }
 
-    /// The first segment of the path, if any
     public var firstSegment: String? {
         segments.first
     }
 }
-
-// MARK: - Collection
 
 extension RFC_3986.URI.Path: Swift.Collection {
     public typealias Index = Array<String>.Index
@@ -361,35 +241,22 @@ extension RFC_3986.URI.Path: Swift.Collection {
     }
 }
 
-// MARK: - ExpressibleByArrayLiteral
-
 extension RFC_3986.URI.Path: ExpressibleByArrayLiteral {
-    /// Creates a path from an array literal of segments
-    ///
-    /// Example:
-    /// ```swift
-    /// let path: RFC_3986.URI.Path = ["users", "123", "profile"]
-    /// ```
-    ///
-    /// - Note: Creates an absolute path by default. Use init(segments:isAbsolute:) for relative paths.
+
     public init(arrayLiteral elements: String...) {
         self.init(__unchecked: (), segments: elements, isAbsolute: true)
     }
 }
 
-// MARK: - CustomStringConvertible
-
 extension RFC_3986.URI.Path: CustomStringConvertible {
-    /// The path's ASCII serialization decoded as a `String`.
+
     public var description: String {
         String(decoding: serialized, as: UTF8.self)
     }
 }
 
-// MARK: - Codable
-
 extension RFC_3986.URI.Path: Codable {
-    // reason: Decodable's `init(from:) throws` requirement is fixed by the stdlib protocol — `any Decoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
+
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)
@@ -403,24 +270,14 @@ extension RFC_3986.URI.Path: Codable {
         }
     }
 
-    // reason: Encodable's `encode(to:) throws` requirement is fixed by the stdlib protocol — `any Encoder` and untyped `throws` cannot be replaced with a generic constraint or typed throws without breaking Codable conformance.
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(description)
     }
 }
 
-// MARK: - Byte Serialization
-
 extension [Byte] {
-    /// Creates ASCII byte representation of an RFC 3986 URI path
-    ///
-    /// ## Category Theory
-    ///
-    /// Natural transformation: RFC_3986.URI.Path → [Byte]
-    /// ```
-    /// Path → [Byte] (ASCII) → String (UTF-8)
-    /// ```
+
     public init(_ path: RFC_3986.URI.Path) {
         var bytes: [Byte] = []
 

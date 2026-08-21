@@ -37,24 +37,20 @@ struct `URI Validation` {
 
     @Test
     func `Valid URI - relative references`() {
-        // RFC 3986 Section 4.2: relative references are valid URI references
+
         #expect(RFC_3986.isValidURI("/path/to/resource"))
         #expect(RFC_3986.isValidURI("?query=value"))
         #expect(RFC_3986.isValidURI("#fragment"))
         #expect(RFC_3986.isValidURI("../relative/path"))
 
-        // Note: "example.com" without a scheme is technically a valid path (not a host)
-        // per RFC 3986, even though it's ambiguous
         #expect(RFC_3986.isValidURI("example.com"))
     }
 
     @Test
     func `Valid URI - empty string (same document reference)`() {
-        // Empty strings are valid as "same document reference"
-        // Used in href="" and RFC 6570 expansion with undefined variables
+
         #expect(RFC_3986.isValidURI(""))
 
-        // Can create a URI from empty string
         let uri = try? RFC_3986.URI("")
         #expect(uri != nil)
         #expect(uri?.value.isEmpty == true)
@@ -62,14 +58,14 @@ struct `URI Validation` {
 
     @Test
     func `Invalid URI - non-ASCII characters`() {
-        // RFC 3986 requires ASCII-only characters
+
         #expect(!RFC_3986.isValidURI("https://example.com/寿司"))
         #expect(!RFC_3986.isValidURI("https://例え.jp"))
     }
 
     @Test
     func `Valid URI - percent-encoded`() {
-        // Percent-encoded characters are valid ASCII
+
         #expect(RFC_3986.isValidURI("https://example.com/%E5%AF%BF%E5%8F%B8"))
     }
 }
@@ -242,9 +238,6 @@ struct `URI Component Parsing` {
     }
 }
 
-// NOTE: URL conformance tests removed - URL conformance moved to coenttb/swift-uri (Phase 3)
-// See /Users/coen/Developer/URI_ARCHITECTURE_PLAN.md for details
-
 @Suite
 struct `Path Normalization Algorithm` {
 
@@ -306,7 +299,6 @@ struct `URI normalizePercentEncoding()` {
         let uri = try RFC_3986.URI("https://example.com/hello%2dworld")
         let normalized = uri.normalizePercentEncoding()
 
-        // Hyphen is unreserved, should be decoded
         #expect(normalized.path?.description == "/hello-world")
         #expect(normalized.value == "https://example.com/hello-world")
     }
@@ -316,7 +308,6 @@ struct `URI normalizePercentEncoding()` {
         let uri = try RFC_3986.URI("https://example.com?key%3dvalue")
         let normalized = uri.normalizePercentEncoding()
 
-        // = is reserved in query, should stay encoded but uppercase
         #expect(normalized.query?.description.contains("%3D") == true)
     }
 
@@ -325,7 +316,6 @@ struct `URI normalizePercentEncoding()` {
         let uri = try RFC_3986.URI("https://example.com/test%2fpath")
         let normalized = uri.normalizePercentEncoding()
 
-        // Lowercase hex should become uppercase
         #expect(normalized.value.contains("%2F"))
         #expect(!normalized.value.contains("%2f"))
     }
@@ -335,7 +325,6 @@ struct `URI normalizePercentEncoding()` {
         let uri = try RFC_3986.URI("https://example.com/test%2dpath")
         let normalized = uri.normalizePercentEncoding()
 
-        // Should be different instances
         #expect(uri.value != normalized.value)
         #expect(uri.value == "https://example.com/test%2dpath")
         #expect(normalized.value == "https://example.com/test-path")
@@ -346,7 +335,6 @@ struct `URI normalizePercentEncoding()` {
         let uri = try RFC_3986.URI("https://example.com/test%2dpath?key%2dname=value")
         let normalized = uri.normalizePercentEncoding()
 
-        // Both should be normalized
         #expect(normalized.path?.description == "/test-path")
         #expect(normalized.query?.description.contains("key-name") == true)
     }

@@ -70,7 +70,7 @@ struct `String uri property` {
 
     @Test(arguments: [
         "not a valid uri 😀",
-        "https://例え.jp",  // Non-ASCII host
+        "https://例え.jp",
         "http://host with spaces.com",
     ])
     func `Invalid URI returns nil`(input: String) {
@@ -90,7 +90,6 @@ struct `String uri property` {
     func `Accessing URI methods`() {
         let uri = "https://example.com/hello%2dworld".uri
 
-        // Should be able to call methods
         let normalized = uri?.normalizePercentEncoding()
         #expect(normalized?.value == "https://example.com/hello-world")
 
@@ -110,9 +109,8 @@ struct `String percent encoding` {
         let input = "hello?world"
         let encoded = input.percentEncoded(allowing: .unreserved)
 
-        // RFC 3986 uses UPPERCASE hex per Section 6.2.2.2
-        #expect(encoded.contains("%3F"))  // Uppercase F
-        #expect(!encoded.contains("%3f"))  // No lowercase f
+        #expect(encoded.contains("%3F"))
+        #expect(!encoded.contains("%3f"))
     }
 
     @Test
@@ -120,7 +118,6 @@ struct `String percent encoding` {
         let unreserved = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
         let encoded = unreserved.percentEncoded(allowing: .unreserved)
 
-        // Unreserved characters should not be encoded
         #expect(encoded == unreserved)
     }
 
@@ -129,18 +126,17 @@ struct `String percent encoding` {
         let input = "hello world!@#$%"
         let encoded = input.percentEncoded(allowing: .unreserved)
 
-        // Space and special characters should be encoded
-        #expect(encoded.contains("%20"))  // space
-        #expect(encoded.contains("%21"))  // !
-        #expect(encoded.contains("%40"))  // @
-        #expect(encoded.contains("%23"))  // #
-        #expect(encoded.contains("%24"))  // $
-        #expect(encoded.contains("%25"))  // %
+        #expect(encoded.contains("%20"))
+        #expect(encoded.contains("%21"))
+        #expect(encoded.contains("%40"))
+        #expect(encoded.contains("%23"))
+        #expect(encoded.contains("%24"))
+        #expect(encoded.contains("%25"))
     }
 
     @Test
     func `Percent decoding handles multi-byte UTF-8`() {
-        let encoded = "caf%C3%A9"  // café
+        let encoded = "caf%C3%A9"
         let decoded = encoded.percentDecoded()
 
         #expect(decoded == "café")

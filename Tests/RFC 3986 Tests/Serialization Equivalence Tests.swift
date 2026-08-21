@@ -2,22 +2,9 @@ import Testing
 
 @testable import RFC_3986
 
-/// [FAM-012] dual-sibling equivalence.
-///
-/// Every RFC 3986 conformer is a text-protocol dual: it carries both an
-/// `ASCII.Serializable` text verb (`ASCII.Code`) and a `Binary.Serializable`
-/// wire verb (`Byte`). A URI (and each of its components) travels as ASCII text
-/// on the wire — an HTTP request-target, say — so its wire form is exactly its
-/// text form projected to bytes. The two independent format-sibling bodies must
-/// therefore agree byte-for-byte: `ascii.map(\.byte) == wire`. This suite guards
-/// the two bodies (each self-contained, no canonical `.serialized` detour)
-/// against drift — in particular the `URI.Host` IPv4/IPv6 arms, whose `Byte`
-/// verb composes the IP address's *ASCII* verb (not its raw-octet wire verb).
 @Suite
 struct `Serialization Equivalence` {
 
-    /// Serializes `value` through both format siblings and asserts the text verb's
-    /// output, projected to bytes, equals the wire verb's output.
     private func expectEquivalent<T: ASCII.Serializable & Binary.Serializable>(
         _ value: T,
         _ label: Comment

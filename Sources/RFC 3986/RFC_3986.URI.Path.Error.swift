@@ -1,43 +1,18 @@
-// ===----------------------------------------------------------------------===//
-//
-// Copyright (c) 2025 Coen ten Thije Boonkkamp
-// Licensed under Apache License v2.0
-//
-// See LICENSE.txt for license information
-// See CONTRIBUTORS.txt for the list of project contributors
-//
-// SPDX-License-Identifier: Apache-2.0
-//
-// ===----------------------------------------------------------------------===//
-
-// URI.Path.Error.swift
-// swift-rfc-3986
-//
-// Path-level validation errors
-
 public import ASCII_Serializer_Primitives
 
 extension RFC_3986.URI.Path {
-    /// Errors that can occur during path validation
-    ///
-    /// These represent constraint violations for URI paths,
-    /// as defined by RFC 3986 Section 3.3.
+
     public enum Error: Swift.Error, Sendable, Equatable {
-        /// Path segment contains a path separator
+
         case segmentContainsSeparator(_ segment: String)
 
-        /// Path segment contains invalid whitespace
         case segmentContainsWhitespace(_ segment: String)
 
-        /// Path contains an invalid byte
         case invalidCharacter(_ value: String, byte: Byte, reason: String)
 
-        /// Path contains malformed percent-encoding
         case invalidPercentEncoding(_ value: String, reason: String)
     }
 }
-
-// MARK: - CustomStringConvertible
 
 extension RFC_3986.URI.Path.Error: CustomStringConvertible {
     public var description: String {

@@ -1,18 +1,7 @@
-//
-//  RFC_3986.URI.Path.Parse.swift
-//  swift-rfc-3986
-//
-//  URI path: *( pchar / "/" )
-//
-
 public import Parser_Primitives
 
 extension RFC_3986.URI.Path {
-    /// Parses a URI path per RFC 3986 Section 3.3.
-    ///
-    /// Consumes `pchar` and `/` characters. Returns the raw byte slice.
-    /// Does not distinguish between path-abempty, path-absolute, path-rootless,
-    /// or path-empty — that classification is left to the caller.
+
     public struct Parse<Input: Collection.Slice.`Protocol`>: Sendable
     where Input: Sendable, Input.Element == UInt8 {
         @inlinable

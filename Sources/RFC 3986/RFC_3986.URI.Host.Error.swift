@@ -1,46 +1,20 @@
-// ===----------------------------------------------------------------------===//
-//
-// Copyright (c) 2025 Coen ten Thije Boonkkamp
-// Licensed under Apache License v2.0
-//
-// See LICENSE.txt for license information
-// See CONTRIBUTORS.txt for the list of project contributors
-//
-// SPDX-License-Identifier: Apache-2.0
-//
-// ===----------------------------------------------------------------------===//
-
-// URI.Host.Error.swift
-// swift-rfc-3986
-//
-// Host-level validation errors
-
 public import ASCII_Serializer_Primitives
 
 extension RFC_3986.URI.Host {
-    /// Errors that can occur during host validation
-    ///
-    /// These represent constraint violations for URI hosts,
-    /// as defined by RFC 3986 Section 3.2.2.
+
     public enum Error: Swift.Error, Sendable, Equatable {
-        /// Host is empty
+
         case empty
 
-        /// IPv6 address is malformed
         case invalidIPv6(_ value: String, reason: String)
 
-        /// IPv4 address is malformed
         case invalidIPv4(_ value: String, reason: String)
 
-        /// Registered name is malformed
         case invalidRegisteredName(_ value: String, reason: String)
 
-        /// Host contains an invalid byte
         case invalidCharacter(_ value: String, byte: Byte, reason: String)
     }
 }
-
-// MARK: - CustomStringConvertible
 
 extension RFC_3986.URI.Host.Error: CustomStringConvertible {
     public var description: String {

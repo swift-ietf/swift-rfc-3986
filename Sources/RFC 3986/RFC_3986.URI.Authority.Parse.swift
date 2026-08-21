@@ -1,19 +1,7 @@
-//
-//  RFC_3986.URI.Authority.Parse.swift
-//  swift-rfc-3986
-//
-//  URI authority: [ userinfo "@" ] host [ ":" port ]
-//
-
 public import Parser_Primitives
 
 extension RFC_3986.URI.Authority {
-    /// Parses a URI authority per RFC 3986 Section 3.2.
-    ///
-    /// `authority = [ userinfo "@" ] host [ ":" port ]`
-    ///
-    /// Detects userinfo by scanning for `@` within the authority boundary.
-    /// Returns structured output with optional userinfo, host slice, and optional port.
+
     public struct Parse<Input: Collection.Slice.`Protocol`>: Sendable
     where Input: Sendable, Input.Element == UInt8 {
         @inlinable
@@ -38,14 +26,7 @@ extension RFC_3986.URI.Authority.Parse {
 }
 
 extension RFC_3986.URI.Authority {
-    /// Failures from the byte-level authority ``Parse`` parser, distinct
-    /// from the validation ``Error``.
-    ///
-    /// Defined on the non-generic `Authority` namespace, NOT nested in the
-    /// generic `Authority.Parse<Input>`, to avoid the typed-throws /
-    /// `FunctionSignatureOpts` `!type.hasTypeParameter()` crash under
-    /// `-c release` (SILArgument.cpp:40). `Output` stays nested in `Parse`
-    /// (it depends on `Input`).
+
     public enum ParseFailure: Swift.Error, Sendable, Equatable {
         case unterminatedIPLiteral
         case portOverflow
@@ -57,18 +38,18 @@ extension RFC_3986.URI.Authority.Parse: Parser.`Protocol` {
 
     @inlinable
     public func parse(_ input: inout Input) throws(Failure) -> Output {
-        // Step 1: Scan for @ to detect userinfo (without consuming input)
+
         var userinfo: Input? = nil
         let saved = input
         var scanIndex = input.startIndex
         var foundAt = false
         while scanIndex < input.endIndex {
             let byte = input[scanIndex]
-            if byte == 0x40 {  // @
+            if byte == 0x40 {
                 foundAt = true
                 break
             }
-            // Stop at authority boundary chars
+
             if byte == 0x2F || byte == 0x3F || byte == 0x23 { break }
             input.formIndex(after: &scanIndex)
         }
@@ -80,10 +61,9 @@ extension RFC_3986.URI.Authority.Parse: Parser.`Protocol` {
             input = saved
         }
 
-        // Step 2: Parse host
         let host: Input
         if input.startIndex < input.endIndex && input[input.startIndex] == 0x5B {
-            // IP-literal: "[" ... "]"
+
             var index = input.startIndex
             input.formIndex(after: &index)
             while index < input.endIndex {
@@ -97,7 +77,7 @@ extension RFC_3986.URI.Authority.Parse: Parser.`Protocol` {
             }
             throw .unterminatedIPLiteral
         } else {
-            // reg-name / IPv4address
+
             var index = input.startIndex
             while index < input.endIndex {
                 let byte = input[index]

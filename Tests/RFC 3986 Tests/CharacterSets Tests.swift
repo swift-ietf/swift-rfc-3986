@@ -45,25 +45,21 @@ struct `CharacterSet SetAlgebra Conformance` {
     func `CharacterSet union()`() {
         let combined = RFC_3986.CharacterSet.unreserved.union(.reserved)
 
-        // Should contain unreserved characters
         #expect(combined.contains("a"))
         #expect(combined.contains("-"))
 
-        // Should contain reserved characters
         #expect(combined.contains(":"))
         #expect(combined.contains("/"))
     }
 
     @Test
     func `CharacterSet intersection()`() {
-        // genDelims is a subset of reserved
+
         let intersection = RFC_3986.CharacterSet.reserved.intersection(.genDelims)
 
-        // Should contain genDelims characters
         #expect(intersection.contains(":"))
         #expect(intersection.contains("/"))
 
-        // Should not contain subDelims-only characters
         #expect(!intersection.contains("!"))
         #expect(!intersection.contains("$"))
     }
@@ -72,16 +68,13 @@ struct `CharacterSet SetAlgebra Conformance` {
     func `CharacterSet symmetricDifference()`() {
         let diff = RFC_3986.CharacterSet.genDelims.symmetricDifference(.subDelims)
 
-        // Should contain genDelims but not subDelims
         #expect(diff.contains(":"))
         #expect(diff.contains("/"))
 
-        // Should contain subDelims but not genDelims
         #expect(diff.contains("!"))
         #expect(diff.contains("$"))
 
-        // Reserved = genDelims + subDelims, so nothing should overlap
-        #expect(!diff.contains("x"))  // Not in either set
+        #expect(!diff.contains("x"))
     }
 
     @Test
@@ -96,12 +89,10 @@ struct `CharacterSet SetAlgebra Conformance` {
     func `CharacterSet mutating operations`() {
         var mutableSet = RFC_3986.CharacterSet.unreserved
 
-        // Test insert
         let (inserted, _) = mutableSet.insert("🔥")
         #expect(inserted)
         #expect(mutableSet.contains("🔥"))
 
-        // Test remove
         let removed = mutableSet.remove("🔥")
         #expect(removed == "🔥")
         #expect(!mutableSet.contains("🔥"))
@@ -122,8 +113,8 @@ struct `Percent Encoding` {
     func `Encode special characters`() {
         let input = "hello?world#test"
         let encoded = RFC_3986.percentEncode(input)
-        #expect(encoded.contains("%3F"))  // ?
-        #expect(encoded.contains("%23"))  // #
+        #expect(encoded.contains("%3F"))
+        #expect(encoded.contains("%23"))
     }
 
     @Test
@@ -142,32 +133,32 @@ struct `Percent Encoding` {
 
     @Test
     func `Normalize percent-encoding - uppercase hex`() {
-        let input = "hello%2fworld"  // lowercase hex
+        let input = "hello%2fworld"
         let normalized = RFC_3986.normalizePercentEncoding(input)
-        #expect(normalized == "hello%2Fworld")  // uppercase hex
+        #expect(normalized == "hello%2Fworld")
     }
 
     @Test
     func `Normalize percent-encoding - decode unreserved`() {
-        let input = "hello%2Dworld"  // encoded hyphen (unreserved)
+        let input = "hello%2Dworld"
         let normalized = RFC_3986.normalizePercentEncoding(input)
-        #expect(normalized == "hello-world")  // decoded
+        #expect(normalized == "hello-world")
     }
 
     @Test
     func `Encode path segment with allowed characters`() {
         let input = "path/segment:with@special"
         let encoded = RFC_3986.percentEncode(input, allowing: .pathSegment)
-        #expect(!encoded.contains("%3A"))  // : should not be encoded in path
-        #expect(!encoded.contains("%40"))  // @ should not be encoded in path
+        #expect(!encoded.contains("%3A"))
+        #expect(!encoded.contains("%40"))
     }
 
     @Test
     func `Encode query with allowed characters`() {
         let input = "key=value&foo=bar"
         let encoded = RFC_3986.percentEncode(input, allowing: .query)
-        #expect(!encoded.contains("%3D"))  // = should not be encoded in query
-        #expect(!encoded.contains("%26"))  // & should not be encoded in query
+        #expect(!encoded.contains("%3D"))
+        #expect(!encoded.contains("%26"))
     }
 }
 

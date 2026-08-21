@@ -4,12 +4,6 @@ import Testing
 
 @testable import RFC_3986
 
-/// Fable-448 wave-1 remediation regression suite for `RFC_3986.URI`.
-///
-/// Each test below corresponds to a CONFIRMED, in-scope finding fixed on this
-/// branch and is written to fail against the pre-fix source and pass against
-/// the post-fix source (see `O/remediation/swift-rfc-3986/REPORT.md` for the
-/// captured before/after `swift test` output).
 extension RFC_3986.URI {
     @Suite
     struct Remediation {
@@ -18,17 +12,8 @@ extension RFC_3986.URI {
     }
 }
 
-// MARK: - F-001 — Cache concurrency (blocker)
-
 extension RFC_3986.URI.Remediation.Unit {
-    /// F-001: `URI.Cache`'s components were `lazy var`s guarded by nothing —
-    /// `lazy` in Swift is not thread-safe, so many tasks racing on first
-    /// access to a freshly constructed, shared `URI`'s components could
-    /// observe torn/inconsistent state or trigger the initializer expression
-    /// concurrently (undefined behavior on a type declared `@unchecked
-    /// Sendable`). Post-fix, every component is computed once, eagerly, in
-    /// `Cache.init` as an immutable `let`, so every task must observe the
-    /// exact same fully-formed value.
+
     @Test
     func `Concurrent first access to cached components does not race`() throws {
         let uri = try RFC_3986.URI(
@@ -40,10 +25,6 @@ extension RFC_3986.URI.Remediation.Unit {
             path: String?, query: String?, fragment: String?
         )
 
-        // `DispatchQueue.concurrentPerform` fans out onto the real OS thread
-        // pool (unlike a `Task` group, which can serialize task start-up on
-        // its cooperative pool) to maximize genuine simultaneous first-access
-        // contention on `uri`'s cached components.
         let iterations = 2_000
         let snapshots = Mutex<[Snapshot]>([])
         snapshots.withLock { $0.reserveCapacity(iterations) }
@@ -77,13 +58,8 @@ extension RFC_3986.URI.Remediation.Unit {
     }
 }
 
-// MARK: - F-012 — structure injection via appendingPathComponent / appendingQueryItem (high)
-
 extension RFC_3986.URI.Remediation.Unit {
-    /// F-012: `appendingPathComponent` concatenated the caller-supplied
-    /// component into the path with no encoding at all, so an unencoded "/",
-    /// "?", or "#" in `component` could inject extra path segments, a query,
-    /// or a fragment into a URI the caller had already validated.
+
     @Test
     func `appendingPathComponent percent-encodes structural characters in the component`() throws {
         let base = try RFC_3986.URI("https://example.com/api")
@@ -95,10 +71,6 @@ extension RFC_3986.URI.Remediation.Unit {
         #expect(appended.fragment == nil)
     }
 
-    /// F-012: `appendingQueryItem` encoded name/value with `.query`, which
-    /// (via `sub-delims`) still permits raw "&" and "=" — so a caller-supplied
-    /// value could terminate its own pair and inject an additional
-    /// `name=value` pair into the query.
     @Test
     func `appendingQueryItem percent-encodes structural characters in name and value`() throws {
         let base = try RFC_3986.URI("https://example.com/path")
@@ -108,8 +80,6 @@ extension RFC_3986.URI.Remediation.Unit {
         #expect(appended.fragment == nil)
     }
 
-    /// F-012: injection also applies to the query item *name*, not just the
-    /// value.
     @Test
     func `appendingQueryItem percent-encodes structural characters in the name`() throws {
         let base = try RFC_3986.URI("https://example.com/path")
@@ -119,30 +89,18 @@ extension RFC_3986.URI.Remediation.Unit {
     }
 }
 
-// MARK: - F-002 — isValidURI blocklist vs. RFC 3986 grammar (correctness-high)
-
 extension RFC_3986.URI.Remediation.`Edge Case` {
-    /// F-002: the character blocklist had no rule about "%", so malformed
-    /// percent-encoding (`pct-encoded = "%" HEXDIG HEXDIG`, RFC 3986 Section
-    /// 2.1 is not satisfied by "%of" — "o" is not a hex digit) passed
-    /// validation. The grammar-derived validator rejects it.
+
     @Test
     func `isValidURI rejects malformed percent-encoding that the blocklist allowed`() {
         #expect(!RFC_3986.isValidURI("http://example.com/100%offsale"))
     }
 
-    /// F-002: an authority whose port fails to parse (non-digit) falls back
-    /// to folding the literal ":" and trailing text into the host string. A
-    /// blocklist has no opinion on ":"; `Host`'s own grammar
-    /// (`reg-name = *( unreserved / pct-encoded / sub-delims )`, no ":")
-    /// rejects it.
     @Test
     func `isValidURI rejects a colon folded into host by an unparseable port`() {
         #expect(!RFC_3986.isValidURI("http://example.com:notaport/path"))
     }
 
-    /// F-002: `URI.init` gates on the same grammar-derived validity as
-    /// `isValidURI`, so it must throw for the same inputs.
     @Test
     func `URI init throws for the same grammar violations isValidURI rejects`() {
         #expect(throws: RFC_3986.Error.self) {
