@@ -1,4 +1,4 @@
-import Parser_Primitives
+import Parser
 
 extension RFC_3986 {
     public enum Parse {}

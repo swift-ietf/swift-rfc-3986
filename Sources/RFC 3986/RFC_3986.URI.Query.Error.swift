@@ -1,4 +1,4 @@
-public import ASCII_Serializer_Primitives
+public import ASCII_Serializer
 
 extension RFC_3986.URI.Query {
 

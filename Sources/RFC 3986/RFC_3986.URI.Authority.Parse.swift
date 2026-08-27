@@ -1,4 +1,4 @@
-public import Parser_Primitives
+public import Parser
 
 extension RFC_3986.URI.Authority {
 

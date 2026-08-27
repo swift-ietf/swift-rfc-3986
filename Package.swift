@@ -18,23 +18,23 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/swift-primitives/swift-standard-library-extensions.git",
+            url: "https://github.com/swift-molecules/swift-standard-library-extensions.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-parser-primitives.git",
+            url: "https://github.com/swift-molecules/swift-parser.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-ascii-primitives.git",
+            url: "https://github.com/swift-molecules/swift-ascii.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-ascii-serializer-primitives.git",
+            url: "https://github.com/swift-molecules/swift-ascii-serializer.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-primitives/swift-ascii-parser-primitives.git",
+            url: "https://github.com/swift-molecules/swift-ascii-parser.git",
             branch: "main"
         ),
         .package(url: "https://github.com/swift-standards/swift-ipv4-standard.git", branch: "main"),
@@ -48,19 +48,19 @@ let package = Package(
                     name: "Standard Library Extensions",
                     package: "swift-standard-library-extensions"
                 ),
-                .product(name: "Parser Primitives", package: "swift-parser-primitives"),
-                .product(name: "ASCII Primitives", package: "swift-ascii-primitives"),
+                .product(name: "Parser", package: "swift-parser"),
+                .product(name: "ASCII", package: "swift-ascii"),
                 .product(
-                    name: "ASCII Serializer Primitives",
-                    package: "swift-ascii-serializer-primitives"
+                    name: "ASCII Serializer",
+                    package: "swift-ascii-serializer"
                 ),
                 .product(
-                    name: "ASCII Decimal Parser Primitives",
-                    package: "swift-ascii-parser-primitives"
+                    name: "ASCII Decimal Parser",
+                    package: "swift-ascii-parser"
                 ),
                 .product(
-                    name: "Parseable ASCII Primitives",
-                    package: "swift-ascii-parser-primitives"
+                    name: "Parseable ASCII",
+                    package: "swift-ascii-parser"
                 ),
                 .product(name: "IPv4 Standard", package: "swift-ipv4-standard"),
                 .product(name: "IPv6 Standard", package: "swift-ipv6-standard"),

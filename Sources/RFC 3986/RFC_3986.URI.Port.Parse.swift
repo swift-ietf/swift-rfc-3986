@@ -1,6 +1,6 @@
-public import ASCII_Decimal_Parser_Primitives
-import Byte_Primitives
-import Parser_Primitives
+public import ASCII_Decimal_Parser
+import Byte
+import Parser
 
 extension RFC_3986.URI.Port {
 
