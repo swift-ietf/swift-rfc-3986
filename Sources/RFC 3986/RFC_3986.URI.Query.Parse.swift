@@ -1,30 +1,42 @@
+public import Byte
+public import Cursor
 public import Parser
+import Checkpoint
+import Iterator_Protocol
 
 extension RFC_3986.URI.Query {
 
-    public struct Parse<Input: Collection.Slice.`Protocol`>: Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct Parse<Input: Cursor.`Protocol`>: Sendable
+    where Input.Element == Byte, Input.Failure == Never {
         @inlinable
         public init() {}
     }
 }
 
 extension RFC_3986.URI.Query.Parse: Parser.`Protocol` {
-    public typealias Output = Input
+    public typealias Output = [Byte]
     public typealias Failure = Never
+    public typealias Body = Never
 
     @inlinable
-    public func parse(_ input: inout Input) -> Input {
-        var index = input.startIndex
-        while index < input.endIndex {
-            let byte = input[index]
+    public func parse(_ input: inout Input) -> [Byte] {
+        var result: [Byte] = []
+        var checkpoint = input.checkpoint
 
-            guard byte != 0x23 else { break }
-            guard RFC_3986.Parse._isQueryOrFragmentChar(byte) else { break }
-            input.formIndex(after: &index)
+        while let byte = input.next() {
+            let raw = byte.bitPattern
+            guard raw != 0x23 else {
+                input.seek(to: checkpoint)
+                break
+            }
+            guard RFC_3986.Parse._isQueryOrFragmentChar(raw) else {
+                input.seek(to: checkpoint)
+                break
+            }
+            result.append(byte)
+            checkpoint = input.checkpoint
         }
-        let result = input[input.startIndex..<index]
-        input = input[index...]
+
         return result
     }
 }

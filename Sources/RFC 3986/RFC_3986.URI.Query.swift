@@ -1,6 +1,8 @@
 public import ASCII_Serializer
 public import Binary_Serializable
 public import Parseable_ASCII
+import Byte
+import Byte_Standard_Library_Integration
 
 extension RFC_3986.URI {
 
@@ -47,14 +49,14 @@ extension RFC_3986.URI.Query: Swift.RawRepresentable, ASCII.Serializable, Binary
         _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        for byte in value.rawValue.utf8 { buffer.append(Byte(byte)) }
+        for byte in value.rawValue.utf8 { buffer.append(Byte(bitPattern: byte)) }
     }
 }
 
 extension RFC_3986.URI.Query: ASCII.Parseable {
 
     public init(_ string: some StringProtocol) throws(Error) {
-        try self.init(ascii: [Byte](string.utf8))
+        try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
     public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
@@ -67,7 +69,12 @@ extension RFC_3986.URI.Query: ASCII.Parseable {
 
         let arr: [ASCII.Code]
         do throws(ASCII.Code.Error) {
-            arr = try [ASCII.Code](bytes)
+            var codes: [ASCII.Code] = []
+            codes.reserveCapacity(bytes.count)
+            for byte in bytes {
+                codes.append(try ASCII.Code(byte))
+            }
+            arr = codes
         } catch {
             switch error {
             case .notASCII(let byte):
@@ -143,12 +150,15 @@ extension RFC_3986.URI.Query: ASCII.Parseable {
             }
 
             if let eq = eqIdx {
-                let key = String(decoding: arr[lo..<eq], as: UTF8.self)
+                let key = String(decoding: arr[lo..<eq].lazy.map(\.underlying), as: UTF8.self)
                 guard !key.isEmpty else { throw Error.emptyKey }
-                let value = String(decoding: arr[(eq &+ 1)..<hi], as: UTF8.self)
+                let value = String(
+                    decoding: arr[(eq &+ 1)..<hi].lazy.map(\.underlying),
+                    as: UTF8.self
+                )
                 parameters.append((key, value))
             } else {
-                let key = String(decoding: arr[lo..<hi], as: UTF8.self)
+                let key = String(decoding: arr[lo..<hi].lazy.map(\.underlying), as: UTF8.self)
                 guard !key.isEmpty else { throw Error.emptyKey }
                 parameters.append((key, nil))
             }
@@ -187,7 +197,7 @@ extension RFC_3986.URI.Query {
             }
         }.joined(separator: "&")
 
-        try self.init(ascii: [Byte](queryString.utf8))
+        try self.init(ascii: queryString.utf8.map(Byte.init(bitPattern:)))
     }
 
     internal init(unchecked parameters: [(String, String?)]) {

@@ -1,6 +1,8 @@
 public import ASCII_Serializer
 public import Binary_Serializable
 public import Parseable_ASCII
+import Byte
+import Byte_Standard_Library_Integration
 
 extension RFC_3986.URI {
 
@@ -43,7 +45,7 @@ extension RFC_3986.URI.Scheme: Swift.RawRepresentable, ASCII.Serializable, Binar
         _ value: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        for byte in value.rawValue.utf8 { buffer.append(Byte(byte)) }
+        for byte in value.rawValue.utf8 { buffer.append(Byte(bitPattern: byte)) }
     }
 }
 
@@ -57,7 +59,7 @@ extension RFC_3986.URI.Scheme: CustomStringConvertible {
 extension RFC_3986.URI.Scheme: ASCII.Parseable {
 
     public init(_ string: some StringProtocol) throws(Error) {
-        try self.init(ascii: [Byte](string.utf8))
+        try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
     public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)

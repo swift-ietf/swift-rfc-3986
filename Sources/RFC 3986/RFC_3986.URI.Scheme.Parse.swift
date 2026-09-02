@@ -1,9 +1,13 @@
+public import Byte
+public import Cursor
 public import Parser
+import Checkpoint
+import Iterator_Protocol
 
 extension RFC_3986.URI.Scheme {
 
-    public struct Parse<Input: Collection.Slice.`Protocol`>: Sendable
-    where Input: Sendable, Input.Element == UInt8 {
+    public struct Parse<Input: Cursor.`Protocol`>: Sendable
+    where Input.Element == Byte, Input.Failure == Never {
         @inlinable
         public init() {}
     }
@@ -17,28 +21,31 @@ extension RFC_3986.URI.Scheme {
 }
 
 extension RFC_3986.URI.Scheme.Parse: Parser.`Protocol` {
-    public typealias Output = Input
+    public typealias Output = [Byte]
     public typealias Failure = RFC_3986.URI.Scheme.ParseFailure
+    public typealias Body = Never
 
     @inlinable
-    public func parse(_ input: inout Input) throws(Failure) -> Input {
-        var index = input.startIndex
+    public func parse(_ input: inout Input) throws(Failure) -> [Byte] {
+        var checkpoint = input.checkpoint
 
-        guard index < input.endIndex else { throw .expectedAlpha }
-        let first = input[index]
-        guard (first >= 0x41 && first <= 0x5A) || (first >= 0x61 && first <= 0x7A) else {
+        guard let first = input.next(), RFC_3986.Parse._isAlpha(first.bitPattern) else {
+            input.seek(to: checkpoint)
             throw .expectedAlpha
         }
-        input.formIndex(after: &index)
 
-        while index < input.endIndex {
-            let byte = input[index]
-            guard Self._isSchemeChar(byte) else { break }
-            input.formIndex(after: &index)
+        var result: [Byte] = [first]
+        checkpoint = input.checkpoint
+
+        while let byte = input.next() {
+            guard Self._isSchemeChar(byte.bitPattern) else {
+                input.seek(to: checkpoint)
+                break
+            }
+            result.append(byte)
+            checkpoint = input.checkpoint
         }
 
-        let result = input[input.startIndex..<index]
-        input = input[index...]
         return result
     }
 

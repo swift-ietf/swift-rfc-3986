@@ -1,4 +1,5 @@
 public import ASCII_Serializer
+import Byte
 
 extension RFC_3986.URI.Port {
 
@@ -20,7 +21,7 @@ extension RFC_3986.URI.Port.Error: CustomStringConvertible {
 
         case .invalidCharacter(let value, let byte):
             return
-                "Port '\(value)' contains invalid byte 0x\(String(byte, radix: 16)): only digits allowed"
+                "Port '\(value)' contains invalid byte 0x\(String(byte.bitPattern, radix: 16)): only digits allowed"
 
         case .overflow(let value):
             return "Port '\(value)' overflows maximum value of 65535"

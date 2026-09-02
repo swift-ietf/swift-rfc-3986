@@ -160,10 +160,8 @@ struct `Developer Delight - Error Messages` {
             let string = "https://example.com/寿司"
             _ = try RFC_3986.URI(string)
             Issue.record("Should have thrown an error")
-        } catch let error as RFC_3986.Error {
+        } catch let error {
             #expect(error.description.contains("ASCII"))
-        } catch {
-            Issue.record("Wrong error type")
         }
     }
 
@@ -173,10 +171,8 @@ struct `Developer Delight - Error Messages` {
             let string = "http://example.com/<invalid>"
             _ = try RFC_3986.URI(string)
             Issue.record("Should have thrown an error")
-        } catch let error as RFC_3986.Error {
+        } catch let error {
             #expect(error.description.contains("RFC 3986"))
-        } catch {
-            Issue.record("Wrong error type")
         }
     }
 }

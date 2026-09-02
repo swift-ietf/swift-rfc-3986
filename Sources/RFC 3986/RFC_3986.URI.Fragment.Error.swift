@@ -1,4 +1,5 @@
 public import ASCII_Serializer
+import Byte
 
 extension RFC_3986.URI.Fragment {
 
@@ -22,7 +23,7 @@ extension RFC_3986.URI.Fragment.Error: CustomStringConvertible {
             return "Fragment '\(value)' cannot contain newline characters"
 
         case .invalidCharacter(let value, let byte, let reason):
-            return "Fragment '\(value)' has invalid byte 0x\(String(byte, radix: 16)): \(reason)"
+            return "Fragment '\(value)' has invalid byte 0x\(String(byte.bitPattern, radix: 16)): \(reason)"
         }
     }
 }

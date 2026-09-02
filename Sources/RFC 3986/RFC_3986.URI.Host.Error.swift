@@ -1,4 +1,5 @@
 public import ASCII_Serializer
+import Byte
 
 extension RFC_3986.URI.Host {
 
@@ -32,7 +33,7 @@ extension RFC_3986.URI.Host.Error: CustomStringConvertible {
             return "Invalid registered name '\(value)': \(reason)"
 
         case .invalidCharacter(let value, let byte, let reason):
-            return "Host '\(value)' has invalid byte 0x\(String(byte, radix: 16)): \(reason)"
+            return "Host '\(value)' has invalid byte 0x\(String(byte.bitPattern, radix: 16)): \(reason)"
         }
     }
 }

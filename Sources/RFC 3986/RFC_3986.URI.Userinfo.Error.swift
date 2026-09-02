@@ -1,4 +1,5 @@
 public import ASCII_Serializer
+import Byte
 
 extension RFC_3986.URI.Userinfo {
 
@@ -14,7 +15,7 @@ extension RFC_3986.URI.Userinfo.Error: CustomStringConvertible {
     public var description: String {
         switch self {
         case .invalidCharacter(let value, let byte, let reason):
-            return "Userinfo '\(value)' has invalid byte 0x\(String(byte, radix: 16)): \(reason)"
+            return "Userinfo '\(value)' has invalid byte 0x\(String(byte.bitPattern, radix: 16)): \(reason)"
 
         case .invalidPercentEncoding(let value, let reason):
             return "Userinfo '\(value)' has invalid percent-encoding: \(reason)"

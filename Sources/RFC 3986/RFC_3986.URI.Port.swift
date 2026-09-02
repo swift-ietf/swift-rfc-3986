@@ -1,6 +1,8 @@
 public import ASCII_Serializer
 public import Binary_Serializable
 public import Parseable_ASCII
+import Byte
+import Byte_Standard_Library_Integration
 
 extension RFC_3986.URI {
 
@@ -37,7 +39,7 @@ extension RFC_3986.URI.Port: ASCII.Serializable, Binary.Serializable {
         _ port: Self,
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: String(port.value).utf8)
+        buffer.append(contentsOf: String(port.value).utf8.lazy.map(Byte.init(bitPattern:)))
     }
 }
 

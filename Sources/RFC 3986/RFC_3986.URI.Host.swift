@@ -3,6 +3,8 @@ public import Binary_Serializable
 public import IPv4_Standard
 public import IPv6_Standard
 public import Parseable_ASCII
+import Byte
+import Byte_Standard_Library_Integration
 
 extension RFC_3986.URI {
 
@@ -63,12 +65,12 @@ extension RFC_3986.URI.Host: ASCII.Serializable, Binary.Serializable {
                 buffer.append(ASCII.Code.percentSign.byte)
                 buffer.append(ASCII.Code.`2`.byte)
                 buffer.append(ASCII.Code.`5`.byte)
-                for byte in zone.utf8 { buffer.append(Byte(byte)) }
+                for byte in zone.utf8 { buffer.append(Byte(bitPattern: byte)) }
             }
             buffer.append(ASCII.Code.rightBracket.byte)
 
         case .registeredName(let name):
-            for byte in name.utf8 { buffer.append(Byte(byte)) }
+            for byte in name.utf8 { buffer.append(Byte(bitPattern: byte)) }
         }
     }
 }
@@ -76,7 +78,7 @@ extension RFC_3986.URI.Host: ASCII.Serializable, Binary.Serializable {
 extension RFC_3986.URI.Host: ASCII.Parseable {
 
     public init(_ string: some StringProtocol) throws(Error) {
-        try self.init(ascii: [Byte](string.utf8))
+        try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
     public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
@@ -89,7 +91,12 @@ extension RFC_3986.URI.Host: ASCII.Parseable {
 
         let arr: [ASCII.Code]
         do throws(ASCII.Code.Error) {
-            arr = try [ASCII.Code](bytes)
+            var codes: [ASCII.Code] = []
+            codes.reserveCapacity(bytes.count)
+            for byte in bytes {
+                codes.append(try ASCII.Code(byte))
+            }
+            arr = codes
         } catch {
             switch error {
             case .notASCII(let byte):
@@ -118,12 +125,12 @@ extension RFC_3986.URI.Host: ASCII.Parseable {
                         && innerArray[i + 2] == ASCII.Code.`5`
                     {
 
-                        decodedBytes.append(ASCII.Code.percentSign)
+                        decodedBytes.append(ASCII.Code.percentSign.byte)
                         i += 3
                         continue
                     }
                 }
-                decodedBytes.append(innerArray[i])
+                decodedBytes.append(innerArray[i].byte)
                 i += 1
             }
 
@@ -132,7 +139,7 @@ extension RFC_3986.URI.Host: ASCII.Parseable {
                 self = .ipv6(scopedAddress)
                 return
             } catch {
-                let innerString = String(decoding: innerCodes, as: UTF8.self)
+                let innerString = String(decoding: innerCodes.lazy.map(\.underlying), as: UTF8.self)
                 throw Error.invalidIPv6(innerString, reason: "Invalid IPv6 address")
             }
         }
@@ -190,7 +197,7 @@ extension RFC_3986.URI.Host {
         switch self {
         case .ipv4(let address):
 
-            return address.octets.0 == 127
+            return address.octets.0.bitPattern == 127
 
         case .ipv6(let scopedAddress):
             return scopedAddress.address.is.loopback

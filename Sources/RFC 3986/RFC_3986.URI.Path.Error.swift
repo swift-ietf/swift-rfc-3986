@@ -1,4 +1,5 @@
 public import ASCII_Serializer
+import Byte
 
 extension RFC_3986.URI.Path {
 
@@ -24,7 +25,7 @@ extension RFC_3986.URI.Path.Error: CustomStringConvertible {
             return "Path segment contains invalid whitespace: \(segment)"
 
         case .invalidCharacter(let value, let byte, let reason):
-            return "Path '\(value)' has invalid byte 0x\(String(byte, radix: 16)): \(reason)"
+            return "Path '\(value)' has invalid byte 0x\(String(byte.bitPattern, radix: 16)): \(reason)"
 
         case .invalidPercentEncoding(let value, let reason):
             return "Path '\(value)' has invalid percent-encoding: \(reason)"

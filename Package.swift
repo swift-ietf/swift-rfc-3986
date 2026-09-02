@@ -22,11 +22,11 @@ let package = Package(
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-parser.git",
+            url: "https://github.com/swift-atoms/swift-parser.git",
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-molecules/swift-ascii.git",
+            url: "https://github.com/swift-atoms/swift-ascii.git",
             branch: "main"
         ),
         .package(
@@ -35,6 +35,14 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/swift-molecules/swift-ascii-parser.git",
+            branch: "main"
+        ),
+        .package(url: "https://github.com/swift-atoms/swift-byte.git", branch: "main"),
+        .package(url: "https://github.com/swift-atoms/swift-cursor.git", branch: "main"),
+        .package(url: "https://github.com/swift-atoms/swift-checkpoint.git", branch: "main"),
+        .package(url: "https://github.com/swift-atoms/swift-iterator.git", branch: "main"),
+        .package(
+            url: "https://github.com/swift-molecules/swift-byte-parser.git",
             branch: "main"
         ),
         .package(url: "https://github.com/swift-standards/swift-ipv4-standard.git", branch: "main"),
@@ -62,6 +70,11 @@ let package = Package(
                     name: "Parseable ASCII",
                     package: "swift-ascii-parser"
                 ),
+                .product(name: "Byte", package: "swift-byte"),
+                .product(name: "Cursor", package: "swift-cursor"),
+                .product(name: "Checkpoint", package: "swift-checkpoint"),
+                .product(name: "Iterator", package: "swift-iterator"),
+                .product(name: "Iterator Protocol", package: "swift-iterator"),
                 .product(name: "IPv4 Standard", package: "swift-ipv4-standard"),
                 .product(name: "IPv6 Standard", package: "swift-ipv6-standard"),
             ]
@@ -69,17 +82,14 @@ let package = Package(
         .testTarget(
             name: "RFC 3986 Tests",
             dependencies: [
-                "RFC 3986"
+                "RFC 3986",
+                .product(name: "Byte", package: "swift-byte"),
+                .product(name: "Byte Parser", package: "swift-byte-parser"),
             ]
         ),
     ],
     swiftLanguageModes: [.v6]
 )
-
-extension String {
-    var tests: Self { self + " Tests" }
-    var foundation: Self { self + " Foundation" }
-}
 
 for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
     let ecosystem: [SwiftSetting] = [

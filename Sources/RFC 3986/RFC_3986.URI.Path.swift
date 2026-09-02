@@ -1,6 +1,8 @@
 public import ASCII_Serializer
 public import Binary_Serializable
 public import Parseable_ASCII
+import Byte
+import Byte_Standard_Library_Integration
 
 extension RFC_3986.URI {
 
@@ -51,14 +53,14 @@ extension RFC_3986.URI.Path: ASCII.Serializable, Binary.Serializable {
         into buffer: inout Buffer
     ) where Buffer.Element == Byte {
         if path.isAbsolute {
-            buffer.append(ASCII.Code.solidus)
+            buffer.append(ASCII.Code.solidus.byte)
         }
 
         for (index, segment) in path.segments.enumerated() {
             if index > 0 {
-                buffer.append(ASCII.Code.solidus)
+                buffer.append(ASCII.Code.solidus.byte)
             }
-            buffer.append(contentsOf: segment.utf8)
+            buffer.append(contentsOf: segment.utf8.lazy.map(Byte.init(bitPattern:)))
         }
     }
 }
@@ -75,7 +77,12 @@ extension RFC_3986.URI.Path: ASCII.Parseable {
 
         let arr: [ASCII.Code]
         do throws(ASCII.Code.Error) {
-            arr = try [ASCII.Code](bytes)
+            var codes: [ASCII.Code] = []
+            codes.reserveCapacity(bytes.count)
+            for byte in bytes {
+                codes.append(try ASCII.Code(byte))
+            }
+            arr = codes
         } catch {
             switch error {
             case .notASCII(let byte):
@@ -148,13 +155,13 @@ extension RFC_3986.URI.Path: ASCII.Parseable {
 
         for code in pathCodes {
             if code == ASCII.Code.solidus {
-                segments.append(String(decoding: currentSegment, as: UTF8.self))
+                segments.append(String(decoding: currentSegment.lazy.map(\.underlying), as: UTF8.self))
                 currentSegment = []
             } else {
                 currentSegment.append(code)
             }
         }
-        segments.append(String(decoding: currentSegment, as: UTF8.self))
+        segments.append(String(decoding: currentSegment.lazy.map(\.underlying), as: UTF8.self))
 
         self.init(__unchecked: (), segments: segments, isAbsolute: isAbsolute)
     }
@@ -178,7 +185,7 @@ extension RFC_3986.URI.Path {
     }
 
     public init(_ string: some StringProtocol) throws(Error) {
-        try self.init(ascii: [Byte](string.utf8))
+        try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 }
 
@@ -282,14 +289,14 @@ extension [Byte] {
         var bytes: [Byte] = []
 
         if path.isAbsolute {
-            bytes.append(ASCII.Code.solidus)
+            bytes.append(ASCII.Code.solidus.byte)
         }
 
         for (index, segment) in path.segments.enumerated() {
             if index > 0 {
-                bytes.append(ASCII.Code.solidus)
+                bytes.append(ASCII.Code.solidus.byte)
             }
-            bytes.append(contentsOf: segment.utf8)
+            bytes.append(contentsOf: segment.utf8.lazy.map(Byte.init(bitPattern:)))
         }
 
         self = bytes
