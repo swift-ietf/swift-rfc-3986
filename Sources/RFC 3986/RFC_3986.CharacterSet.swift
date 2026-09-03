@@ -272,7 +272,7 @@ extension RFC_3986 {
         allowing allowedCharacters: RFC_3986.CharacterSet = .unreserved
     ) -> String {
         var result = ""
-        let hexDigits = Array("0123456789ABCDEF")
+        let hexDigits = Array("0123456789ABCDEF" as String)
 
         for character in string {
             if allowedCharacters.contains(character) {
@@ -280,7 +280,7 @@ extension RFC_3986 {
             } else {
 
                 for byte in String(character).utf8 {
-                    result.append("%")
+                    result.append(Character("%"))
                     result.append(hexDigits[Int(byte >> 4)])
                     result.append(hexDigits[Int(byte & 0x0F)])
                 }
