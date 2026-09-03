@@ -229,14 +229,14 @@ extension RFC_3986.URI.Cache {
         let components = parseURI(string)
 
         if let scheme = components.scheme {
-            guard RFC_3986.Parse._isValidScheme(scheme.utf8) else { return nil }
+            guard RFC_3986.Grammar.isValidScheme(scheme.utf8) else { return nil }
         }
 
         if let userinfo = components.userinfo {
             guard
-                RFC_3986.Parse._isGrammarValid(
+                RFC_3986.Grammar.isGrammarValid(
                     userinfo.utf8,
-                    allowedRawByte: RFC_3986.Parse._isUserinfoChar
+                    allowedRawByte: RFC_3986.Grammar.isUserinfoChar
                 )
             else { return nil }
         }
@@ -251,9 +251,9 @@ extension RFC_3986.URI.Cache {
 
         if let path = components.path {
             guard
-                RFC_3986.Parse._isGrammarValid(
+                RFC_3986.Grammar.isGrammarValid(
                     path.utf8,
-                    allowedRawByte: { RFC_3986.Parse._isPchar($0) || $0 == 0x2F }
+                    allowedRawByte: { RFC_3986.Grammar.isPchar($0) || $0 == 0x2F }
                 )
             else { return nil }
 
@@ -265,18 +265,18 @@ extension RFC_3986.URI.Cache {
 
         if let query = components.query {
             guard
-                RFC_3986.Parse._isGrammarValid(
+                RFC_3986.Grammar.isGrammarValid(
                     query.utf8,
-                    allowedRawByte: RFC_3986.Parse._isQueryOrFragmentChar
+                    allowedRawByte: RFC_3986.Grammar.isQueryOrFragmentChar
                 )
             else { return nil }
         }
 
         if let fragment = components.fragment {
             guard
-                RFC_3986.Parse._isGrammarValid(
+                RFC_3986.Grammar.isGrammarValid(
                     fragment.utf8,
-                    allowedRawByte: RFC_3986.Parse._isQueryOrFragmentChar
+                    allowedRawByte: RFC_3986.Grammar.isQueryOrFragmentChar
                 )
             else { return nil }
         }

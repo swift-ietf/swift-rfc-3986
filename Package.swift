@@ -22,10 +22,6 @@ let package = Package(
             branch: "main"
         ),
         .package(
-            url: "https://github.com/swift-atoms/swift-parser.git",
-            branch: "main"
-        ),
-        .package(
             url: "https://github.com/swift-atoms/swift-ascii.git",
             branch: "main"
         ),
@@ -38,9 +34,6 @@ let package = Package(
             branch: "main"
         ),
         .package(url: "https://github.com/swift-atoms/swift-byte.git", branch: "main"),
-        .package(url: "https://github.com/swift-atoms/swift-cursor.git", branch: "main"),
-        .package(url: "https://github.com/swift-atoms/swift-checkpoint.git", branch: "main"),
-        .package(url: "https://github.com/swift-atoms/swift-iterator.git", branch: "main"),
         .package(url: "https://github.com/swift-standards/swift-ipv4-standard.git", branch: "main"),
         .package(url: "https://github.com/swift-standards/swift-ipv6-standard.git", branch: "main"),
     ],
@@ -52,25 +45,16 @@ let package = Package(
                     name: "Standard Library Extensions",
                     package: "swift-standard-library-extensions"
                 ),
-                .product(name: "Parser", package: "swift-parser"),
                 .product(name: "ASCII", package: "swift-ascii"),
                 .product(
                     name: "ASCII Serializer",
                     package: "swift-ascii-serializer"
                 ),
                 .product(
-                    name: "ASCII Decimal Parser",
-                    package: "swift-ascii-parser"
-                ),
-                .product(
                     name: "Parseable ASCII",
                     package: "swift-ascii-parser"
                 ),
                 .product(name: "Byte", package: "swift-byte"),
-                .product(name: "Cursor", package: "swift-cursor"),
-                .product(name: "Checkpoint", package: "swift-checkpoint"),
-                .product(name: "Iterator", package: "swift-iterator"),
-                .product(name: "Iterator Protocol", package: "swift-iterator"),
                 .product(name: "IPv4 Standard", package: "swift-ipv4-standard"),
                 .product(name: "IPv6 Standard", package: "swift-ipv6-standard"),
             ]
@@ -81,7 +65,6 @@ let package = Package(
                 "RFC 3986",
                 .product(name: "Byte", package: "swift-byte"),
                 .product(name: "Byte Standard Library Integration", package: "swift-byte"),
-                .product(name: "Cursor Standard Library Integration", package: "swift-cursor"),
             ]
         ),
     ],
