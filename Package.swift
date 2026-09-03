@@ -41,10 +41,6 @@ let package = Package(
         .package(url: "https://github.com/swift-atoms/swift-cursor.git", branch: "main"),
         .package(url: "https://github.com/swift-atoms/swift-checkpoint.git", branch: "main"),
         .package(url: "https://github.com/swift-atoms/swift-iterator.git", branch: "main"),
-        .package(
-            url: "https://github.com/swift-molecules/swift-byte-parser.git",
-            branch: "main"
-        ),
         .package(url: "https://github.com/swift-standards/swift-ipv4-standard.git", branch: "main"),
         .package(url: "https://github.com/swift-standards/swift-ipv6-standard.git", branch: "main"),
     ],
@@ -84,7 +80,8 @@ let package = Package(
             dependencies: [
                 "RFC 3986",
                 .product(name: "Byte", package: "swift-byte"),
-                .product(name: "Byte Parser", package: "swift-byte-parser"),
+                .product(name: "Byte Standard Library Integration", package: "swift-byte"),
+                .product(name: "Cursor Standard Library Integration", package: "swift-cursor"),
             ]
         ),
     ],
