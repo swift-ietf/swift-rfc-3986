@@ -14,7 +14,11 @@ let package = Package(
         .library(
             name: "RFC 3986",
             targets: ["RFC 3986"]
-        )
+        ),
+        .library(
+            name: "RFC 3986 Foundation Integration",
+            targets: ["RFC 3986 Foundation Integration"]
+        ),
     ],
     dependencies: [
         .package(
@@ -23,14 +27,6 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/swift-atoms/swift-ascii.git",
-            branch: "main"
-        ),
-        .package(
-            url: "https://github.com/swift-molecules/swift-ascii-serializer.git",
-            branch: "main"
-        ),
-        .package(
-            url: "https://github.com/swift-molecules/swift-ascii-parser.git",
             branch: "main"
         ),
         .package(url: "https://github.com/swift-atoms/swift-byte.git", branch: "main"),
@@ -46,17 +42,22 @@ let package = Package(
                     package: "swift-standard-library-extensions"
                 ),
                 .product(name: "ASCII", package: "swift-ascii"),
-                .product(
-                    name: "ASCII Serializer",
-                    package: "swift-ascii-serializer"
-                ),
-                .product(
-                    name: "Parseable ASCII",
-                    package: "swift-ascii-parser"
-                ),
                 .product(name: "Byte", package: "swift-byte"),
                 .product(name: "IPv4 Standard", package: "swift-ipv4-standard"),
                 .product(name: "IPv6 Standard", package: "swift-ipv6-standard"),
+            ]
+        ),
+        .target(
+            name: "RFC 3986 Foundation Integration",
+            dependencies: [
+                .target(name: "RFC 3986")
+            ]
+        ),
+        .testTarget(
+            name: "RFC 3986 Foundation Integration Tests",
+            dependencies: [
+                .target(name: "RFC 3986"),
+                .target(name: "RFC 3986 Foundation Integration"),
             ]
         ),
         .testTarget(

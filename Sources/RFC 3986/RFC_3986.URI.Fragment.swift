@@ -1,12 +1,10 @@
-public import ASCII_Serializer
-public import Binary_Serializable
-public import Parseable_ASCII
-import Byte
+public import Byte
+import ASCII
 import Byte_Standard_Library_Integration
 
 extension RFC_3986.URI {
 
-    public struct Fragment: Sendable, Equatable, Hashable, Codable {
+    public struct Fragment: Sendable, Equatable, Hashable {
 
         public let rawValue: String
 
@@ -24,7 +22,7 @@ extension RFC_3986.URI.Fragment {
     public typealias RawValue = String
 }
 
-extension RFC_3986.URI.Fragment: Swift.RawRepresentable, ASCII.Serializable, Binary.Serializable {
+extension RFC_3986.URI.Fragment: Swift.RawRepresentable {
 
     public init?(rawValue: String) {
         do throws(Error) {
@@ -33,23 +31,9 @@ extension RFC_3986.URI.Fragment: Swift.RawRepresentable, ASCII.Serializable, Bin
             return nil
         }
     }
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == ASCII.Code {
-        for byte in value.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
-    }
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        for byte in value.rawValue.utf8 { buffer.append(Byte(bitPattern: byte)) }
-    }
 }
 
-extension RFC_3986.URI.Fragment: ASCII.Parseable {
+extension RFC_3986.URI.Fragment {
 
     public init(_ string: some StringProtocol) throws(Error) {
         try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
@@ -89,7 +73,7 @@ extension RFC_3986.URI.Fragment: ASCII.Parseable {
 extension RFC_3986.URI.Fragment: CustomStringConvertible {
 
     public var description: String {
-        String(decoding: serialized, as: UTF8.self)
+        rawValue
     }
 }
 
@@ -106,16 +90,3 @@ extension RFC_3986.URI.Fragment {
     }
 }
 
-extension RFC_3986.URI.Fragment {
-
-    public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let string = try container.decode(String.self)
-        try self.init(string)
-    }
-
-    public func encode(to encoder: any Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(rawValue)
-    }
-}

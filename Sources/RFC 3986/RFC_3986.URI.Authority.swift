@@ -1,7 +1,5 @@
-public import ASCII_Serializer
-public import Binary_Serializable
-public import Parseable_ASCII
-import Byte
+public import Byte
+import ASCII
 import Byte_Standard_Library_Integration
 
 extension RFC_3986.URI {
@@ -36,44 +34,7 @@ extension RFC_3986.URI {
     }
 }
 
-extension RFC_3986.URI.Authority: ASCII.Serializable, Binary.Serializable {
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ authority: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == ASCII.Code {
-        if let userinfo = authority.userinfo {
-            RFC_3986.URI.Userinfo.serialize(userinfo, into: &buffer)
-            buffer.append(ASCII.Code.commercialAt)
-        }
-
-        RFC_3986.URI.Host.serialize(authority.host, into: &buffer)
-
-        if let port = authority.port {
-            buffer.append(ASCII.Code.colon)
-            RFC_3986.URI.Port.serialize(port, into: &buffer)
-        }
-    }
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ authority: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        if let userinfo = authority.userinfo {
-            RFC_3986.URI.Userinfo.serialize(userinfo, into: &buffer)
-            buffer.append(ASCII.Code.commercialAt.byte)
-        }
-
-        RFC_3986.URI.Host.serialize(authority.host, into: &buffer)
-
-        if let port = authority.port {
-            buffer.append(ASCII.Code.colon.byte)
-            RFC_3986.URI.Port.serialize(port, into: &buffer)
-        }
-    }
-}
-
-extension RFC_3986.URI.Authority: ASCII.Parseable {
+extension RFC_3986.URI.Authority {
 
     public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
@@ -107,9 +68,10 @@ extension RFC_3986.URI.Authority: ASCII.Parseable {
 
             if remaining.hasPrefix(":") {
                 let portString = String(remaining.dropFirst())
-                guard let portValue = RFC_3986.URI.Port(portString) else {
+                guard let portNumber = UInt16(portString) else {
                     throw Error.invalidPort(portString)
                 }
+                let portValue = RFC_3986.URI.Port(portNumber)
                 port = portValue
             } else if !remaining.isEmpty {
                 throw Error.invalidCharactersAfterIPv6(remaining)
@@ -128,9 +90,10 @@ extension RFC_3986.URI.Authority: ASCII.Parseable {
                 let hostString = String(remaining[..<colonIndex])
                 let portString = String(remaining[remaining.index(after: colonIndex)...])
 
-                guard let portValue = RFC_3986.URI.Port(portString) else {
+                guard let portNumber = UInt16(portString) else {
                     throw Error.invalidPort(portString)
                 }
+                let portValue = RFC_3986.URI.Port(portNumber)
 
                 do throws(RFC_3986.URI.Host.Error) {
                     host = try RFC_3986.URI.Host(hostString)
@@ -184,9 +147,10 @@ extension RFC_3986.URI.Authority {
 
             if remaining.hasPrefix(":") {
                 let portString = String(remaining.dropFirst())
-                guard let portValue = RFC_3986.URI.Port(portString) else {
+                guard let portNumber = UInt16(portString) else {
                     throw Error.invalidPort(portString)
                 }
+                let portValue = RFC_3986.URI.Port(portNumber)
                 port = portValue
             } else if !remaining.isEmpty {
                 throw Error.invalidCharactersAfterIPv6(remaining)
@@ -205,9 +169,10 @@ extension RFC_3986.URI.Authority {
                 let hostString = String(remaining[..<colonIndex])
                 let portString = String(remaining[remaining.index(after: colonIndex)...])
 
-                guard let portValue = RFC_3986.URI.Port(portString) else {
+                guard let portNumber = UInt16(portString) else {
                     throw Error.invalidPort(portString)
                 }
+                let portValue = RFC_3986.URI.Port(portNumber)
 
                 do throws(RFC_3986.URI.Host.Error) {
                     host = try RFC_3986.URI.Host(hostString)
@@ -254,19 +219,6 @@ extension RFC_3986.URI.Authority: CustomStringConvertible {
     }
 }
 
-extension RFC_3986.URI.Authority: Codable {
-
-    public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let string = try container.decode(String.self)
-        try self.init(string)
-    }
-
-    public func encode(to encoder: any Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(rawValue)
-    }
-}
 
 extension RFC_3986.URI.Authority {
 

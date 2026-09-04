@@ -1,5 +1,4 @@
-public import ASCII_Serializer
-import Byte
+public import Byte
 
 extension RFC_3986.URI.Query {
 

@@ -1,9 +1,7 @@
-public import ASCII_Serializer
-public import Binary_Serializable
+public import Byte
 public import IPv4_Standard
 public import IPv6_Standard
-public import Parseable_ASCII
-import Byte
+import ASCII
 import Byte_Standard_Library_Integration
 
 extension RFC_3986.URI {
@@ -18,64 +16,7 @@ extension RFC_3986.URI {
     }
 }
 
-extension RFC_3986.URI.Host: ASCII.Serializable, Binary.Serializable {
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ host: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == ASCII.Code {
-        switch host {
-        case .ipv4(let address):
-            RFC_791.IPv4.Address.serialize(address, into: &buffer)
-
-        case .ipv6(let scopedAddress):
-            buffer.append(ASCII.Code.leftBracket)
-            RFC_4291.IPv6.Address.serialize(scopedAddress.address, into: &buffer)
-            if let zone = scopedAddress.zone {
-
-                buffer.append(ASCII.Code.percentSign)
-                buffer.append(ASCII.Code.`2`)
-                buffer.append(ASCII.Code.`5`)
-                for byte in zone.utf8 { buffer.append(ASCII.Code(byte)) }
-            }
-            buffer.append(ASCII.Code.rightBracket)
-
-        case .registeredName(let name):
-            for byte in name.utf8 { buffer.append(ASCII.Code(byte)) }
-        }
-    }
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ host: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        switch host {
-        case .ipv4(let address):
-            var codes: [ASCII.Code] = []
-            RFC_791.IPv4.Address.serialize(address, into: &codes)
-            buffer.append(contentsOf: codes.map(\.byte))
-
-        case .ipv6(let scopedAddress):
-            buffer.append(ASCII.Code.leftBracket.byte)
-            var codes: [ASCII.Code] = []
-            RFC_4291.IPv6.Address.serialize(scopedAddress.address, into: &codes)
-            buffer.append(contentsOf: codes.map(\.byte))
-            if let zone = scopedAddress.zone {
-
-                buffer.append(ASCII.Code.percentSign.byte)
-                buffer.append(ASCII.Code.`2`.byte)
-                buffer.append(ASCII.Code.`5`.byte)
-                for byte in zone.utf8 { buffer.append(Byte(bitPattern: byte)) }
-            }
-            buffer.append(ASCII.Code.rightBracket.byte)
-
-        case .registeredName(let name):
-            for byte in name.utf8 { buffer.append(Byte(bitPattern: byte)) }
-        }
-    }
-}
-
-extension RFC_3986.URI.Host: ASCII.Parseable {
+extension RFC_3986.URI.Host {
 
     public init(_ string: some StringProtocol) throws(Error) {
         try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
@@ -190,7 +131,22 @@ extension RFC_3986.URI.Host: CustomStringConvertible {
 extension RFC_3986.URI.Host {
 
     public var rawValue: String {
-        String(decoding: serialized, as: UTF8.self)
+        switch self {
+        case .ipv4(let address):
+            return address.description
+
+        case .ipv6(let scopedAddress):
+            var codes: [ASCII.Code] = []
+            RFC_4291.IPv6.Address.serialize(scopedAddress.address, into: &codes)
+            let address = String(decoding: codes.map(\.byte), as: UTF8.self)
+            guard let zone = scopedAddress.zone else {
+                return "[\(address)]"
+            }
+            return "[\(address)%25\(zone)]"
+
+        case .registeredName(let name):
+            return name
+        }
     }
 
     public var isLoopback: Bool {
@@ -236,16 +192,3 @@ extension RFC_3986.URI.Host {
     }
 }
 
-extension RFC_3986.URI.Host: Codable {
-
-    public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let string = try container.decode(String.self)
-        try self.init(string)
-    }
-
-    public func encode(to encoder: any Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(rawValue)
-    }
-}

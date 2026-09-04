@@ -1,7 +1,5 @@
-public import ASCII_Serializer
-public import Binary_Serializable
-public import Parseable_ASCII
-import Byte
+public import Byte
+import ASCII
 import Byte_Standard_Library_Integration
 
 extension RFC_3986 {
@@ -42,7 +40,7 @@ extension RFC_3986 {
 
 extension RFC_3986 {
 
-    public struct URI: Hashable, Sendable, Codable {
+    public struct URI: Hashable, Sendable {
         fileprivate let cache: Cache
     }
 }
@@ -82,7 +80,7 @@ extension RFC_3986.URI {
             self.components = components
             self.scheme = Self.parsed(components.scheme) { try Scheme($0) }
             self.host = Self.parsed(components.host) { try Host($0) }
-            self.port = components.port.flatMap { Port($0) }
+            self.port = components.port.flatMap { UInt16($0) }.map { Port($0) }
 
             self.path = Self.parsed(components.path) { try Path($0) }
             self.query = Self.parsed(components.query) { try Query($0) }
@@ -94,7 +92,7 @@ extension RFC_3986.URI {
             self.components = components
             self.scheme = Self.parsed(components.scheme) { try Scheme($0) }
             self.host = Self.parsed(components.host) { try Host($0) }
-            self.port = components.port.flatMap { Port($0) }
+            self.port = components.port.flatMap { UInt16($0) }.map { Port($0) }
             self.path = Self.parsed(components.path) { try Path($0) }
             self.query = Self.parsed(components.query) { try Query($0) }
             self.fragment = Self.parsed(components.fragment) { try Fragment($0) }
@@ -285,31 +283,7 @@ extension RFC_3986.URI.Cache {
     }
 }
 
-extension RFC_3986.URI: ASCII.Serializable, Binary.Serializable {
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == ASCII.Code {
-        for byte in value.value.utf8 { buffer.append(ASCII.Code(byte)) }
-    }
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        serializeBytes(value, into: &buffer)
-    }
-
-    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
-        _ uri: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        buffer.append(contentsOf: uri.value.utf8.lazy.map(Byte.init(bitPattern:)))
-    }
-}
-
-extension RFC_3986.URI: ASCII.Parseable {
+extension RFC_3986.URI {
 
     public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(RFC_3986.Error)
     where Bytes.Element == Byte {
@@ -780,19 +754,6 @@ extension RFC_3986.URI {
     }
 }
 
-extension RFC_3986.URI {
-
-    public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let string = try container.decode(String.self)
-        try self.init(string)
-    }
-
-    public func encode(to encoder: any Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(value)
-    }
-}
 
 extension RFC_3986.URI {
 

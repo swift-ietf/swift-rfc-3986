@@ -1,7 +1,5 @@
-public import ASCII_Serializer
-public import Binary_Serializable
-public import Parseable_ASCII
-import Byte
+public import Byte
+import ASCII
 import Byte_Standard_Library_Integration
 
 extension RFC_3986.URI {
@@ -23,49 +21,7 @@ extension RFC_3986.URI {
     }
 }
 
-extension RFC_3986.URI.Path: ASCII.Serializable, Binary.Serializable {
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == ASCII.Code {
-        if value.isAbsolute {
-            buffer.append(ASCII.Code.solidus)
-        }
-
-        for (index, segment) in value.segments.enumerated() {
-            if index > 0 {
-                buffer.append(ASCII.Code.solidus)
-            }
-            for byte in segment.utf8 { buffer.append(ASCII.Code(byte)) }
-        }
-    }
-
-    public static func serialize<Buffer: RangeReplaceableCollection>(
-        _ value: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        serializeBytes(value, into: &buffer)
-    }
-
-    private static func serializeBytes<Buffer: RangeReplaceableCollection>(
-        _ path: Self,
-        into buffer: inout Buffer
-    ) where Buffer.Element == Byte {
-        if path.isAbsolute {
-            buffer.append(ASCII.Code.solidus.byte)
-        }
-
-        for (index, segment) in path.segments.enumerated() {
-            if index > 0 {
-                buffer.append(ASCII.Code.solidus.byte)
-            }
-            buffer.append(contentsOf: segment.utf8.lazy.map(Byte.init(bitPattern:)))
-        }
-    }
-}
-
-extension RFC_3986.URI.Path: ASCII.Parseable {
+extension RFC_3986.URI.Path {
 
     public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
@@ -258,30 +214,10 @@ extension RFC_3986.URI.Path: ExpressibleByArrayLiteral {
 extension RFC_3986.URI.Path: CustomStringConvertible {
 
     public var description: String {
-        String(decoding: serialized, as: UTF8.self)
+        (isAbsolute ? "/" : "") + segments.joined(separator: "/")
     }
 }
 
-extension RFC_3986.URI.Path: Codable {
-
-    public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let string = try container.decode(String.self)
-        do throws(Error) {
-            try self.init(string)
-        } catch {
-            throw DecodingError.dataCorruptedError(
-                in: container,
-                debugDescription: "Invalid path: \(error)"
-            )
-        }
-    }
-
-    public func encode(to encoder: any Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(description)
-    }
-}
 
 extension [Byte] {
 
