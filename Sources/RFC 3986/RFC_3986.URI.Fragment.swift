@@ -1,6 +1,6 @@
 public import Byte
 import ASCII
-import Byte_Standard_Library_Integration
+import Byte
 
 extension RFC_3986.URI {
 

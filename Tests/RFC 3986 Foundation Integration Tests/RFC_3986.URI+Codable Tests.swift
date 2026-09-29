@@ -17,16 +17,6 @@ struct `RFC_3986.URI+Codable Tests` {
     }
 
     @Test
-    func `an authority codes as its text form`() async throws {
-        let authority = try RFC_3986.URI.Authority("user@example.com:8080")
-
-        let encoded = try JSONEncoder().encode(authority)
-
-        #expect(String(decoding: encoded, as: UTF8.self) == #""user@example.com:8080""#)
-        #expect(try JSONDecoder().decode(RFC_3986.URI.Authority.self, from: encoded) == authority)
-    }
-
-    @Test
     func `a fragment codes as its text form`() async throws {
         let fragment = try RFC_3986.URI.Fragment("section-1")
 
@@ -34,16 +24,6 @@ struct `RFC_3986.URI+Codable Tests` {
 
         #expect(String(decoding: encoded, as: UTF8.self) == #""section-1""#)
         #expect(try JSONDecoder().decode(RFC_3986.URI.Fragment.self, from: encoded) == fragment)
-    }
-
-    @Test
-    func `a host codes as its text form`() async throws {
-        let host = try RFC_3986.URI.Host("example.com")
-
-        let encoded = try JSONEncoder().encode(host)
-
-        #expect(String(decoding: encoded, as: UTF8.self) == #""example.com""#)
-        #expect(try JSONDecoder().decode(RFC_3986.URI.Host.self, from: encoded) == host)
     }
 
     @Test

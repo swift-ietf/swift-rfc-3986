@@ -185,6 +185,10 @@ extension RFC_3986.ByteSet {
     public static let pathSegment = unreserved.union(subDelims).union(RFC_3986.ByteSet(ascii: ":@"))
 
     public static let query = pathSegment.union(RFC_3986.ByteSet(ascii: "/?"))
+
+    public static let queryComponent = query.subtracting(RFC_3986.ByteSet(ascii: "&=#"))
+
+    public static let fragment = query
 }
 
 extension RFC_3986 {
@@ -233,18 +237,25 @@ extension RFC_3986 {
         var result: [UInt8] = []
         result.reserveCapacity(bytes.count)
 
-        var iterator = bytes.makeIterator()
-        while let byte = iterator.next() {
-            if byte == UInt8(ascii: "%"),
-                let hi = iterator.next(),
-                let lo = iterator.next(),
-                let hiVal = hexDigitValue(ASCII.Code(hi)),
-                let loVal = hexDigitValue(ASCII.Code(lo))
-            {
-                result.append((hiVal << 4) | loVal)
-            } else {
-                result.append(byte)
+        var index = bytes.startIndex
+        while index < bytes.endIndex {
+            let byte = bytes[index]
+            if byte == UInt8(ascii: "%") {
+                let hiIndex = bytes.index(after: index)
+                if hiIndex < bytes.endIndex {
+                    let loIndex = bytes.index(after: hiIndex)
+                    if loIndex < bytes.endIndex,
+                        let hiVal = hexDigitValue(ASCII.Code(bytes[hiIndex])),
+                        let loVal = hexDigitValue(ASCII.Code(bytes[loIndex]))
+                    {
+                        result.append((hiVal << 4) | loVal)
+                        index = bytes.index(after: loIndex)
+                        continue
+                    }
+                }
             }
+            result.append(byte)
+            index = bytes.index(after: index)
         }
         return result
     }
@@ -266,54 +277,6 @@ extension RFC_3986 {
 }
 
 extension RFC_3986 {
-
-    public static func percentEncode(
-        _ string: String,
-        allowing allowedCharacters: RFC_3986.CharacterSet = .unreserved
-    ) -> String {
-        var result = ""
-        let hexDigits = Array("0123456789ABCDEF" as String)
-
-        for character in string {
-            if allowedCharacters.contains(character) {
-                result.append(character)
-            } else {
-
-                for byte in String(character).utf8 {
-                    result.append(Character("%"))
-                    result.append(hexDigits[Int(byte >> 4)])
-                    result.append(hexDigits[Int(byte & 0x0F)])
-                }
-            }
-        }
-        return result
-    }
-
-    public static func percentDecode(_ string: String) -> String {
-        var bytes: [UInt8] = []
-        var index = string.startIndex
-
-        while index < string.endIndex {
-            if string[index] == "%",
-                let nextIndex = string.index(index, offsetBy: 1, limitedBy: string.endIndex),
-                let thirdIndex = string.index(index, offsetBy: 3, limitedBy: string.endIndex)
-            {
-                let hexString = String(string[nextIndex..<thirdIndex])
-                if let byte = UInt8(hexString, radix: 16) {
-                    bytes.append(byte)
-                    index = thirdIndex
-                    continue
-                }
-            }
-
-            for byte in String(string[index]).utf8 {
-                bytes.append(byte)
-            }
-            index = string.index(after: index)
-        }
-
-        return String(decoding: bytes, as: UTF8.self)
-    }
 
     public static func normalizePercentEncoding(_ string: String) -> String {
         var result = ""

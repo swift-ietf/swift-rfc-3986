@@ -9,6 +9,7 @@ let package = Package(
         .iOS(.v27),
         .tvOS(.v27),
         .watchOS(.v27),
+        .visionOS(.v27),
     ],
     products: [
         .library(
@@ -22,10 +23,6 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/swift-atoms/swift-standard-library-extensions.git",
-            branch: "main"
-        ),
-        .package(
             url: "https://github.com/swift-atoms/swift-ascii.git",
             branch: "main"
         ),
@@ -37,10 +34,6 @@ let package = Package(
         .target(
             name: "RFC 3986",
             dependencies: [
-                .product(
-                    name: "Standard Library Extensions",
-                    package: "swift-standard-library-extensions"
-                ),
                 .product(name: "ASCII", package: "swift-ascii"),
                 .product(name: "Byte", package: "swift-byte"),
                 .product(name: "IPv4 Standard", package: "swift-ipv4-standard"),
@@ -63,9 +56,8 @@ let package = Package(
         .testTarget(
             name: "RFC 3986 Tests",
             dependencies: [
-                "RFC 3986",
+                .target(name: "RFC 3986"),
                 .product(name: "Byte", package: "swift-byte"),
-                .product(name: "Byte Standard Library Integration", package: "swift-byte"),
             ]
         ),
     ],

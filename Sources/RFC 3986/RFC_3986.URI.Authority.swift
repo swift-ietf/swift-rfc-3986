@@ -1,12 +1,10 @@
 public import Byte
-import ASCII
-import Byte_Standard_Library_Integration
+import Byte
 
 extension RFC_3986.URI {
 
     public struct Authority: Sendable, Equatable, Hashable {
 
-        @available(*, deprecated, message: "deprecated for security reasons")
         public let userinfo: RFC_3986.URI.Userinfo?
 
         public let host: RFC_3986.URI.Host
@@ -193,32 +191,6 @@ extension RFC_3986.URI.Authority {
         self.init(userinfo: userinfo, host: host, port: port)
     }
 }
-
-extension RFC_3986.URI.Authority {
-
-    public var rawValue: String {
-        var result = ""
-
-        if let userinfo {
-            result += "\(userinfo.rawValue)@"
-        }
-
-        result += host.rawValue
-
-        if let port {
-            result += ":\(port.value)"
-        }
-
-        return result
-    }
-}
-
-extension RFC_3986.URI.Authority: CustomStringConvertible {
-    public var description: String {
-        rawValue
-    }
-}
-
 
 extension RFC_3986.URI.Authority {
 

@@ -2,7 +2,7 @@ public import Byte
 public import IPv4_Standard
 public import IPv6_Standard
 import ASCII
-import Byte_Standard_Library_Integration
+import Byte
 
 extension RFC_3986.URI {
 
@@ -75,12 +75,27 @@ extension RFC_3986.URI.Host {
                 i += 1
             }
 
-            do throws(RFC_4007.IPv6.ScopedAddress.Error) {
-                let scopedAddress = try RFC_4007.IPv6.ScopedAddress(ascii: decodedBytes)
-                self = .ipv6(scopedAddress)
+            let innerString = String(decoding: innerCodes.lazy.map(\.underlying), as: UTF8.self)
+
+            let addressBytes: ArraySlice<Byte>
+            let zone: String?
+            if let percentIndex = decodedBytes.firstIndex(of: ASCII.Code.percentSign.byte) {
+                let zoneBytes = decodedBytes[decodedBytes.index(after: percentIndex)...]
+                guard !zoneBytes.isEmpty else {
+                    throw Error.invalidIPv6(innerString, reason: "Missing zone identifier after '%25'")
+                }
+                addressBytes = decodedBytes[..<percentIndex]
+                zone = String(decoding: zoneBytes, as: UTF8.self)
+            } else {
+                addressBytes = decodedBytes[...]
+                zone = nil
+            }
+
+            do throws(RFC_4291.IPv6.Address.Error) {
+                let address = try RFC_4291.IPv6.Address(ascii: addressBytes)
+                self = .ipv6(RFC_4007.IPv6.ScopedAddress(address: address, zone: zone))
                 return
             } catch {
-                let innerString = String(decoding: innerCodes.lazy.map(\.underlying), as: UTF8.self)
                 throw Error.invalidIPv6(innerString, reason: "Invalid IPv6 address")
             }
         }
@@ -122,32 +137,7 @@ extension RFC_3986.URI.Host {
     }
 }
 
-extension RFC_3986.URI.Host: CustomStringConvertible {
-    public var description: String {
-        rawValue
-    }
-}
-
 extension RFC_3986.URI.Host {
-
-    public var rawValue: String {
-        switch self {
-        case .ipv4(let address):
-            return address.description
-
-        case .ipv6(let scopedAddress):
-            var codes: [ASCII.Code] = []
-            RFC_4291.IPv6.Address.serialize(scopedAddress.address, into: &codes)
-            let address = String(decoding: codes.map(\.byte), as: UTF8.self)
-            guard let zone = scopedAddress.zone else {
-                return "[\(address)]"
-            }
-            return "[\(address)%25\(zone)]"
-
-        case .registeredName(let name):
-            return name
-        }
-    }
 
     public var isLoopback: Bool {
         switch self {

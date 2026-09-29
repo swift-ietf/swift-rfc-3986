@@ -123,6 +123,24 @@ struct `URI Normalization` {
     }
 
     @Test
+    func `Normalize an IPv6 literal by case only, keeping its written form`() throws {
+        let uri = try RFC_3986.URI("HTTP://[2001:0DB8::1]:80/a/./b")
+        let normalized = uri.normalized()
+        #expect(normalized.value == "http://[2001:0db8::1]/a/b")
+        #expect(normalized.host == uri.host)
+    }
+
+    @Test
+    func `Only a URI whose host the domain accepts has a base`() throws {
+        let accepted = try RFC_3986.URI("https://Example.COM:8080/path?query#fragment")
+        #expect(accepted.base?.value == "https://Example.COM:8080")
+
+        let rejected = RFC_3986.URI(unchecked: "https://exa mple.com:8080/path")
+        #expect(rejected.host == nil)
+        #expect(rejected.base == nil)
+    }
+
+    @Test
     func `Remove default HTTP port`() throws {
         let string = "http://example.com:80/path"
         let uri = try RFC_3986.URI(string)
@@ -194,7 +212,7 @@ struct `URI Component Parsing` {
     func `Parse host`() throws {
         let string = "https://example.com/path"
         let uri = try RFC_3986.URI(string)
-        #expect(uri.host?.rawValue == "example.com")
+        #expect(uri.host == .registeredName("example.com"))
     }
 
     @Test
@@ -230,7 +248,7 @@ struct `URI Component Parsing` {
         let string = "https://example.com:8080/path?query=value#section"
         let uri = try RFC_3986.URI(string)
         #expect(uri.scheme?.value == "https")
-        #expect(uri.host?.rawValue == "example.com")
+        #expect(uri.host == .registeredName("example.com"))
         #expect(uri.port == 8080)
         #expect(uri.path?.description == "/path")
         #expect(uri.query?.description == "query=value")

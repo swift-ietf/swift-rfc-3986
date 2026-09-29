@@ -1,6 +1,6 @@
 public import Byte
 import ASCII
-import Byte_Standard_Library_Integration
+import Byte
 
 extension RFC_3986 {
 
@@ -322,37 +322,6 @@ extension RFC_3986.URI {
         self.init(__unchecked: (), value: value)
     }
 
-    public init(
-        scheme: Scheme,
-        authority: Authority,
-        path: Path,
-        query: Query? = nil,
-        fragment: Fragment? = nil
-    ) {
-        var uriString = "\(scheme.value)://"
-
-        if let userinfo = authority.userinfo {
-            uriString += "\(userinfo.rawValue)@"
-        }
-
-        uriString += authority.host.rawValue
-
-        if let port = authority.port {
-            uriString += ":\(port.value)"
-        }
-
-        uriString += path.description
-
-        if let query {
-            uriString += "?\(query.description)"
-        }
-
-        if let fragment {
-            uriString += "#\(fragment.value)"
-        }
-
-        self.cache = Cache(value: uriString)
-    }
 }
 
 extension RFC_3986.URI {
@@ -412,6 +381,11 @@ extension RFC_3986.URI {
     public var fragment: Fragment? {
         cache.fragment
     }
+
+    fileprivate var validatedHostText: String? {
+        guard host != nil else { return nil }
+        return cache.components.host
+    }
 }
 
 extension RFC_3986.URI {
@@ -432,10 +406,10 @@ extension RFC_3986.URI {
 
     public var base: RFC_3986.URI? {
         guard let uriScheme = scheme,
-            let uriHost = host
+            let uriHost = validatedHostText
         else { return nil }
 
-        var baseString = "\(uriScheme.value)://\(uriHost.rawValue)"
+        var baseString = "\(uriScheme.value)://\(uriHost)"
         if let uriPort = port {
             baseString += ":\(uriPort.value)"
         }
@@ -456,7 +430,7 @@ extension RFC_3986.URI {
     public func normalized() -> RFC_3986.URI {
 
         let normalizedScheme = scheme?.value.lowercased()
-        let normalizedHost = host?.rawValue.lowercased()
+        let normalizedHost = validatedHostText?.lowercased()
         var normalizedPort = port
         var normalizedPath = path?.description
         var normalizedQuery = query?.description
@@ -522,7 +496,7 @@ extension RFC_3986.URI {
             result += "\(scheme):"
         }
 
-        if let host = host?.rawValue {
+        if let host = validatedHostText {
             result += "//"
             if let userinfo = userinfo?.rawValue {
                 result += "\(userinfo)@"
@@ -564,8 +538,8 @@ extension RFC_3986.URI {
                 result += "\(baseScheme.value):"
             }
             result += "//"
-            if let refHost = refURI.host {
-                result += refHost.rawValue
+            if let refHost = refURI.validatedHostText {
+                result += refHost
             }
             if let refPort = refURI.port {
                 result += ":\(refPort)"
@@ -586,8 +560,8 @@ extension RFC_3986.URI {
         if let baseScheme = scheme {
             result += "\(baseScheme.value):"
         }
-        if let baseHost = host {
-            result += "//\(baseHost.rawValue)"
+        if let baseHost = validatedHostText {
+            result += "//\(baseHost)"
             if let basePort = port {
                 result += ":\(basePort)"
             }
@@ -642,14 +616,17 @@ extension RFC_3986.URI {
             result += "\(uriScheme.value):"
         }
 
-        if let uriHost = host {
-            result += "//\(uriHost.rawValue)"
+        if let uriHost = validatedHostText {
+            result += "//\(uriHost)"
             if let uriPort = port {
                 result += ":\(uriPort)"
             }
         }
 
-        let encodedComponent = RFC_3986.percentEncode(String(component), allowing: .pathSegment)
+        let encodedComponent = String(
+            decoding: RFC_3986.percentEncode(Array(component.utf8), allowing: .pathSegment),
+            as: UTF8.self
+        )
 
         let currentPath = path?.description ?? ""
         let separator = currentPath.hasSuffix("/") ? "" : "/"
@@ -675,8 +652,8 @@ extension RFC_3986.URI {
             result += "\(uriScheme.value):"
         }
 
-        if let uriHost = host {
-            result += "//\(uriHost.rawValue)"
+        if let uriHost = validatedHostText {
+            result += "//\(uriHost)"
             if let uriPort = port {
                 result += ":\(uriPort)"
             }
@@ -686,9 +663,15 @@ extension RFC_3986.URI {
             result += uriPath.description
         }
 
-        let encodedName = RFC_3986.percentEncode(String(name), allowing: .queryComponent)
+        let encodedName = String(
+            decoding: RFC_3986.percentEncode(Array(name.utf8), allowing: .queryComponent),
+            as: UTF8.self
+        )
         let encodedValue = value.map {
-            RFC_3986.percentEncode(String($0), allowing: .queryComponent)
+            String(
+                decoding: RFC_3986.percentEncode(Array($0.utf8), allowing: .queryComponent),
+                as: UTF8.self
+            )
         }
 
         if let currentQuery = query?.description {
@@ -717,8 +700,8 @@ extension RFC_3986.URI {
             result += "\(uriScheme.value):"
         }
 
-        if let uriHost = host {
-            result += "//\(uriHost.rawValue)"
+        if let uriHost = validatedHostText {
+            result += "//\(uriHost)"
             if let uriPort = port {
                 result += ":\(uriPort)"
             }
@@ -796,7 +779,7 @@ extension RFC_3986.URI: CustomDebugStringConvertible {
         if let scheme {
             parts.append("scheme: \(scheme)")
         }
-        if let host {
+        if let host = validatedHostText {
             parts.append("host: \(host)")
         }
         if let port {

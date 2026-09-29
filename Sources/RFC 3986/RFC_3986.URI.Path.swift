@@ -1,6 +1,6 @@
 public import Byte
 import ASCII
-import Byte_Standard_Library_Integration
+import Byte
 
 extension RFC_3986.URI {
 
@@ -218,23 +218,3 @@ extension RFC_3986.URI.Path: CustomStringConvertible {
     }
 }
 
-
-extension [Byte] {
-
-    public init(_ path: RFC_3986.URI.Path) {
-        var bytes: [Byte] = []
-
-        if path.isAbsolute {
-            bytes.append(ASCII.Code.solidus.byte)
-        }
-
-        for (index, segment) in path.segments.enumerated() {
-            if index > 0 {
-                bytes.append(ASCII.Code.solidus.byte)
-            }
-            bytes.append(contentsOf: segment.utf8.lazy.map(Byte.init(bitPattern:)))
-        }
-
-        self = bytes
-    }
-}

@@ -1,4 +1,3 @@
-import Standard_Library_Extensions
 import Testing
 
 @testable import RFC_3986
@@ -7,36 +6,25 @@ import Testing
 struct `Developer Delight - Convenience APIs` {
 
     @Test
-    func `String extension - percentEncoded()`() {
-        let input = "hello world"
-        let encoded = input.percentEncoded()
-        #expect(encoded == "hello%20world")
+    func `Percent-encoding a byte sequence`() {
+        let encoded = RFC_3986.percentEncode(Array("hello world".utf8))
+        #expect(String(decoding: encoded, as: UTF8.self) == "hello%20world")
     }
 
     @Test
-    func `String extension - percentDecoded()`() {
-        let input = "hello%20world"
-        let decoded = input.percentDecoded()
-        #expect(decoded == "hello world")
+    func `Percent-decoding a byte sequence`() {
+        let decoded = RFC_3986.percentDecode(Array("hello%20world".utf8))
+        #expect(String(decoding: decoded, as: UTF8.self) == "hello world")
     }
 
     @Test
-    func `String extension - uri property`() {
-        #expect("https://example.com".uri != nil)
-        #expect("not a uri".uri == nil)
-    }
+    func `A URI validates the text it is built from`() throws {
+        let uri = try RFC_3986.URI("https://example.com")
+        #expect(uri.value == "https://example.com")
 
-    @Test
-    func `String extension - uri.isHTTP`() {
-        #expect("https://example.com".uri?.isHTTP == true)
-        #expect("ftp://example.com".uri?.isHTTP == false)
-    }
-
-    @Test
-    func `String extension - uri parsing`() {
-        let string = "https://example.com"
-        let uri = string.uri
-        #expect(uri?.value == "https://example.com")
+        #expect(throws: RFC_3986.Error.self) {
+            try RFC_3986.URI("not a uri")
+        }
     }
 
     @Test
@@ -224,11 +212,13 @@ struct `Developer Delight - Fluent Chains` {
     }
 
     @Test
-    func `URI method chaining`() {
-        let encoded = "hello world?".percentEncoded()
-        let result = encoded.uri?.normalizePercentEncoding().value
+    func `URI method chaining`() throws {
+        let encoded = RFC_3986.percentEncode(Array("hello world?".utf8))
+        let result = try RFC_3986.URI(String(decoding: encoded, as: UTF8.self))
+            .normalizePercentEncoding()
+            .value
 
-        #expect(result?.contains("%20") == true)
-        #expect(result?.contains("%3F") == true)
+        #expect(result.contains("%20"))
+        #expect(result.contains("%3F"))
     }
 }

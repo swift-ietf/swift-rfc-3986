@@ -100,69 +100,6 @@ struct `CharacterSet SetAlgebra Conformance` {
 }
 
 @Suite
-struct `Percent Encoding` {
-
-    @Test
-    func `Encode space character`() {
-        let input = "hello world"
-        let encoded = RFC_3986.percentEncode(input)
-        #expect(encoded.contains("%20"))
-    }
-
-    @Test
-    func `Encode special characters`() {
-        let input = "hello?world#test"
-        let encoded = RFC_3986.percentEncode(input)
-        #expect(encoded.contains("%3F"))
-        #expect(encoded.contains("%23"))
-    }
-
-    @Test
-    func `Don't encode unreserved characters`() {
-        let input = "hello-world_123.test~abc"
-        let encoded = RFC_3986.percentEncode(input)
-        #expect(encoded == input)
-    }
-
-    @Test
-    func `Decode percent-encoded string`() {
-        let encoded = "hello%20world%3Ftest"
-        let decoded = RFC_3986.percentDecode(encoded)
-        #expect(decoded == "hello world?test")
-    }
-
-    @Test
-    func `Normalize percent-encoding - uppercase hex`() {
-        let input = "hello%2fworld"
-        let normalized = RFC_3986.normalizePercentEncoding(input)
-        #expect(normalized == "hello%2Fworld")
-    }
-
-    @Test
-    func `Normalize percent-encoding - decode unreserved`() {
-        let input = "hello%2Dworld"
-        let normalized = RFC_3986.normalizePercentEncoding(input)
-        #expect(normalized == "hello-world")
-    }
-
-    @Test
-    func `Encode path segment with allowed characters`() {
-        let input = "path/segment:with@special"
-        let encoded = RFC_3986.percentEncode(input, allowing: .pathSegment)
-        #expect(!encoded.contains("%3A"))
-        #expect(!encoded.contains("%40"))
-    }
-
-    @Test
-    func `Encode query with allowed characters`() {
-        let input = "key=value&foo=bar"
-        let encoded = RFC_3986.percentEncode(input, allowing: .query)
-        #expect(!encoded.contains("%3D"))
-        #expect(!encoded.contains("%26"))
-    }
-}
-
-@Suite
 struct `URI Resolution - RFC 3986 Section 5.4` {
 
     let base = "http://a/b/c/d;p?q"
