@@ -21,6 +21,9 @@ let package = Package(
             targets: ["RFC 3986 Foundation Integration"]
         ),
     ],
+    traits: [
+        .trait(name: "Coder", description: "Host text serialization"),
+    ],
     dependencies: [
         .package(
             url: "https://github.com/swift-atoms/swift-ascii.git",
@@ -29,6 +32,9 @@ let package = Package(
         .package(url: "https://github.com/swift-atoms/swift-byte.git", branch: "main"),
         .package(url: "https://github.com/swift-standards/swift-ipv4-standard.git", branch: "main"),
         .package(url: "https://github.com/swift-standards/swift-ipv6-standard.git", branch: "main"),
+        .package(url: "https://github.com/swift-atoms/swift-serializer.git", branch: "main"),
+        .package(url: "https://github.com/swift-ietf/swift-rfc-4291.git", branch: "main"),
+        .package(url: "https://github.com/swift-ietf/swift-rfc-5952-coder.git", branch: "main"),
     ],
     targets: [
         .target(
@@ -38,6 +44,9 @@ let package = Package(
                 .product(name: "Byte", package: "swift-byte"),
                 .product(name: "IPv4 Standard", package: "swift-ipv4-standard"),
                 .product(name: "IPv6 Standard", package: "swift-ipv6-standard"),
+                .product(name: "Serializer", package: "swift-serializer", condition: .when(traits: ["Coder"])),
+                .product(name: "RFC 4291", package: "swift-rfc-4291", condition: .when(traits: ["Coder"])),
+                .product(name: "RFC 5952 Coder", package: "swift-rfc-5952-coder", condition: .when(traits: ["Coder"])),
             ]
         ),
         .target(
@@ -56,6 +65,7 @@ let package = Package(
         .testTarget(
             name: "RFC 3986 Tests",
             dependencies: [
+                .product(name: "ASCII", package: "swift-ascii"),
                 .target(name: "RFC 3986"),
                 .product(name: "Byte", package: "swift-byte"),
             ]
