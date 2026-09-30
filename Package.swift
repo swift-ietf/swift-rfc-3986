@@ -35,6 +35,8 @@ let package = Package(
         .package(url: "https://github.com/swift-atoms/swift-serializer.git", branch: "main"),
         .package(url: "https://github.com/swift-ietf/swift-rfc-4291.git", branch: "main"),
         .package(url: "https://github.com/swift-ietf/swift-rfc-5952-coder.git", branch: "main"),
+        .package(url: "https://github.com/swift-atoms/swift-span.git", branch: "main", traits: ["Iterator"]),
+        .package(url: "https://github.com/swift-atoms/swift-ratio.git", branch: "main", traits: ["Bit", "Ordinal", "Difference"]),
     ],
     targets: [
         .target(
