@@ -35,6 +35,8 @@ let package = Package(
         .package(url: "https://github.com/swift-atoms/swift-serializer.git", branch: "main"),
         .package(url: "https://github.com/swift-ietf/swift-rfc-4291.git", branch: "main"),
         .package(url: "https://github.com/swift-ietf/swift-rfc-5952-coder.git", branch: "main"),
+        .package(url: "https://github.com/swift-ietf/swift-rfc-791.git", branch: "main"),
+        .package(url: "https://github.com/swift-ietf/swift-rfc-4007.git", branch: "main"),
         .package(url: "https://github.com/swift-atoms/swift-span.git", branch: "main", traits: ["Iterator"]),
         .package(url: "https://github.com/swift-atoms/swift-ratio.git", branch: "main", traits: ["Bit", "Ordinal", "Difference"]),
     ],
@@ -49,6 +51,8 @@ let package = Package(
                 .product(name: "Serializer", package: "swift-serializer", condition: .when(traits: ["Coder"])),
                 .product(name: "RFC 4291", package: "swift-rfc-4291", condition: .when(traits: ["Coder"])),
                 .product(name: "RFC 5952 Coder", package: "swift-rfc-5952-coder", condition: .when(traits: ["Coder"])),
+                .product(name: "RFC 791", package: "swift-rfc-791", condition: .when(traits: ["Coder"])),
+                .product(name: "RFC 4007", package: "swift-rfc-4007", condition: .when(traits: ["Coder"])),
             ]
         ),
         .target(
