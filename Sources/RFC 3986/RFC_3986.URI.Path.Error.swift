@@ -2,7 +2,7 @@ public import Byte
 
 extension RFC_3986.URI.Path {
 
-    public enum Error: Swift.Error, Sendable, Equatable {
+    public enum Error: Swift::Error, Sendable, Equatable {
 
         case segmentContainsSeparator(_ segment: String)
 

@@ -1,5 +1,4 @@
 public import Byte
-import Byte
 
 extension RFC_3986.URI {
 
@@ -34,7 +33,7 @@ extension RFC_3986.URI {
 
 extension RFC_3986.URI.Authority {
 
-    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         let string = String(decoding: bytes, as: UTF8.self)
         var remaining = string
@@ -194,11 +193,11 @@ extension RFC_3986.URI.Authority {
 
 extension RFC_3986.URI.Authority {
 
-    public enum Error: Swift.Error, Sendable, Equatable, CustomStringConvertible {
+    public enum Error: Swift::Error, Sendable, Equatable, CustomStringConvertible {
 
-        case invalidUserinfo(String, underlying: any Swift.Error)
+        case invalidUserinfo(String, underlying: any Swift::Error)
 
-        case invalidHost(String, underlying: any Swift.Error)
+        case invalidHost(String, underlying: any Swift::Error)
 
         case invalidPort(String)
 

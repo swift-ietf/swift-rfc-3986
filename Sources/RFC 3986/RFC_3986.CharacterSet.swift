@@ -194,7 +194,7 @@ extension RFC_3986.ByteSet {
 extension RFC_3986 {
 
     @inlinable
-    public static func percentEncode<Bytes: Swift.Collection>(
+    public static func percentEncode<Bytes: Swift::Collection>(
         _ bytes: Bytes,
         allowing allowed: ByteSet = .unreserved
     ) -> [UInt8] where Bytes.Element == UInt8 {
@@ -214,7 +214,7 @@ extension RFC_3986 {
     }
 
     @inlinable
-    public static func percentEncode<Bytes: Swift.Collection, Buffer: RangeReplaceableCollection>(
+    public static func percentEncode<Bytes: Swift::Collection, Buffer: RangeReplaceableCollection>(
         _ bytes: Bytes,
         into buffer: inout Buffer,
         allowing allowed: ByteSet = .unreserved
@@ -231,7 +231,7 @@ extension RFC_3986 {
     }
 
     @inlinable
-    public static func percentDecode<Bytes: Swift.Collection>(
+    public static func percentDecode<Bytes: Swift::Collection>(
         _ bytes: Bytes
     ) -> [UInt8] where Bytes.Element == UInt8 {
         var result: [UInt8] = []

@@ -2,7 +2,7 @@ public import Byte
 
 extension RFC_3986.URI.Userinfo {
 
-    public enum Error: Swift.Error, Sendable, Equatable {
+    public enum Error: Swift::Error, Sendable, Equatable {
 
         case invalidCharacter(_ value: String, byte: Byte, reason: String)
 

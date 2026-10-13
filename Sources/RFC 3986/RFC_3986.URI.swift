@@ -1,10 +1,9 @@
 public import Byte
 import ASCII
-import Byte
 
 extension RFC_3986 {
 
-    public enum Error: Swift.Error, Hashable, Sendable {
+    public enum Error: Swift::Error, Hashable, Sendable {
 
         case invalidURI(String)
 
@@ -98,7 +97,7 @@ extension RFC_3986.URI {
             self.fragment = Self.parsed(components.fragment) { try Fragment($0) }
         }
 
-        private static func parsed<Value, Failure: Swift.Error>(
+        private static func parsed<Value, Failure: Swift::Error>(
             _ string: String?,
             _ makeValue: (String) throws(Failure) -> Value
         ) -> Value? {
@@ -285,7 +284,7 @@ extension RFC_3986.URI.Cache {
 
 extension RFC_3986.URI {
 
-    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(RFC_3986.Error)
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(RFC_3986.Error)
     where Bytes.Element == Byte {
         let string = String(decoding: bytes, as: UTF8.self)
         guard RFC_3986.isValidURI(string) else {

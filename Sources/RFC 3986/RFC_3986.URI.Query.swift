@@ -1,6 +1,5 @@
 public import Byte
 import ASCII
-import Byte
 
 extension RFC_3986.URI {
 
@@ -26,7 +25,7 @@ extension RFC_3986.URI.Query {
     public typealias RawValue = String
 }
 
-extension RFC_3986.URI.Query: Swift.RawRepresentable {
+extension RFC_3986.URI.Query: Swift::RawRepresentable {
 
     public init?(rawValue: String) {
         do throws(Error) {
@@ -43,7 +42,7 @@ extension RFC_3986.URI.Query {
         try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
-    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
 
         if bytes.isEmpty {
@@ -240,7 +239,7 @@ extension RFC_3986.URI.Query {
     }
 }
 
-extension RFC_3986.URI.Query: Swift.Collection {
+extension RFC_3986.URI.Query: Swift::Collection {
     public typealias Index = Array<(key: String, value: String?)>.Index
     public typealias Element = (key: String, value: String?)
 

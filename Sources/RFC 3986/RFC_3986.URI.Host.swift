@@ -2,7 +2,6 @@ public import Byte
 public import IPv4_Standard
 public import IPv6_Standard
 import ASCII
-import Byte
 
 extension RFC_3986.URI {
 
@@ -22,7 +21,7 @@ extension RFC_3986.URI.Host {
         try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
     }
 
-    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         guard !bytes.isEmpty else {
             throw Error.empty

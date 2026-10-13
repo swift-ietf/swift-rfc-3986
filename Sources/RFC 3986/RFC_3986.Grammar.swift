@@ -59,7 +59,7 @@ extension RFC_3986.Grammar {
     }
 
     @inlinable
-    public static func isValidScheme<Bytes: Swift.Collection>(_ bytes: Bytes) -> Bool
+    public static func isValidScheme<Bytes: Swift::Collection>(_ bytes: Bytes) -> Bool
     where Bytes.Element == UInt8 {
         guard let first = bytes.first, isAlpha(first) else { return false }
         return bytes.dropFirst().allSatisfy(isSchemeChar)
@@ -74,7 +74,7 @@ extension RFC_3986.Grammar {
     }
 
     @inlinable
-    public static func isGrammarValid<Bytes: Swift.Collection>(
+    public static func isGrammarValid<Bytes: Swift::Collection>(
         _ bytes: Bytes,
         allowedRawByte isAllowed: (UInt8) -> Bool
     ) -> Bool where Bytes.Element == UInt8 {

@@ -1,10 +1,10 @@
 #if Coder
 public import ASCII
 internal import RFC_4007
-public import RFC_4291
+import RFC_4291
 internal import RFC_791
-public import RFC_5952_Coder
-public import Serializer
+import RFC_5952_Coder
+import Serializer
 
 extension RFC_3986.URI.Host {
 

@@ -1,6 +1,5 @@
 public import Byte
 import ASCII
-import Byte
 
 extension RFC_3986.URI {
 
@@ -19,7 +18,7 @@ extension RFC_3986.URI {
 
 extension RFC_3986.URI.Port {
 
-    public init<Bytes: Swift.Collection>(ascii bytes: Bytes) throws(Error)
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(Error)
     where Bytes.Element == Byte {
         guard !bytes.isEmpty else {
             throw Error.empty
@@ -60,7 +59,7 @@ extension RFC_3986.URI.Port {
     }
 }
 
-extension RFC_3986.URI.Port: Swift.RawRepresentable {
+extension RFC_3986.URI.Port: Swift::RawRepresentable {
 
     public typealias RawValue = UInt16
 

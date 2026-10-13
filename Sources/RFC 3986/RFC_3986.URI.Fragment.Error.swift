@@ -2,7 +2,7 @@ public import Byte
 
 extension RFC_3986.URI.Fragment {
 
-    public enum Error: Swift.Error, Sendable, Equatable {
+    public enum Error: Swift::Error, Sendable, Equatable {
 
         case containsHash(_ value: String)
 
