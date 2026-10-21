@@ -146,11 +146,10 @@ extension RFC_3986.ByteSet {
     @inlinable
     public func contains(_ byte: UInt8) -> Bool {
         guard byte < 128 else { return false }
-        if byte < 64 {
-            return (low & (1 << UInt64(byte))) != 0
-        } else {
+        guard byte < 64 else {
             return (high & (1 << UInt64(byte - 64))) != 0
         }
+        return (low & (1 << UInt64(byte))) != 0
     }
 
     @inlinable
@@ -262,11 +261,10 @@ extension RFC_3986 {
 
     @inlinable
     package static func hexDigit(_ nibble: UInt8) -> UInt8 {
-        if nibble < 10 {
-            return UInt8(ascii: "0") + nibble
-        } else {
+        guard nibble < 10 else {
             return UInt8(ascii: "A") + nibble - 10
         }
+        return UInt8(ascii: "0") + nibble
     }
 
     @inlinable

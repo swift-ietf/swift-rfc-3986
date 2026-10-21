@@ -37,14 +37,15 @@ struct `Reading URI components concurrently` {
         #expect(readings.count == 2_000)
         #expect(
             readings.allSatisfy {
-                $0 == Components(
-                    scheme: "https",
-                    host: "example.com",
-                    port: 8080,
-                    path: "/path/to/thing",
-                    query: "key=value",
-                    fragment: "frag"
-                )
+                $0
+                    == Components(
+                        scheme: "https",
+                        host: "example.com",
+                        port: 8080,
+                        path: "/path/to/thing",
+                        query: "key=value",
+                        fragment: "frag"
+                    )
             }
         )
     }

@@ -1,5 +1,5 @@
-public import Byte
 import ASCII
+public import Byte
 
 extension RFC_3986.URI {
 
@@ -173,11 +173,10 @@ extension RFC_3986.URI.Query {
     public init(_ parameters: [(String, String?)] = []) throws(Error) {
 
         let queryString = parameters.map { key, value in
-            if let value {
-                return "\(key)=\(value)"
-            } else {
+            guard let value else {
                 return key
             }
+            return "\(key)=\(value)"
         }.joined(separator: "&")
 
         try self.init(ascii: queryString.utf8.map(Byte.init(bitPattern:)))
@@ -185,22 +184,20 @@ extension RFC_3986.URI.Query {
 
     internal init(unchecked parameters: [(String, String?)]) {
         let queryString = parameters.map { key, value in
-            if let value {
-                return "\(key)=\(value)"
-            } else {
+            guard let value else {
                 return key
             }
+            return "\(key)=\(value)"
         }.joined(separator: "&")
         self.init(__unchecked: (), rawValue: queryString, parameters: parameters)
     }
 
     public var string: String {
         parameters.map { key, value in
-            if let value {
-                return "\(key)=\(value)"
-            } else {
+            guard let value else {
                 return key
             }
+            return "\(key)=\(value)"
         }.joined(separator: "&")
     }
 
@@ -287,4 +284,3 @@ extension RFC_3986.URI.Query {
         lhs.rawValue == rhs
     }
 }
-

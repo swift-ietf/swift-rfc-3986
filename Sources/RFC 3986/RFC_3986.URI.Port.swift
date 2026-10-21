@@ -1,5 +1,5 @@
-public import Byte
 import ASCII
+public import Byte
 
 extension RFC_3986.URI {
 
@@ -47,7 +47,13 @@ extension RFC_3986.URI.Port {
                 )
             }
 
-            let digit = UInt32(code.digitValue!)
+            guard let digitValue = code.digitValue else {
+                throw Error.invalidCharacter(
+                    String(decoding: bytes, as: UTF8.self),
+                    byte: code.byte
+                )
+            }
+            let digit = UInt32(digitValue)
             result = result * 10 + digit
 
             guard result <= UInt32(UInt16.max) else {
@@ -146,7 +152,6 @@ extension RFC_3986.URI.Port: ExpressibleByIntegerLiteral {
         self.init(value)
     }
 }
-
 
 extension RFC_3986.URI.Port: Comparable {
     public static func < (lhs: RFC_3986.URI.Port, rhs: RFC_3986.URI.Port) -> Bool {

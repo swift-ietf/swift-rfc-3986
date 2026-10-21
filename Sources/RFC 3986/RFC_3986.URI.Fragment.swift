@@ -1,5 +1,5 @@
-public import Byte
 import ASCII
+public import Byte
 
 extension RFC_3986.URI {
 
@@ -88,4 +88,3 @@ extension RFC_3986.URI.Fragment {
         rawValue.isEmpty
     }
 }
-

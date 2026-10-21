@@ -1,7 +1,7 @@
+import ASCII
 public import Byte
 public import IPv4_Standard
 public import IPv6_Standard
-import ASCII
 
 extension RFC_3986.URI {
 
@@ -180,4 +180,3 @@ extension RFC_3986.URI.Host {
         return nil
     }
 }
-

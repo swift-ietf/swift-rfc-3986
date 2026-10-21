@@ -1,5 +1,5 @@
-public import Byte
 import ASCII
+public import Byte
 
 extension RFC_3986 {
 
@@ -735,7 +735,6 @@ extension RFC_3986.URI {
         hasher.combine(value)
     }
 }
-
 
 extension RFC_3986.URI {
 
