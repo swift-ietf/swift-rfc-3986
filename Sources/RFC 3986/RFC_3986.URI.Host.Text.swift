@@ -3,7 +3,7 @@
     internal import RFC_4007
     import RFC_4291
     internal import RFC_791
-    import RFC_5952_Coder
+    import RFC_5952
     import Serializer
 
     extension RFC_3986.URI.Host {
