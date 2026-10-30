@@ -133,7 +133,7 @@ let package = Package(
             name: "RFC 3986 Foundation Integration",
             dependencies: [
                 .target(name: "RFC 3986"),
-                .product(name: "ASCII", package: "swift-ascii", condition: .when(traits: ["Coder"]))
+                .product(name: "ASCII", package: "swift-ascii", condition: .when(traits: ["Coder"])),
             ]
         ),
         .testTarget(
