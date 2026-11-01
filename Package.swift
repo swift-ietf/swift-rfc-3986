@@ -106,7 +106,7 @@ let package = Package(
         .package(
             url: "https://github.com/swift-ietf/swift-rfc-5952.git",
             branch: "main",
-            traits: [.trait(name: "Coder", condition: .when(traits: ["Coder"]))]
+            traits: ["Coder"]
         ),
     ],
     targets: [
