@@ -1,28 +1,20 @@
 # swift-rfc-3986
 
-Domain model for RFC 3986, the Uniform Resource Identifier generic syntax: `RFC_3986.URI` with its `URI.Scheme`, `URI.Userinfo`, `URI.Authority`, `URI.Host` (IPv4 literal, scoped IPv6 literal or registered name), `URI.Port`, `URI.Path`, `URI.Query` and `URI.Fragment`, each validating on construction from text or ASCII bytes and each carrying its own typed error. The package also carries the character classes of Section 2 (`RFC_3986.CharacterSet`, `RFC_3986.ByteSet`, `RFC_3986.Grammar`), the percent-encoding primitives of Section 2.1 over bytes, dot-segment removal and the reference resolution of Section 5, and the normalization of Section 6. `normalized()` lowercases the scheme and the host text as written (Section 6.2.2.1), normalizes the percent-encoding of the path and query (uppercase triplets, unreserved octets decoded), removes dot segments and drops the default port; it keeps an IP literal in its written form, and the canonical RFC 5952 rendering of an IPv6 host belongs to the coder's serializer. The `RFC 3986 Foundation Integration` product bridges `URI`, `Scheme`, `Userinfo`, `Port`, `Path`, `Query` and `Fragment` to `Codable`.
+Use this package when you need to check, take apart, normalize or resolve URIs, or percent-encode bytes for one. Start from `RFC_3986.URI`, which holds absolute URIs and relative references alike, and from `RFC_3986.percentEncode(_:allowing:)` and `RFC_3986.percentDecode(_:)` for raw bytes. If your identifiers may contain Unicode, use swift-rfc-3987. If you want one URI type that also covers related standards, use swift-uri-standard. For URLs parsed the way browsers do, use swift-whatwg-url. For URI templates, use swift-rfc-6570. For `Codable`, add the `RFC 3986 Foundation Integration` product.
 
-Everything that renders wire text lives in [swift-rfc-3986-coder](https://github.com/swift-ietf/swift-rfc-3986-coder): the `ASCII.Parseable`, `ASCII.Serializable` and `Binary.Serializable` conformances, the nested `Coder` types with `Coder.Codable`, the composing initializer `RFC_3986.URI.init(scheme:authority:path:query:fragment:)`, and the `Codable` conformances of `URI.Host` and `URI.Authority` (product `RFC 3986 Coder Foundation Integration`).
+## Laws
 
-```swift
-import RFC_3986
-
-let uri = try RFC_3986.URI("https://user@example.com:8080/path/to/thing?key=value#section")
-uri.scheme?.value                                    // "https"
-uri.host                                             // .registeredName("example.com")
-uri.port                                             // 8080
-uri.path?.description                                // "/path/to/thing"
-uri.query?.description                               // "key=value"
-uri.fragment?.value                                  // "section"
-
-try RFC_3986.URI("HTTPS://EXAMPLE.COM:443/path").normalized().value
-// "https://example.com/path"
-
-try RFC_3986.URI("http://example.com/path/to/resource").resolve("../other").value
-// "http://example.com/path/other"
-
-RFC_3986.percentEncode(Array("hello world?".utf8))   // "hello%20world%3F" as bytes
-RFC_3986.percentDecode(Array("caf%C3%A9".utf8))      // "café" as bytes
-```
-
-For Internationalized Resource Identifiers, which allow Unicode beyond the ASCII repertoire RFC 3986 admits, see [swift-rfc-3987](https://github.com/swift-ietf/swift-rfc-3987).
+- A URI is ASCII only. Text with any other character is refused, so Unicode has to be percent-encoded first. Malformed percent-encoding such as `100%offsale`, and a port that isn't a number, are refused too.
+- The empty string is a valid URI, the same-document reference. A relative reference such as `../relative/path`, `?query=value` or `#fragment` is valid, and so is `example.com`, which is read as a path.
+- A URI parses its components once, when it's created, and reads of them are safe from any thread.
+- `RFC_3986.URI.init(unchecked:)` skips validation. A component that doesn't parse then reads as nil, and a URI without a host has no `base`.
+- `RFC_3986.URI.value` keeps the text as written. `RFC_3986.URI.base` keeps the host as written too, so the base of `https://Example.COM:8080/path` is `https://Example.COM:8080`.
+- `RFC_3986.URI.normalized()` lowercases the scheme and host, drops the port when it is 80 for `http`, 443 for `https` or 21 for `ftp`, removes dot segments, and normalizes percent-encoding in the path and query. An IPv6 literal is only lowercased, not rewritten in its canonical form.
+- Normalizing percent-encoding decodes escapes of unreserved characters and uppercases the hex digits of every other escape, so `%2d` becomes `-` and `%2f` becomes `%2F`. `RFC_3986.URI.normalizePercentEncoding()` does only this, and only in the path and query.
+- `RFC_3986.URI.resolve(_:)` follows the reference resolution of RFC 3986 section 5. A reference with a scheme is returned unchanged. A reference with only a query keeps the base path. Dot segments in the merged path are removed.
+- `RFC_3986.URI.appendingPathComponent(_:)` percent-encodes the component, including `/`, `?` and `#`, so the component can't add segments, a query or a fragment. It adds a `/` only when the path doesn't already end in one. `RFC_3986.URI.appendingQueryItem(name:value:)` percent-encodes `&`, `=` and `#` in the name and value.
+- `RFC_3986.percentEncode(_:allowing:)` writes uppercase hex and by default leaves only unreserved characters as they are. `RFC_3986.percentDecode(_:)` leaves a malformed escape such as `%G0` or a trailing `%` as it is.
+- `RFC_3986.URI.isSecure` is true for `https`, `wss` and `ftps`.
+- An IPv6 host is written in brackets, with a zone written as `%25` followed by the zone. A host serializes and encodes an IPv6 address in its canonical form, so `[2001:0DB8::1]` becomes `[2001:db8::1]`.
+- `RFC_3986.URI.coder` reads only absolute URIs: it needs a scheme. It stops at the first byte that can't continue the URI, such as a space. If parsing fails, the input is left where it started.
+- With `RFC 3986 Foundation Integration`, each type encodes as its text, except a port, which encodes as its number.
