@@ -445,7 +445,7 @@ extension RFC_3986.URI {
         }
 
         if let pathString = normalizedPath, !pathString.isEmpty {
-            normalizedPath = RFC_3986.removeDotSegments(from: pathString)
+            normalizedPath = RFC_3986.removeDotSegments(fromText: pathString)
         }
 
         if let pathString = normalizedPath {
@@ -586,7 +586,7 @@ extension RFC_3986.URI {
                 }
             }
 
-            mergedPath = RFC_3986.removeDotSegments(from: mergedPath)
+            mergedPath = RFC_3986.removeDotSegments(fromText: mergedPath)
             result += mergedPath
         } else if let basePath = path {
             result += basePath.description
@@ -806,7 +806,16 @@ extension RFC_3986.URI: Comparable {
 
 extension RFC_3986 {
 
-    public static func removeDotSegments(from path: String) -> String {
+    /// RFC 3986 Section 5.2.4 applied to `path`.
+    public static func removeDotSegments(from path: URI.Path) -> URI.Path {
+        let text = removeDotSegments(fromText: path.description)
+        let isAbsolute = text.hasPrefix("/")
+        let body = isAbsolute ? text.dropFirst() : text[...]
+        let segments: [String] = body.isEmpty ? [] : body.split(separator: "/", omittingEmptySubsequences: false).map { String($0) }
+        return URI.Path(__unchecked: (), segments: segments, isAbsolute: isAbsolute)
+    }
+
+    static func removeDotSegments(fromText path: String) -> String {
         var input = path
         var output = ""
 

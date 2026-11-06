@@ -260,51 +260,58 @@ struct `URI Component Parsing` {
 struct `Path Normalization Algorithm` {
 
     @Test
+    func `A path keeps its form through the algorithm`() throws {
+        #expect(RFC_3986.removeDotSegments(from: try RFC_3986.URI.Path("/a/b/.")).description == "/a/b/")
+        #expect(RFC_3986.removeDotSegments(from: try RFC_3986.URI.Path("mid/content=5/../6")).description == "mid/6")
+        #expect(RFC_3986.removeDotSegments(from: try RFC_3986.URI.Path("/")).description == "/")
+    }
+
+    @Test
     func `Remove single dot`() {
         let input = "/a/./b"
-        let output = RFC_3986.removeDotSegments(from: input)
+        let output = RFC_3986.removeDotSegments(fromText: input)
         #expect(output == "/a/b")
     }
 
     @Test
     func `Remove double dots`() {
         let input = "/a/b/../c"
-        let output = RFC_3986.removeDotSegments(from: input)
+        let output = RFC_3986.removeDotSegments(fromText: input)
         #expect(output == "/a/c")
     }
 
     @Test
     func `Complex path normalization`() {
         let input = "/a/b/c/./../../g"
-        let output = RFC_3986.removeDotSegments(from: input)
+        let output = RFC_3986.removeDotSegments(fromText: input)
         #expect(output == "/a/g")
     }
 
     @Test
     func `Leading dots`() {
         let input = "../a/b"
-        let output = RFC_3986.removeDotSegments(from: input)
+        let output = RFC_3986.removeDotSegments(fromText: input)
         #expect(output == "a/b")
     }
 
     @Test
     func `Trailing dot`() {
         let input = "/a/b/."
-        let output = RFC_3986.removeDotSegments(from: input)
+        let output = RFC_3986.removeDotSegments(fromText: input)
         #expect(output == "/a/b/")
     }
 
     @Test
     func `RFC 3986 Example 1`() {
         let input = "/a/b/c/./../../g"
-        let output = RFC_3986.removeDotSegments(from: input)
+        let output = RFC_3986.removeDotSegments(fromText: input)
         #expect(output == "/a/g")
     }
 
     @Test
     func `RFC 3986 Example 2`() {
         let input = "mid/content=5/../6"
-        let output = RFC_3986.removeDotSegments(from: input)
+        let output = RFC_3986.removeDotSegments(fromText: input)
         #expect(output == "mid/6")
     }
 }
