@@ -132,12 +132,12 @@ extension RFC_3986.URI.Cache {
 
         var remaining = uri
 
-        if let fragmentIndex = remaining.lastIndex(of: "#") {
+        if let fragmentIndex = remaining.firstIndex(of: "#") {
             fragment = String(remaining[remaining.index(after: fragmentIndex)...])
             remaining = String(remaining[..<fragmentIndex])
         }
 
-        if let queryIndex = remaining.lastIndex(of: "?") {
+        if let queryIndex = remaining.firstIndex(of: "?") {
             query = String(remaining[remaining.index(after: queryIndex)...])
             remaining = String(remaining[..<queryIndex])
         }

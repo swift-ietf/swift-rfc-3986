@@ -263,6 +263,16 @@
         }
 
         @Test
+        func `parses repeated question marks into the query and fragment`() throws {
+            var input: ArraySlice<Byte> = "https://example.com/a?b?c#d?e"
+            let uri = try RFC_3986.URI.coder.parse(&input)
+            #expect(uri.path?.description == "/a")
+            #expect(uri.query?.description == "b?c")
+            #expect(uri.fragment?.value == "d?e")
+            #expect(input.isEmpty)
+        }
+
+        @Test
         func `rejects a missing scheme`() {
             var input: ArraySlice<Byte> = "//example.com"
             #expect(throws: RFC_3986.Error.self) {
