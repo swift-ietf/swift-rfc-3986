@@ -115,6 +115,25 @@ struct `URI delimiters` {
         #expect(try base.resolve("c?d?e").value == "https://example.com/a/c?d?e")
     }
 
+    @Test(arguments: ["/a?b://u@h", "/a#b://u@h", "/a://u@h", "?b://u@h", "#b://u@h"])
+    func `Userinfo-shaped text outside an authority is not userinfo`(input: String) throws {
+        let uri = try RFC_3986.URI(input)
+        #expect(uri.host == nil)
+        #expect(uri.userinfo == nil)
+    }
+
+    @Test(arguments: [
+        ("https://u@h/a?b://v@w", "u"),
+        ("https://u:p@h#b://v@w", "u:p"),
+        ("//u@h/a", "u"),
+        ("//u:p@h/a", "u:p"),
+    ])
+    func `Userinfo comes from the authority`(input: String, expected: String) throws {
+        let uri = try RFC_3986.URI(input)
+        #expect(uri.host == .registeredName("h"))
+        #expect(uri.userinfo?.rawValue == expected)
+    }
+
     @Test
     func `Normalizing keeps a repeated question mark in the query`() throws {
         let uri = try RFC_3986.URI("HTTPS://EXAMPLE.COM/a?b?c")

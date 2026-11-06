@@ -67,6 +67,7 @@ extension RFC_3986.URI {
         let components: ParsedComponents
 
         let scheme: Scheme?
+        let userinfo: Userinfo?
         let host: Host?
         let port: Port?
         let path: Path?
@@ -78,6 +79,7 @@ extension RFC_3986.URI {
             let components = Self.parseURI(value)
             self.components = components
             self.scheme = Self.parsed(components.scheme) { try Scheme($0) }
+            self.userinfo = Self.parsed(components.userinfo) { try Userinfo($0) }
             self.host = Self.parsed(components.host) { try Host($0) }
             self.port = components.port.flatMap { UInt16($0) }.map { Port($0) }
 
@@ -90,6 +92,7 @@ extension RFC_3986.URI {
             self.value = value
             self.components = components
             self.scheme = Self.parsed(components.scheme) { try Scheme($0) }
+            self.userinfo = Self.parsed(components.userinfo) { try Userinfo($0) }
             self.host = Self.parsed(components.host) { try Host($0) }
             self.port = components.port.flatMap { UInt16($0) }.map { Port($0) }
             self.path = Self.parsed(components.path) { try Path($0) }
@@ -330,35 +333,7 @@ extension RFC_3986.URI {
     }
 
     public var userinfo: Userinfo? {
-
-        var remaining = cache.value
-
-        if let colonIndex = remaining.firstIndex(of: ":") {
-            remaining = String(remaining[remaining.index(after: colonIndex)...])
-        }
-
-        guard remaining.hasPrefix("//") else { return nil }
-        let afterSlashes = remaining.index(remaining.startIndex, offsetBy: 2)
-        var authorityEnd = remaining.endIndex
-
-        for char in ["/", "?", "#"] {
-            if let index = remaining[afterSlashes...].firstIndex(of: Character(char)) {
-                if index < authorityEnd {
-                    authorityEnd = index
-                }
-            }
-        }
-
-        let authority = String(remaining[afterSlashes..<authorityEnd])
-
-        guard let atIndex = authority.firstIndex(of: "@") else { return nil }
-        let userinfoString = String(authority[..<atIndex])
-
-        do throws(Userinfo.Error) {
-            return try Userinfo(userinfoString)
-        } catch {
-            return nil
-        }
+        cache.userinfo
     }
 
     public var host: Host? {
