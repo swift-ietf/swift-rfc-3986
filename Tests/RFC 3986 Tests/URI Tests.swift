@@ -2,6 +2,8 @@ import Testing
 
 @testable import RFC_3986
 
+enum `URI Tests` {}
+
 extension `URI Tests` {
     @Suite
     struct `URI Validation` {
