@@ -1,4 +1,4 @@
-public import Byte
+import Byte
 
 
 extension RFC_3986.URI.Authority {

@@ -1,4 +1,4 @@
-public import ASCII
+import ASCII
 
 
 extension RFC_3986 {
