@@ -2,223 +2,235 @@ import Testing
 
 @testable import RFC_3986
 
-@Suite
-struct `Developer Delight - Convenience APIs` {
+enum `Developer Delight Tests` {}
 
-    @Test
-    func `Percent-encoding a byte sequence`() {
-        let encoded = RFC_3986.percentEncode(Array("hello world".utf8))
-        #expect(String(decoding: encoded, as: UTF8.self) == "hello%20world")
-    }
+extension `Developer Delight Tests` {
+    @Suite
+    struct `Developer Delight - Convenience APIs` {
 
-    @Test
-    func `Percent-decoding a byte sequence`() {
-        let decoded = RFC_3986.percentDecode(Array("hello%20world".utf8))
-        #expect(String(decoding: decoded, as: UTF8.self) == "hello world")
-    }
-
-    @Test
-    func `A URI validates the text it is built from`() throws {
-        let uri = try RFC_3986.URI("https://example.com")
-        #expect(uri.value == "https://example.com")
-
-        #expect(throws: RFC_3986.Error.self) {
-            try RFC_3986.URI("not a uri")
+        @Test
+        func `Percent-encoding a byte sequence`() {
+            let encoded = RFC_3986.percentEncode(Array("hello world".utf8))
+            #expect(String(decoding: encoded, as: UTF8.self) == "hello%20world")
         }
-    }
 
-    @Test
-    func `URI isSecure property`() throws {
-        let httpsURI = try RFC_3986.URI("https://example.com")
-        #expect(httpsURI.isSecure == true)
-
-        let httpURI = try RFC_3986.URI("http://example.com")
-        #expect(httpURI.isSecure == false)
-
-        let wssURI = try RFC_3986.URI("wss://example.com")
-        #expect(wssURI.isSecure == true)
-    }
-
-    @Test
-    func `URI isHTTP property`() throws {
-        let httpsURI = try RFC_3986.URI("https://example.com")
-        #expect(httpsURI.isHTTP == true)
-
-        let ftpURI = try RFC_3986.URI("ftp://example.com")
-        #expect(ftpURI.isHTTP == false)
-    }
-
-    @Test
-    func `URI base property`() throws {
-        let uri = try RFC_3986.URI("https://example.com:8080/path?query#fragment")
-        let base = uri.base
-        #expect(base?.value == "https://example.com:8080")
-    }
-
-    @Test
-    func `URI pathAndQuery property`() throws {
-        let uri = try RFC_3986.URI("https://example.com/path?key=value")
-        #expect(uri.pathAndQuery == "/path?key=value")
-
-        let uriNoQuery = try RFC_3986.URI("https://example.com/path")
-        #expect(uriNoQuery.pathAndQuery == "/path")
-    }
-
-    @Test
-    func `appendingPathComponent()`() throws {
-        let base = try RFC_3986.URI("https://example.com/path")
-        let appended = base.appendingPathComponent("file.txt")
-        #expect(appended.value == "https://example.com/path/file.txt")
-
-        let baseWithSlash = try RFC_3986.URI("https://example.com/path/")
-        let appendedWithSlash = baseWithSlash.appendingPathComponent("file.txt")
-        #expect(appendedWithSlash.value == "https://example.com/path/file.txt")
-    }
-
-    @Test
-    func `appendingQueryItem()`() throws {
-        let base = try RFC_3986.URI("https://example.com/path")
-        let withQuery = base.appendingQueryItem(name: "key", value: "value")
-        #expect(withQuery.query?.string.contains("key=value") == true)
-
-        let withTwoQueries = withQuery.appendingQueryItem(name: "foo", value: "bar")
-        #expect(withTwoQueries.query?.string.contains("key=value") == true)
-        #expect(withTwoQueries.query?.string.contains("foo=bar") == true)
-    }
-
-    @Test
-    func `settingFragment()`() throws {
-        let base = try RFC_3986.URI("https://example.com/path")
-        let withFragment = base.settingFragment(try RFC_3986.URI.Fragment("section"))
-        #expect(withFragment.fragment?.value == "section")
-
-        let replaced = withFragment.settingFragment(try RFC_3986.URI.Fragment("other"))
-        #expect(replaced.fragment?.value == "other")
-    }
-}
-
-@Suite
-struct `Developer Delight - Operators` {
-
-    @Test
-    func `/ operator for URI resolution - String`() throws {
-        let base = try RFC_3986.URI("https://example.com/path/to/resource")
-        let resolved = try base / "../other"
-        #expect(resolved.value == "https://example.com/path/other")
-    }
-
-    @Test
-    func `/ operator for URI resolution - URI`() throws {
-        let base = try RFC_3986.URI("https://example.com/path/")
-        let reference = try RFC_3986.URI("file.txt")
-        let resolved = try base / reference
-        #expect(resolved.value.hasSuffix("file.txt"))
-    }
-
-    @Test
-    func `Comparable - sorting URIs`() throws {
-        let uri1 = try RFC_3986.URI("https://a.com")
-        let uri2 = try RFC_3986.URI("https://b.com")
-        let uri3 = try RFC_3986.URI("https://c.com")
-
-        let sorted = [uri3, uri1, uri2].sorted()
-        #expect(sorted[0].value == "https://a.com")
-        #expect(sorted[1].value == "https://b.com")
-        #expect(sorted[2].value == "https://c.com")
-    }
-
-    @Test
-    func `Comparable - comparison`() throws {
-        let uri1 = try RFC_3986.URI("https://a.com")
-        let uri2 = try RFC_3986.URI("https://b.com")
-
-        #expect(uri1 < uri2)
-        #expect(uri2 > uri1)
-        #expect(uri1 <= uri2)
-        #expect(uri2 >= uri1)
-    }
-}
-
-@Suite
-struct `Developer Delight - Error Messages` {
-
-    @Test
-    func `Error description - invalidURI with non-ASCII`() {
-        do {
-            let string = "https://example.com/寿司"
-            _ = try RFC_3986.URI(string)
-            Issue.record("Should have thrown an error")
-        } catch let error {
-            #expect(error.description.contains("ASCII"))
+        @Test
+        func `Percent-decoding a byte sequence`() {
+            let decoded = RFC_3986.percentDecode(Array("hello%20world".utf8))
+            #expect(String(decoding: decoded, as: UTF8.self) == "hello world")
         }
-    }
 
-    @Test
-    func `Error description - invalidURI with invalid characters`() {
-        do {
-            let string = "http://example.com/<invalid>"
-            _ = try RFC_3986.URI(string)
-            Issue.record("Should have thrown an error")
-        } catch let error {
-            #expect(error.description.contains("RFC 3986"))
+        @Test
+        func `A URI validates the text it is built from`() throws {
+            let uri = try RFC_3986.URI("https://example.com")
+            #expect(uri.value == "https://example.com")
+
+            #expect(throws: RFC_3986.Error.self) {
+                try RFC_3986.URI("not a uri")
+            }
+        }
+
+        @Test
+        func `URI isSecure property`() throws {
+            let httpsURI = try RFC_3986.URI("https://example.com")
+            #expect(httpsURI.isSecure == true)
+
+            let httpURI = try RFC_3986.URI("http://example.com")
+            #expect(httpURI.isSecure == false)
+
+            let wssURI = try RFC_3986.URI("wss://example.com")
+            #expect(wssURI.isSecure == true)
+        }
+
+        @Test
+        func `URI isHTTP property`() throws {
+            let httpsURI = try RFC_3986.URI("https://example.com")
+            #expect(httpsURI.isHTTP == true)
+
+            let ftpURI = try RFC_3986.URI("ftp://example.com")
+            #expect(ftpURI.isHTTP == false)
+        }
+
+        @Test
+        func `URI base property`() throws {
+            let uri = try RFC_3986.URI("https://example.com:8080/path?query#fragment")
+            let base = uri.base
+            #expect(base?.value == "https://example.com:8080")
+        }
+
+        @Test
+        func `URI pathAndQuery property`() throws {
+            let uri = try RFC_3986.URI("https://example.com/path?key=value")
+            #expect(uri.pathAndQuery == "/path?key=value")
+
+            let uriNoQuery = try RFC_3986.URI("https://example.com/path")
+            #expect(uriNoQuery.pathAndQuery == "/path")
+        }
+
+        @Test
+        func `appendingPathComponent()`() throws {
+            let base = try RFC_3986.URI("https://example.com/path")
+            let appended = base.appendingPathComponent("file.txt")
+            #expect(appended.value == "https://example.com/path/file.txt")
+
+            let baseWithSlash = try RFC_3986.URI("https://example.com/path/")
+            let appendedWithSlash = baseWithSlash.appendingPathComponent("file.txt")
+            #expect(appendedWithSlash.value == "https://example.com/path/file.txt")
+        }
+
+        @Test
+        func `appendingQueryItem()`() throws {
+            let base = try RFC_3986.URI("https://example.com/path")
+            let withQuery = base.appendingQueryItem(name: "key", value: "value")
+            #expect(withQuery.query?.string.contains("key=value") == true)
+
+            let withTwoQueries = withQuery.appendingQueryItem(name: "foo", value: "bar")
+            #expect(withTwoQueries.query?.string.contains("key=value") == true)
+            #expect(withTwoQueries.query?.string.contains("foo=bar") == true)
+        }
+
+        @Test
+        func `settingFragment()`() throws {
+            let base = try RFC_3986.URI("https://example.com/path")
+            let withFragment = base.settingFragment(try RFC_3986.URI.Fragment("section"))
+            #expect(withFragment.fragment?.value == "section")
+
+            let replaced = withFragment.settingFragment(try RFC_3986.URI.Fragment("other"))
+            #expect(replaced.fragment?.value == "other")
         }
     }
 }
 
-@Suite
-struct `Developer Delight - Debug Output` {
+extension `Developer Delight Tests` {
+    @Suite
+    struct `Developer Delight - Operators` {
 
-    @Test
-    func `CustomDebugStringConvertible - full URI`() throws {
-        let uri = try RFC_3986.URI("https://example.com:8080/path?key=value#section")
-        let debug = uri.debugDescription
+        @Test
+        func `/ operator for URI resolution - String`() throws {
+            let base = try RFC_3986.URI("https://example.com/path/to/resource")
+            let resolved = try base / "../other"
+            #expect(resolved.value == "https://example.com/path/other")
+        }
 
-        #expect(debug.contains("scheme: https"))
-        #expect(debug.contains("host: example.com"))
-        #expect(debug.contains("port: 8080"))
-        #expect(debug.contains("path: /path"))
-        #expect(debug.contains("query: key=value"))
-        #expect(debug.contains("fragment: section"))
-    }
+        @Test
+        func `/ operator for URI resolution - URI`() throws {
+            let base = try RFC_3986.URI("https://example.com/path/")
+            let reference = try RFC_3986.URI("file.txt")
+            let resolved = try base / reference
+            #expect(resolved.value.hasSuffix("file.txt"))
+        }
 
-    @Test
-    func `CustomDebugStringConvertible - minimal URI`() throws {
-        let uri = try RFC_3986.URI("https://example.com")
-        let debug = uri.debugDescription
+        @Test
+        func `Comparable - sorting URIs`() throws {
+            let uri1 = try RFC_3986.URI("https://a.com")
+            let uri2 = try RFC_3986.URI("https://b.com")
+            let uri3 = try RFC_3986.URI("https://c.com")
 
-        #expect(debug.contains("scheme: https"))
-        #expect(debug.contains("host: example.com"))
-        #expect(!debug.contains("port:"))
-        #expect(!debug.contains("query:"))
+            let sorted = [uri3, uri1, uri2].sorted()
+            #expect(sorted[0].value == "https://a.com")
+            #expect(sorted[1].value == "https://b.com")
+            #expect(sorted[2].value == "https://c.com")
+        }
+
+        @Test
+        func `Comparable - comparison`() throws {
+            let uri1 = try RFC_3986.URI("https://a.com")
+            let uri2 = try RFC_3986.URI("https://b.com")
+
+            #expect(uri1 < uri2)
+            #expect(uri2 > uri1)
+            #expect(uri1 <= uri2)
+            #expect(uri2 >= uri1)
+        }
     }
 }
 
-@Suite
-struct `Developer Delight - Fluent Chains` {
+extension `Developer Delight Tests` {
+    @Suite
+    struct `Developer Delight - Error Messages` {
 
-    @Test
-    func `Chaining convenience methods`() throws {
-        let uri = try RFC_3986.URI("https://example.com")
-            .appendingPathComponent("api")
-            .appendingPathComponent("users")
-            .appendingQueryItem(name: "page", value: "1")
-            .appendingQueryItem(name: "limit", value: "10")
-            .settingFragment(try RFC_3986.URI.Fragment("results"))
+        @Test
+        func `Error description - invalidURI with non-ASCII`() {
+            do {
+                let string = "https://example.com/寿司"
+                _ = try RFC_3986.URI(string)
+                Issue.record("Should have thrown an error")
+            } catch let error {
+                #expect(error.description.contains("ASCII"))
+            }
+        }
 
-        #expect(uri.value.contains("/api/users"))
-        #expect(uri.query?.string.contains("page=1") == true)
-        #expect(uri.query?.string.contains("limit=10") == true)
-        #expect(uri.fragment?.value == "results")
+        @Test
+        func `Error description - invalidURI with invalid characters`() {
+            do {
+                let string = "http://example.com/<invalid>"
+                _ = try RFC_3986.URI(string)
+                Issue.record("Should have thrown an error")
+            } catch let error {
+                #expect(error.description.contains("RFC 3986"))
+            }
+        }
     }
+}
 
-    @Test
-    func `URI method chaining`() throws {
-        let encoded = RFC_3986.percentEncode(Array("hello world?".utf8))
-        let result = try RFC_3986.URI(String(decoding: encoded, as: UTF8.self))
-            .normalizePercentEncoding()
-            .value
+extension `Developer Delight Tests` {
+    @Suite
+    struct `Developer Delight - Debug Output` {
 
-        #expect(result.contains("%20"))
-        #expect(result.contains("%3F"))
+        @Test
+        func `CustomDebugStringConvertible - full URI`() throws {
+            let uri = try RFC_3986.URI("https://example.com:8080/path?key=value#section")
+            let debug = uri.debugDescription
+
+            #expect(debug.contains("scheme: https"))
+            #expect(debug.contains("host: example.com"))
+            #expect(debug.contains("port: 8080"))
+            #expect(debug.contains("path: /path"))
+            #expect(debug.contains("query: key=value"))
+            #expect(debug.contains("fragment: section"))
+        }
+
+        @Test
+        func `CustomDebugStringConvertible - minimal URI`() throws {
+            let uri = try RFC_3986.URI("https://example.com")
+            let debug = uri.debugDescription
+
+            #expect(debug.contains("scheme: https"))
+            #expect(debug.contains("host: example.com"))
+            #expect(!debug.contains("port:"))
+            #expect(!debug.contains("query:"))
+        }
+    }
+}
+
+extension `Developer Delight Tests` {
+    @Suite
+    struct `Developer Delight - Fluent Chains` {
+
+        @Test
+        func `Chaining convenience methods`() throws {
+            let uri = try RFC_3986.URI("https://example.com")
+                .appendingPathComponent("api")
+                .appendingPathComponent("users")
+                .appendingQueryItem(name: "page", value: "1")
+                .appendingQueryItem(name: "limit", value: "10")
+                .settingFragment(try RFC_3986.URI.Fragment("results"))
+
+            #expect(uri.value.contains("/api/users"))
+            #expect(uri.query?.string.contains("page=1") == true)
+            #expect(uri.query?.string.contains("limit=10") == true)
+            #expect(uri.fragment?.value == "results")
+        }
+
+        @Test
+        func `URI method chaining`() throws {
+            let encoded = RFC_3986.percentEncode(Array("hello world?".utf8))
+            let result = try RFC_3986.URI(String(decoding: encoded, as: UTF8.self))
+                .normalizePercentEncoding()
+                .value
+
+            #expect(result.contains("%20"))
+            #expect(result.contains("%3F"))
+        }
     }
 }

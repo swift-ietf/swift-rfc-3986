@@ -2,22 +2,26 @@ import Testing
 
 @testable import RFC_3986
 
-@Suite
-struct `Set<Character> uri namespace` {
+enum `Set Character Tests` {}
 
-    @Test
-    func `URI namespace syntax works`() {
+extension `Set Character Tests` {
+    @Suite
+    struct `Set<Character> uri namespace` {
 
-        let reserved: Set<Character> = .uri.reserved
-        #expect(reserved.contains(":"))
-        #expect(reserved.contains("/"))
+        @Test
+        func `URI namespace syntax works`() {
 
-        let unreserved: Set<Character> = .uri.unreserved
-        #expect(unreserved.contains("a"))
-        #expect(unreserved.contains("-"))
+            let reserved: Set<Character> = .uri.reserved
+            #expect(reserved.contains(":"))
+            #expect(reserved.contains("/"))
 
-        let query: Set<Character> = .uri.query
-        #expect(query.contains("?"))
-        #expect(query.contains("&"))
+            let unreserved: Set<Character> = .uri.unreserved
+            #expect(unreserved.contains("a"))
+            #expect(unreserved.contains("-"))
+
+            let query: Set<Character> = .uri.query
+            #expect(query.contains("?"))
+            #expect(query.contains("&"))
+        }
     }
 }
