@@ -3,7 +3,9 @@
     import Cursor
 
     enum Scan {
+    }
 
+    extension Scan {
         static func run<Input: Cursor.`Protocol`<Byte, Never>>(
             _ input: inout Input,
             while predicate: (UInt8) -> Bool
