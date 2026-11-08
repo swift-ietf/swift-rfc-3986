@@ -8,11 +8,13 @@
     import Serializer
     import Testing
 
-    @Suite
-    struct `RFC 3986 Coder Tests` {
-    }
+extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests` {
+        @Suite
+        struct `RFC 3986 Coder Tests` {
+        }
+}
 
-    extension `RFC 3986 Coder Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests` {
         @Suite struct `Scheme Tests` {}
 
         @Suite struct `Userinfo Tests` {}
@@ -34,7 +36,7 @@
         @Suite struct `URI Tests` {}
     }
 
-    extension `RFC 3986 Coder Tests`.`Scheme Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests`.`Scheme Tests` {
 
         @Test
         func `reads a scheme and stops at the colon`() throws {
@@ -72,7 +74,7 @@
         }
     }
 
-    extension `RFC 3986 Coder Tests`.`Userinfo Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests`.`Userinfo Tests` {
 
         @Test
         func `reads userinfo characters and stops at the at sign`() throws {
@@ -82,7 +84,7 @@
         }
     }
 
-    extension `RFC 3986 Coder Tests`.`Host Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests`.`Host Tests` {
 
         @Test
         func `reads a registered name`() throws {
@@ -118,7 +120,7 @@
         }
     }
 
-    extension `RFC 3986 Coder Tests`.`Port Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests`.`Port Tests` {
 
         @Test
         func `reads a decimal port`() throws {
@@ -144,7 +146,7 @@
         }
     }
 
-    extension `RFC 3986 Coder Tests`.`Path Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests`.`Path Tests` {
 
         @Test
         func `reads path characters including slashes and stops at the query`() throws {
@@ -154,7 +156,7 @@
         }
     }
 
-    extension `RFC 3986 Coder Tests`.`Query Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests`.`Query Tests` {
 
         @Test
         func `reads query characters and stops at the hash`() throws {
@@ -164,7 +166,7 @@
         }
     }
 
-    extension `RFC 3986 Coder Tests`.`Fragment Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests`.`Fragment Tests` {
 
         @Test
         func `reads fragment characters`() throws {
@@ -173,7 +175,7 @@
         }
     }
 
-    extension `RFC 3986 Coder Tests`.`Authority Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests`.`Authority Tests` {
 
         @Test
         func `reads userinfo, host and port`() throws {
@@ -211,7 +213,7 @@
         }
     }
 
-    extension `RFC 3986 Coder Tests`.`Percent Encoded Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests`.`Percent Encoded Tests` {
 
         @Test
         func `decodes a percent-encoded triplet`() throws {
@@ -251,7 +253,7 @@
         }
     }
 
-    extension `RFC 3986 Coder Tests`.`URI Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests`.`URI Tests` {
 
         @Test
         func `parses an absolute URI with every component`() throws {
@@ -300,7 +302,7 @@
         }
     }
 
-    extension `RFC 3986 Coder Tests`.`Authority Tests` {
+    extension `RFC 3986 Coder Tests`.`RFC 3986 Coder Tests`.`Authority Tests` {
         @Test func `a present malformed port is committed`() {
             var input = [Byte](utf8: "example.com:invalid/path")[...]
             #expect(throws: RFC_3986.URI.Authority.Error.self) {
