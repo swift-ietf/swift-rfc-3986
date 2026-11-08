@@ -3,9 +3,9 @@
     import RFC_3986
     import Testing
 
-enum `RFC_3986.URI.Host.Text Tests` {}
+    enum `RFC_3986.URI.Host.Text Tests` {}
 
-extension `RFC_3986.URI.Host.Text Tests` {
+    extension `RFC_3986.URI.Host.Text Tests` {
         @Suite
         struct `RFC 3986 Host Text Tests` {
 
@@ -30,5 +30,5 @@ extension `RFC_3986.URI.Host.Text Tests` {
                 #expect(text(try RFC_3986.URI.Host("[2001:db8:0:0:0:0:0:1]")) == "[2001:db8::1]")
             }
         }
-}
+    }
 #endif

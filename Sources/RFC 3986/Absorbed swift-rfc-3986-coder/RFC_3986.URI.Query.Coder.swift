@@ -13,7 +13,7 @@
         public static var coder: Coder<ArraySlice<Byte>, [Byte]> { .init() }
     }
 
-extension RFC_3986.URI.Query.Coder {
+    extension RFC_3986.URI.Query.Coder {
         public typealias Output = RFC_3986.URI.Query
 
         public typealias Failure = RFC_3986.URI.Query.Error
@@ -32,5 +32,5 @@ extension RFC_3986.URI.Query.Coder {
         public borrowing func serialize(_ output: Output, into buffer: inout Buffer) throws(Failure) {
             Scan.append(output.rawValue, into: &buffer)
         }
-}
+    }
 #endif

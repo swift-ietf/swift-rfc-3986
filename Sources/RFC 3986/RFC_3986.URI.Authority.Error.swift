@@ -1,6 +1,5 @@
 import Byte
 
-
 extension RFC_3986.URI.Authority {
     public enum Error: Swift::Error, Sendable, Equatable, CustomStringConvertible {
 

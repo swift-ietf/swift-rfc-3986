@@ -1,6 +1,5 @@
 import ASCII
 
-
 extension RFC_3986 {
     public struct ByteSet: Sendable {
 

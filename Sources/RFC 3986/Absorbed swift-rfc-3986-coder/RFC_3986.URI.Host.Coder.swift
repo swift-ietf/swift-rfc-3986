@@ -13,7 +13,7 @@
         public static var coder: Coder<ArraySlice<Byte>, [Byte]> { .init() }
     }
 
-extension RFC_3986.URI.Host.Coder {
+    extension RFC_3986.URI.Host.Coder {
         public typealias Output = RFC_3986.URI.Host
 
         public typealias Failure = RFC_3986.URI.Host.Error
@@ -53,5 +53,5 @@ extension RFC_3986.URI.Host.Coder {
         public borrowing func serialize(_ output: Output, into buffer: inout Buffer) throws(Failure) {
             RFC_3986.URI.Host.serialize(output, into: &buffer)
         }
-}
+    }
 #endif

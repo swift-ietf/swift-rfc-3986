@@ -13,7 +13,7 @@
         public static var coder: Coder<ArraySlice<Byte>, [Byte]> { .init() }
     }
 
-extension RFC_3986.URI.Coder {
+    extension RFC_3986.URI.Coder {
         public typealias Output = RFC_3986.URI
 
         public typealias Failure = RFC_3986.Error
@@ -93,5 +93,5 @@ extension RFC_3986.URI.Coder {
             }
             return true
         }
-}
+    }
 #endif

@@ -23,7 +23,7 @@
         }
     }
 
-extension RFC_3986.PercentEncoded.Coder {
+    extension RFC_3986.PercentEncoded.Coder {
         public typealias Output = Byte
 
         public typealias Failure = RFC_3986.PercentEncoded.Error
@@ -52,5 +52,5 @@ extension RFC_3986.PercentEncoded.Coder {
             buffer.append(Byte(bitPattern: digits[Int(output.bitPattern >> 4)]))
             buffer.append(Byte(bitPattern: digits[Int(output.bitPattern & 0x0F)]))
         }
-}
+    }
 #endif
