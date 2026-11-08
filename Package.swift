@@ -146,9 +146,9 @@ let package = Package(
         .testTarget(
             name: "RFC 3986 Tests",
             dependencies: [
-                .product(name: "ASCII", package: "swift-ascii"),
+                .product(name: "ASCII", package: "swift-ascii", condition: .when(traits: ["Coder"])),
                 .target(name: "RFC 3986"),
-                .product(name: "Byte", package: "swift-byte"),
+                .product(name: "Byte", package: "swift-byte", condition: .when(traits: ["Coder"])),
                 .product(name: "Coder", package: "swift-coder", condition: .when(traits: ["Coder"])),
                 .product(name: "Cursor", package: "swift-cursor", condition: .when(traits: ["Coder"])),
                 .product(name: "IPv6 Standard", package: "swift-ipv6-standard", condition: .when(traits: ["Coder"])),
