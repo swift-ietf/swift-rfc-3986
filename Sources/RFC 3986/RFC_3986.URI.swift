@@ -118,6 +118,7 @@ extension RFC_3986.URI.Cache {
 
     struct ParsedComponents {
         let scheme: String?
+        let authority: String?
         let userinfo: String?
         let host: String?
         let port: UInt16?
@@ -187,6 +188,7 @@ extension RFC_3986.URI.Cache {
 
         return ParsedComponents(
             scheme: scheme,
+            authority: authority,
             userinfo: userinfo,
             host: host,
             port: port,
@@ -501,82 +503,68 @@ extension RFC_3986.URI {
     }
 
     public func resolve(_ reference: some StringProtocol) throws(RFC_3986.Error) -> RFC_3986.URI {
+        let base = cache.components
+        let ref = try RFC_3986.URI(reference).cache.components
+        let refPath = ref.path ?? ""
 
-        let refURI = try RFC_3986.URI(reference)
+        let scheme: String?
+        let authority: String?
+        let path: String
+        let query: String?
 
-        if refURI.scheme != nil {
-            return refURI
-        }
-
-        if refURI.host != nil {
-            var result = ""
-            if let baseScheme = scheme {
-                result += "\(baseScheme.value):"
-            }
-            result += "//"
-            if let refHost = refURI.validatedHostText {
-                result += refURI.authorityText(host: refHost, port: refURI.port)
-            }
-            if let refPath = refURI.path {
-                result += refPath.description
-            }
-            if let refQuery = refURI.query {
-                result += "?\(refQuery.description)"
-            }
-            if let refFragment = refURI.fragment {
-                result += "#\(refFragment.value)"
-            }
-            return RFC_3986.URI(unchecked: result)
+        if let refScheme = ref.scheme {
+            scheme = refScheme
+            authority = ref.authority
+            path = RFC_3986.removeDotSegments(fromText: refPath)
+            query = ref.query
+        } else if let refAuthority = ref.authority {
+            scheme = base.scheme
+            authority = refAuthority
+            path = RFC_3986.removeDotSegments(fromText: refPath)
+            query = ref.query
+        } else if refPath.isEmpty {
+            scheme = base.scheme
+            authority = base.authority
+            path = base.path ?? ""
+            query = ref.query ?? base.query
+        } else if refPath.hasPrefix("/") {
+            scheme = base.scheme
+            authority = base.authority
+            path = RFC_3986.removeDotSegments(fromText: refPath)
+            query = ref.query
+        } else {
+            scheme = base.scheme
+            authority = base.authority
+            path = RFC_3986.removeDotSegments(fromText: Self.merge(base: base, reference: refPath))
+            query = ref.query
         }
 
         var result = ""
-        if let baseScheme = scheme {
-            result += "\(baseScheme.value):"
+        if let scheme {
+            result += "\(scheme):"
         }
-        if let baseHost = validatedHostText {
-            result += "//\(baseHost)"
-            if let basePort = port {
-                result += ":\(basePort)"
-            }
+        if let authority {
+            result += "//\(authority)"
         }
-
-        let refPath = refURI.path?.description
-        var mergedPath = ""
-        if let refPath, !refPath.isEmpty {
-            if refPath.hasPrefix("/") {
-
-                mergedPath = refPath
-            } else {
-
-                if let basePath = path?.description {
-
-                    if let lastSlash = basePath.lastIndex(of: "/") {
-                        mergedPath = String(basePath[...lastSlash]) + refPath
-                    } else {
-                        mergedPath = refPath
-                    }
-                } else {
-                    mergedPath = "/\(refPath)"
-                }
-            }
-
-            mergedPath = RFC_3986.removeDotSegments(fromText: mergedPath)
-            result += mergedPath
-        } else if let basePath = path {
-            result += basePath.description
+        result += path
+        if let query {
+            result += "?\(query)"
         }
-
-        if let refQuery = refURI.query {
-            result += "?\(refQuery.description)"
-        } else if refPath == nil, let baseQuery = query {
-            result += "?\(baseQuery.description)"
+        if let fragment = ref.fragment {
+            result += "#\(fragment)"
         }
-
-        if let refFragment = refURI.fragment {
-            result += "#\(refFragment.value)"
-        }
-
         return RFC_3986.URI(unchecked: result)
+    }
+
+    private static func merge(base: Cache.ParsedComponents, reference: String) -> String {
+        let basePath = base.path ?? ""
+        if base.authority != nil, basePath.isEmpty {
+            return "/\(reference)"
+        }
+        guard let lastSlash = basePath.lastIndex(of: "/") else {
+            return reference
+        }
+        return String(basePath[...lastSlash]) + reference
     }
 }
 
@@ -800,15 +788,10 @@ extension RFC_3986 {
 
             else if input.hasPrefix("/../") {
                 input = "/" + input.dropFirst(4)
-
-                if let lastSlash = output.lastIndex(of: "/") {
-                    output = String(output[..<lastSlash])
-                }
+                output = String(output[..<(output.lastIndex(of: "/") ?? output.startIndex)])
             } else if input == "/.." {
                 input = "/"
-                if let lastSlash = output.lastIndex(of: "/") {
-                    output = String(output[..<lastSlash])
-                }
+                output = String(output[..<(output.lastIndex(of: "/") ?? output.startIndex)])
             }
 
             else if input == "." || input == ".." {
