@@ -127,11 +127,7 @@ extension RFC_3986.URI.Query {
         func parsePair(_ lo: Int, _ hi: Int) {
             guard lo < hi else { return }
 
-            var eqIdx: Int? = nil
-            for j in lo..<hi where arr[j] == ASCII.Code.equalsSign {
-                eqIdx = j
-                break
-            }
+            let eqIdx = arr[lo..<hi].firstIndex(of: ASCII.Code.equalsSign)
 
             if let eq = eqIdx {
                 let key = String(decoding: arr[lo..<eq].lazy.map(\.underlying), as: UTF8.self)
@@ -146,7 +142,7 @@ extension RFC_3986.URI.Query {
             }
         }
 
-        for idx in 0..<arr.count {
+        arr.indices.forEach { idx in
             if arr[idx] == ASCII.Code.ampersand {
                 parsePair(pairStart, idx)
                 pairStart = idx &+ 1
