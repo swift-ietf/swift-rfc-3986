@@ -128,6 +128,13 @@
         }
 
         @Test
+        func `an IPv6 host refuses a zone the zone type cannot hold`() {
+            #expect(throws: RFC_3986.URI.Host.Error.self) {
+                try RFC_3986.URI.Host("[fe80::1%25eth%200]")
+            }
+        }
+
+        @Test
         func `a normalized URI keeps its IPv6 literal as written while its host serializes canonically`() throws {
             let normalized = try RFC_3986.URI("HTTP://[2001:0DB8::1]:80/a/./b").normalized()
             #expect(normalized.value == "http://[2001:0db8::1]/a/b")

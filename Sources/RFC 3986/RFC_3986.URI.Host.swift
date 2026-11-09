@@ -77,14 +77,18 @@ extension RFC_3986.URI.Host {
             let innerString = String(decoding: innerCodes.lazy.map(\.underlying), as: UTF8.self)
 
             let addressBytes: ArraySlice<Byte>
-            let zone: String?
+            let zone: RFC_4007.IPv6.ScopedAddress.Zone?
             if let percentIndex = decodedBytes.firstIndex(of: ASCII.Code.percentSign.byte) {
                 let zoneBytes = decodedBytes[decodedBytes.index(after: percentIndex)...]
                 guard !zoneBytes.isEmpty else {
                     throw Error.invalidIPv6(innerString, reason: "Missing zone identifier after '%25'")
                 }
                 addressBytes = decodedBytes[..<percentIndex]
-                zone = String(decoding: zoneBytes, as: UTF8.self)
+                do throws(RFC_4007.IPv6.ScopedAddress.Zone.Error) {
+                    zone = try RFC_4007.IPv6.ScopedAddress.Zone(String(decoding: zoneBytes, as: UTF8.self))
+                } catch {
+                    throw Error.invalidIPv6(innerString, reason: "Invalid zone identifier")
+                }
             } else {
                 addressBytes = decodedBytes[...]
                 zone = nil

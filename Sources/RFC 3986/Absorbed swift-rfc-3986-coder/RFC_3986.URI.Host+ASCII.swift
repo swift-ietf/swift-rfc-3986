@@ -29,7 +29,7 @@
                     buffer.append(ASCII.Code.percentSign)
                     buffer.append(ASCII.Code.`2`)
                     buffer.append(ASCII.Code.`5`)
-                    for byte in zone.utf8 { buffer.append(ASCII.Code(byte)) }
+                    for byte in zone.rawValue.utf8 { buffer.append(ASCII.Code(byte)) }
                 }
                 buffer.append(ASCII.Code.rightBracket)
 
