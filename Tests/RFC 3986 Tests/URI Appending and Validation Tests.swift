@@ -100,3 +100,28 @@ extension `URI Appending and Validation Tests` {
         }
     }
 }
+
+extension `URI Appending and Validation Tests` {
+    @Suite
+    struct `A query the grammar accepts reads as a query` {
+
+        @Test(arguments: ["a&&b", "&", "=x", "a&", "&a", "a=&=b"])
+        func `The URI's query is present`(query: String) throws {
+            let uri = try RFC_3986.URI("https://example.com/?\(query)")
+            #expect(uri.query?.rawValue == query)
+        }
+
+        @Test
+        func `Empty pairs carry no parameter`() throws {
+            let query = try RFC_3986.URI.Query("a&&b&")
+            #expect(query.parameters.map(\.key) == ["a", "b"])
+        }
+
+        @Test
+        func `A pair with an empty key keeps its value`() throws {
+            let query = try RFC_3986.URI.Query("=x")
+            #expect(query.parameters.map(\.key) == [""])
+            #expect(query.parameters.map(\.value) == ["x"])
+        }
+    }
+}

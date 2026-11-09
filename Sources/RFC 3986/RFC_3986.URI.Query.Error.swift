@@ -4,8 +4,6 @@ extension RFC_3986.URI.Query {
 
     public enum Error: Swift::Error, Sendable, Equatable {
 
-        case emptyKey
-
         case keyContainsNewline(_ key: String)
 
         case valueContainsNewline(_ key: String, value: String)
@@ -19,9 +17,6 @@ extension RFC_3986.URI.Query {
 extension RFC_3986.URI.Query.Error: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .emptyKey:
-            return "Query parameter key cannot be empty"
-
         case .keyContainsNewline(let key):
             return "Query parameter key '\(key)' contains newline"
 
