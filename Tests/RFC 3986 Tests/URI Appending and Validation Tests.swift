@@ -63,3 +63,40 @@ extension `URI Appending and Validation Tests` {
         }
     }
 }
+
+extension `URI Appending and Validation Tests` {
+    @Suite
+    struct `Rebuilding a URI keeps its userinfo` {
+
+        @Test
+        func `Normalizing keeps the userinfo`() throws {
+            let uri = try RFC_3986.URI("HTTPS://user:pw@Example.COM:443/a/./b")
+            #expect(uri.normalized().value == "https://user:pw@example.com/a/b")
+        }
+
+        @Test
+        func `Appending a path component keeps the userinfo`() throws {
+            let uri = try RFC_3986.URI("https://user@example.com:8443/api")
+            #expect(uri.appendingPathComponent("v1").value == "https://user@example.com:8443/api/v1")
+        }
+
+        @Test
+        func `Appending a query item keeps the userinfo`() throws {
+            let uri = try RFC_3986.URI("https://user@example.com/path")
+            #expect(uri.appendingQueryItem(name: "a", value: "1").value == "https://user@example.com/path?a=1")
+        }
+
+        @Test
+        func `Setting a fragment keeps the userinfo`() throws {
+            let uri = try RFC_3986.URI("https://user@example.com/path")
+            let fragment = try RFC_3986.URI.Fragment("top")
+            #expect(uri.settingFragment(fragment).value == "https://user@example.com/path#top")
+        }
+
+        @Test
+        func `Resolving a network-path reference keeps the reference's userinfo`() throws {
+            let base = try RFC_3986.URI("https://example.com/a")
+            #expect(try base.resolve("//user@other.example:8080/b").value == "https://user@other.example:8080/b")
+        }
+    }
+}

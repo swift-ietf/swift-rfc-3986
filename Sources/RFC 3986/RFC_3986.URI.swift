@@ -360,6 +360,18 @@ extension RFC_3986.URI {
         guard host != nil else { return nil }
         return cache.components.host
     }
+
+    fileprivate func authorityText(host: String, port: Port?) -> String {
+        var text = ""
+        if let userinfo {
+            text += "\(userinfo.rawValue)@"
+        }
+        text += host
+        if let port {
+            text += ":\(port)"
+        }
+        return text
+    }
 }
 
 extension RFC_3986.URI {
@@ -435,10 +447,7 @@ extension RFC_3986.URI {
             result += "\(scheme):"
         }
         if let host = normalizedHost {
-            result += "//\(host)"
-            if let port = normalizedPort {
-                result += ":\(port)"
-            }
+            result += "//\(authorityText(host: host, port: normalizedPort))"
         }
         if let path = normalizedPath {
             result += path
@@ -471,14 +480,7 @@ extension RFC_3986.URI {
         }
 
         if let host = validatedHostText {
-            result += "//"
-            if let userinfo = userinfo?.rawValue {
-                result += "\(userinfo)@"
-            }
-            result += host
-            if let port {
-                result += ":\(port)"
-            }
+            result += "//\(authorityText(host: host, port: port))"
         }
 
         if let path = normalizedPath {
@@ -513,10 +515,7 @@ extension RFC_3986.URI {
             }
             result += "//"
             if let refHost = refURI.validatedHostText {
-                result += refHost
-            }
-            if let refPort = refURI.port {
-                result += ":\(refPort)"
+                result += refURI.authorityText(host: refHost, port: refURI.port)
             }
             if let refPath = refURI.path {
                 result += refPath.description
@@ -591,10 +590,7 @@ extension RFC_3986.URI {
         }
 
         if let uriHost = validatedHostText {
-            result += "//\(uriHost)"
-            if let uriPort = port {
-                result += ":\(uriPort)"
-            }
+            result += "//\(authorityText(host: uriHost, port: port))"
         }
 
         let encodedComponent = String(
@@ -627,10 +623,7 @@ extension RFC_3986.URI {
         }
 
         if let uriHost = validatedHostText {
-            result += "//\(uriHost)"
-            if let uriPort = port {
-                result += ":\(uriPort)"
-            }
+            result += "//\(authorityText(host: uriHost, port: port))"
         }
 
         if let uriPath = path {
@@ -675,10 +668,7 @@ extension RFC_3986.URI {
         }
 
         if let uriHost = validatedHostText {
-            result += "//\(uriHost)"
-            if let uriPort = port {
-                result += ":\(uriPort)"
-            }
+            result += "//\(authorityText(host: uriHost, port: port))"
         }
 
         if let uriPath = path {
