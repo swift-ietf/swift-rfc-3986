@@ -121,7 +121,7 @@ extension RFC_3986.URI.Query {
 
         let queryString = String(decoding: bytes, as: UTF8.self)
 
-        var parameters: [(String, String?)] = []
+        var parameters: [(key: String, value: String?)] = []
         var pairStart = 0
 
         func parsePair(_ lo: Int, _ hi: Int) {
@@ -184,7 +184,11 @@ extension RFC_3986.URI.Query {
             }
             return "\(key)=\(value)"
         }.joined(separator: "&")
-        self.init(__unchecked: (), rawValue: queryString, parameters: parameters)
+        self.init(
+            __unchecked: (),
+            rawValue: queryString,
+            parameters: parameters.map { (key: $0.0, value: $0.1) }
+        )
     }
 
     public var string: String {
