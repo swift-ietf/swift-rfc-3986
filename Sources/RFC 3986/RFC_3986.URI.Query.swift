@@ -130,14 +130,14 @@ extension RFC_3986.URI.Query {
             let eqIdx = arr[lo..<hi].firstIndex(of: ASCII.Code.equalsSign)
 
             if let eq = eqIdx {
-                let key = String(decoding: arr[lo..<eq].lazy.map(\.underlying), as: UTF8.self)
+                let key = String(decoding: arr[lo..<eq].lazy.map({ $0.underlying }), as: UTF8.self)
                 let value = String(
-                    decoding: arr[(eq &+ 1)..<hi].lazy.map(\.underlying),
+                    decoding: arr[(eq &+ 1)..<hi].lazy.map({ $0.underlying }),
                     as: UTF8.self
                 )
                 parameters.append((key, value))
             } else {
-                let key = String(decoding: arr[lo..<hi].lazy.map(\.underlying), as: UTF8.self)
+                let key = String(decoding: arr[lo..<hi].lazy.map({ $0.underlying }), as: UTF8.self)
                 parameters.append((key, nil))
             }
         }

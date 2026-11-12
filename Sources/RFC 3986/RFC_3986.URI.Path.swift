@@ -110,13 +110,13 @@ extension RFC_3986.URI.Path {
 
         for code in pathCodes {
             if code == ASCII.Code.solidus {
-                segments.append(String(decoding: currentSegment.lazy.map(\.underlying), as: UTF8.self))
+                segments.append(String(decoding: currentSegment.lazy.map({ $0.underlying }), as: UTF8.self))
                 currentSegment = []
             } else {
                 currentSegment.append(code)
             }
         }
-        segments.append(String(decoding: currentSegment.lazy.map(\.underlying), as: UTF8.self))
+        segments.append(String(decoding: currentSegment.lazy.map({ $0.underlying }), as: UTF8.self))
 
         self.init(__unchecked: (), segments: segments, isAbsolute: isAbsolute)
     }

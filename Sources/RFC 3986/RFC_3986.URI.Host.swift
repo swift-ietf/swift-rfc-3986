@@ -74,7 +74,7 @@ extension RFC_3986.URI.Host {
                 i += 1
             }
 
-            let innerString = String(decoding: innerCodes.lazy.map(\.underlying), as: UTF8.self)
+            let innerString = String(decoding: innerCodes.lazy.map({ $0.underlying }), as: UTF8.self)
 
             let addressBytes: ArraySlice<Byte>
             let zone: RFC_4007.IPv6.ScopedAddress.Zone?

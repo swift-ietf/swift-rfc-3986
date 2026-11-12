@@ -30,7 +30,7 @@
         ) where Buffer.Element == Byte {
             var codes: [ASCII.Code] = []
             Self.serialize(authority, into: &codes)
-            buffer.append(contentsOf: codes.map(\.byte))
+            buffer.append(contentsOf: codes.map({ $0.byte }))
         }
     }
 #endif
