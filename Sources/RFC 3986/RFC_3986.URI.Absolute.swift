@@ -25,14 +25,16 @@ extension RFC_3986.URI.Absolute: CustomStringConvertible {
     public var description: String { uri.value }
 }
 
-extension RFC_3986.URI.Absolute: Codable {
+#if !hasFeature(Embedded)
+    extension RFC_3986.URI.Absolute: Codable {
 
-    public init(from decoder: any Decoder) throws {
-        try self.init(try decoder.singleValueContainer().decode(String.self))
-    }
+        public init(from decoder: any Decoder) throws {
+            try self.init(try decoder.singleValueContainer().decode(String.self))
+        }
 
-    public func encode(to encoder: any Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(uri.value)
+        public func encode(to encoder: any Encoder) throws {
+            var container = encoder.singleValueContainer()
+            try container.encode(uri.value)
+        }
     }
-}
+#endif
