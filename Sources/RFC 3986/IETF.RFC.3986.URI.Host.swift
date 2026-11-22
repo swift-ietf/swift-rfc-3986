@@ -1,0 +1,186 @@
+import ASCII
+public import Byte
+public import IPv4_Standard
+public import IPv6_Standard
+
+extension IETF.RFC.`3986`.URI {
+
+    public enum Host: Sendable, Equatable, Hashable {
+
+        case ipv4(IETF.RFC.`791`.IPv4.Address)
+
+        case ipv6(IETF.RFC.`4007`.IPv6.ScopedAddress)
+
+        case registeredName(String)
+    }
+}
+
+extension IETF.RFC.`3986`.URI.Host {
+
+    public init(_ string: some StringProtocol) throws(Error) {
+        try self.init(ascii: string.utf8.map(Byte.init(bitPattern:)))
+    }
+
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(Error)
+    where Bytes.Element == Byte {
+        guard !bytes.isEmpty else {
+            throw Error.empty
+        }
+
+        let string = String(decoding: bytes, as: UTF8.self)
+
+        let arr: [ASCII.Code]
+        do throws(ASCII.Code.Error) {
+            var codes: [ASCII.Code] = []
+            codes.reserveCapacity(bytes.count)
+            for byte in bytes {
+                codes.append(try ASCII.Code(byte))
+            }
+            arr = codes
+        } catch {
+            switch error {
+            case .notASCII(let byte):
+                throw Error.invalidCharacter(string, byte: byte, reason: "non-ASCII byte in host")
+            }
+        }
+
+        if arr.first == ASCII.Code.leftBracket {
+
+            guard arr.last == ASCII.Code.rightBracket else {
+                throw Error.invalidIPv6(string, reason: "Missing closing bracket")
+            }
+
+            let innerCodes = arr.dropFirst().dropLast()
+
+            let innerArray = Array(innerCodes)
+            var decodedBytes: [Byte] = []
+            decodedBytes.reserveCapacity(innerArray.count)
+
+            var i = 0
+            while i < innerArray.count {
+                if innerArray[i] == ASCII.Code.percentSign {
+
+                    if i + 2 < innerArray.count
+                        && innerArray[i + 1] == ASCII.Code.`2`
+                        && innerArray[i + 2] == ASCII.Code.`5`
+                    {
+
+                        decodedBytes.append(ASCII.Code.percentSign.byte)
+                        i += 3
+                        continue
+                    }
+                }
+                decodedBytes.append(innerArray[i].byte)
+                i += 1
+            }
+
+            let innerString = String(decoding: innerCodes.lazy.map({ $0.underlying }), as: UTF8.self)
+
+            let addressBytes: ArraySlice<Byte>
+            let zone: IETF.RFC.`4007`.IPv6.ScopedAddress.Zone?
+            if let percentIndex = decodedBytes.firstIndex(of: ASCII.Code.percentSign.byte) {
+                let zoneBytes = decodedBytes[decodedBytes.index(after: percentIndex)...]
+                guard !zoneBytes.isEmpty else {
+                    throw Error.invalidIPv6(innerString, reason: "Missing zone identifier after '%25'")
+                }
+                addressBytes = decodedBytes[..<percentIndex]
+                do throws(IETF.RFC.`4007`.IPv6.ScopedAddress.Zone.Error) {
+                    zone = try IETF.RFC.`4007`.IPv6.ScopedAddress.Zone(String(decoding: zoneBytes, as: UTF8.self))
+                } catch {
+                    throw Error.invalidIPv6(innerString, reason: "Invalid zone identifier")
+                }
+            } else {
+                addressBytes = decodedBytes[...]
+                zone = nil
+            }
+
+            do throws(IETF.RFC.`4291`.IPv6.Address.Error) {
+                let address = try IETF.RFC.`4291`.IPv6.Address(ascii: addressBytes)
+                self = .ipv6(IETF.RFC.`4007`.IPv6.ScopedAddress(address: address, zone: zone))
+                return
+            } catch {
+                throw Error.invalidIPv6(innerString, reason: "Invalid IPv6 address")
+            }
+        }
+
+        do throws(IETF.RFC.`791`.IPv4.Address.Error) {
+            let ipv4Address = try IETF.RFC.`791`.IPv4.Address(ascii: bytes)
+            self = .ipv4(ipv4Address)
+            return
+        } catch {
+
+        }
+
+        for code in arr {
+
+            let isUnreserved =
+                code.isLetter || code.isDigit
+                || code == ASCII.Code.hyphen || code == ASCII.Code.period
+                || code == ASCII.Code.underline || code == ASCII.Code.tilde
+            let isSubDelim =
+                code == ASCII.Code.exclamationPoint || code == ASCII.Code.dollarSign
+                || code == ASCII.Code.ampersand || code == ASCII.Code.apostrophe
+                || code == ASCII.Code.leftParenthesis || code == ASCII.Code.rightParenthesis
+                || code == ASCII.Code.asterisk || code == ASCII.Code.plusSign
+                || code == ASCII.Code.comma || code == ASCII.Code.semicolon
+                || code == ASCII.Code.equalsSign
+            let isPercent = code == ASCII.Code.percentSign
+
+            guard isUnreserved || isSubDelim || isPercent else {
+                throw Error.invalidCharacter(
+                    string,
+                    byte: code.byte,
+                    reason:
+                        "Only unreserved, sub-delims, and percent-encoded allowed in registered name"
+                )
+            }
+        }
+
+        self = .registeredName(string.lowercased())
+    }
+}
+
+extension IETF.RFC.`3986`.URI.Host {
+
+    public var isLoopback: Bool {
+        switch self {
+        case .ipv4(let address):
+
+            return address.octets.0.bitPattern == 127
+
+        case .ipv6(let scopedAddress):
+            return scopedAddress.address.is.loopback
+
+        case .registeredName(let name):
+            return name == "localhost"
+        }
+    }
+
+    public var ipv4Address: IETF.RFC.`791`.IPv4.Address? {
+        if case .ipv4(let address) = self {
+            return address
+        }
+        return nil
+    }
+
+    public var ipv6ScopedAddress: IETF.RFC.`4007`.IPv6.ScopedAddress? {
+        if case .ipv6(let scopedAddress) = self {
+            return scopedAddress
+        }
+        return nil
+    }
+
+    public var ipv6Address: IETF.RFC.`4291`.IPv6.Address? {
+        if case .ipv6(let scopedAddress) = self {
+            return scopedAddress.address
+        }
+        return nil
+    }
+
+    public var registeredNameValue: String? {
+        if case .registeredName(let name) = self {
+            return name
+        }
+        return nil
+    }
+}

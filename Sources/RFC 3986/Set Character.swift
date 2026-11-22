@@ -6,43 +6,43 @@ extension Set<Character> {
 extension Set<Character>.URI {
 
     public static var unreserved: Set<Character> {
-        RFC_3986.CharacterSet.unreserved.characters
+        IETF.RFC.`3986`.CharacterSet.unreserved.characters
     }
 
     public static var reserved: Set<Character> {
-        RFC_3986.CharacterSet.reserved.characters
+        IETF.RFC.`3986`.CharacterSet.reserved.characters
     }
 
     public static var genDelims: Set<Character> {
-        RFC_3986.CharacterSet.genDelims.characters
+        IETF.RFC.`3986`.CharacterSet.genDelims.characters
     }
 
     public static var subDelims: Set<Character> {
-        RFC_3986.CharacterSet.subDelims.characters
+        IETF.RFC.`3986`.CharacterSet.subDelims.characters
     }
 
     public static var scheme: Set<Character> {
-        RFC_3986.CharacterSet.scheme.characters
+        IETF.RFC.`3986`.CharacterSet.scheme.characters
     }
 
     public static var userinfo: Set<Character> {
-        RFC_3986.CharacterSet.userinfo.characters
+        IETF.RFC.`3986`.CharacterSet.userinfo.characters
     }
 
     public static var host: Set<Character> {
-        RFC_3986.CharacterSet.host.characters
+        IETF.RFC.`3986`.CharacterSet.host.characters
     }
 
     public static var pathSegment: Set<Character> {
-        RFC_3986.CharacterSet.pathSegment.characters
+        IETF.RFC.`3986`.CharacterSet.pathSegment.characters
     }
 
     public static var query: Set<Character> {
-        RFC_3986.CharacterSet.query.characters
+        IETF.RFC.`3986`.CharacterSet.query.characters
     }
 
     public static var fragment: Set<Character> {
-        RFC_3986.CharacterSet.fragment.characters
+        IETF.RFC.`3986`.CharacterSet.fragment.characters
     }
 }
 
@@ -55,7 +55,7 @@ extension Set<Character> {
 
 extension Set<Character> {
 
-    public init(_ characterSet: RFC_3986.CharacterSet) {
+    public init(_ characterSet: IETF.RFC.`3986`.CharacterSet) {
         self = characterSet.characters
     }
 }

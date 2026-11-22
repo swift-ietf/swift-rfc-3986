@@ -25,6 +25,7 @@ let package = Package(
         .trait(name: "Coder", description: "Host text serialization")
     ],
     dependencies: [
+        .package(url: "https://github.com/swift-ietf/swift-rfc.git", branch: "main"),
         .package(
             url: "https://github.com/swift-atoms/swift-ascii.git",
             branch: "main",
@@ -113,6 +114,7 @@ let package = Package(
         .target(
             name: "RFC 3986",
             dependencies: [
+                .product(name: "IETF RFC", package: "swift-rfc"),
                 .product(name: "ASCII", package: "swift-ascii"),
                 .product(name: "Byte", package: "swift-byte"),
                 .product(name: "IPv4 Standard", package: "swift-ipv4-standard"),

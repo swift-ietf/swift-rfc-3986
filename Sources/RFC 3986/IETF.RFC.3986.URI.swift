@@ -1,0 +1,844 @@
+import ASCII
+public import Byte
+
+extension IETF.RFC.`3986` {
+
+    public enum Error: Swift::Error, Hashable, Sendable {
+
+        case invalidURI(String)
+
+        case invalidComponent(String)
+
+        case conversionFailed(String)
+    }
+}
+
+extension IETF.RFC.`3986`.Error: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .invalidURI(let value):
+            return
+                "Invalid URI: '\(value)'. URIs must follow RFC 3986 syntax and contain only ASCII characters."
+
+        case .invalidComponent(let component):
+            return "Invalid URI component: '\(component)'"
+
+        case .conversionFailed(let reason):
+            return "URI conversion failed: \(reason)"
+        }
+    }
+}
+
+extension IETF.RFC.`3986` {
+
+    public protocol URIRepresentable {
+
+        var uri: IETF.RFC.`3986`.URI { get }
+    }
+}
+
+extension IETF.RFC.`3986` {
+
+    public struct URI: Hashable, Sendable {
+        fileprivate let cache: Cache
+    }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public var value: String { cache.value }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public static func == <S: StringProtocol>(lhs: IETF.RFC.`3986`.URI, rhs: S) -> Bool {
+        lhs.value == rhs
+    }
+
+    public static func == <S: StringProtocol>(lhs: S, rhs: IETF.RFC.`3986`.URI) -> Bool {
+        lhs == rhs.value
+    }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    fileprivate final class Cache: @unchecked Sendable {
+        let value: String
+        let components: ParsedComponents
+
+        let scheme: Scheme?
+        let userinfo: Userinfo?
+        let host: Host?
+        let port: Port?
+        let path: Path?
+        let query: Query?
+        let fragment: Fragment?
+
+        init(value: String) {
+            self.value = value
+            let components = Self.parseURI(value)
+            self.components = components
+            self.scheme = Self.parsed(components.scheme) { try Scheme($0) }
+            self.userinfo = Self.parsed(components.userinfo) { try Userinfo($0) }
+            self.host = Self.parsed(components.host) { try Host($0) }
+            self.port = components.port.flatMap { UInt16($0) }.map { Port($0) }
+
+            self.path = Self.parsed(components.path) { try Path($0) }
+            self.query = Self.parsed(components.query) { try Query($0) }
+            self.fragment = Self.parsed(components.fragment) { try Fragment($0) }
+        }
+
+        init(value: String, components: ParsedComponents) {
+            self.value = value
+            self.components = components
+            self.scheme = Self.parsed(components.scheme) { try Scheme($0) }
+            self.userinfo = Self.parsed(components.userinfo) { try Userinfo($0) }
+            self.host = Self.parsed(components.host) { try Host($0) }
+            self.port = components.port.flatMap { UInt16($0) }.map { Port($0) }
+            self.path = Self.parsed(components.path) { try Path($0) }
+            self.query = Self.parsed(components.query) { try Query($0) }
+            self.fragment = Self.parsed(components.fragment) { try Fragment($0) }
+        }
+
+        private static func parsed<Value, Failure: Swift::Error>(
+            _ string: String?,
+            _ makeValue: (String) throws(Failure) -> Value
+        ) -> Value? {
+            guard let string else { return nil }
+            do throws(Failure) {
+                return try makeValue(string)
+            } catch {
+                return nil
+            }
+        }
+    }
+}
+
+extension IETF.RFC.`3986`.URI.Cache {
+
+    struct ParsedComponents {
+        let scheme: String?
+        let authority: String?
+        let userinfo: String?
+        let host: String?
+        let port: UInt16?
+        let path: String?
+        let query: String?
+        let fragment: String?
+    }
+
+    fileprivate static func parseURI(_ uri: String) -> ParsedComponents {
+        var scheme: String?
+        var authority: String?
+        var path: String?
+        var query: String?
+        var fragment: String?
+
+        var remaining = uri
+
+        if let fragmentIndex = remaining.firstIndex(of: "#") {
+            fragment = String(remaining[remaining.index(after: fragmentIndex)...])
+            remaining = String(remaining[..<fragmentIndex])
+        }
+
+        if let queryIndex = remaining.firstIndex(of: "?") {
+            query = String(remaining[remaining.index(after: queryIndex)...])
+            remaining = String(remaining[..<queryIndex])
+        }
+
+        if let colonIndex = remaining.firstIndex(of: ":"),
+            colonIndex > remaining.startIndex
+        {
+            let schemeCandidate = String(remaining[..<colonIndex])
+
+            if !schemeCandidate.contains("/") && !schemeCandidate.contains("?")
+                && !schemeCandidate.contains("#")
+            {
+                scheme = schemeCandidate
+                remaining = String(remaining[remaining.index(after: colonIndex)...])
+            }
+        }
+
+        if remaining.hasPrefix("//") {
+            let afterSlashes = remaining.index(remaining.startIndex, offsetBy: 2)
+            var authorityEnd = remaining.endIndex
+
+            for char in ["/", "?", "#"] {
+                if let index = remaining[afterSlashes...].firstIndex(of: Character(char)) {
+                    if index < authorityEnd {
+                        authorityEnd = index
+                    }
+                }
+            }
+
+            authority = String(remaining[afterSlashes..<authorityEnd])
+            remaining = String(remaining[authorityEnd...])
+        }
+
+        if !remaining.isEmpty {
+            path = remaining
+        }
+
+        var userinfo: String?
+        var host: String?
+        var port: UInt16?
+        if let auth = authority {
+            (userinfo, host, port) = parseAuthority(auth)
+        }
+
+        return ParsedComponents(
+            scheme: scheme,
+            authority: authority,
+            userinfo: userinfo,
+            host: host,
+            port: port,
+            path: path,
+            query: query,
+            fragment: fragment
+        )
+    }
+
+    fileprivate static func parseAuthority(
+        _ authority: String
+    ) -> (userinfo: String?, host: String?, port: UInt16?) {
+        var remaining = authority
+        var userinfo: String?
+
+        if let atIndex = remaining.lastIndex(of: "@") {
+            userinfo = String(remaining[..<atIndex])
+            remaining = String(remaining[remaining.index(after: atIndex)...])
+        }
+
+        if let colonIndex = remaining.lastIndex(of: ":") {
+            let hostPart = String(remaining[..<colonIndex])
+            let portPart = String(remaining[remaining.index(after: colonIndex)...])
+
+            if let portValue = UInt16(portPart) {
+                return (userinfo, hostPart.isEmpty ? nil : hostPart, portValue)
+            }
+        }
+
+        return (userinfo, remaining.isEmpty ? nil : remaining, nil)
+    }
+}
+
+extension IETF.RFC.`3986`.URI.Cache {
+
+    static func _parseAndValidate(_ string: String) -> ParsedComponents? {
+
+        guard string.utf8.allSatisfy({ $0 < 0x80 }) else { return nil }
+
+        let components = parseURI(string)
+
+        if let scheme = components.scheme {
+            guard IETF.RFC.`3986`.Grammar.isValidScheme(scheme.utf8) else { return nil }
+        }
+
+        if let userinfo = components.userinfo {
+            guard
+                IETF.RFC.`3986`.Grammar.isGrammarValid(
+                    userinfo.utf8,
+                    allowedRawByte: IETF.RFC.`3986`.Grammar.isUserinfoChar
+                )
+            else { return nil }
+        }
+
+        if let host = components.host {
+            do throws(IETF.RFC.`3986`.URI.Host.Error) {
+                _ = try IETF.RFC.`3986`.URI.Host(host)
+            } catch {
+                return nil
+            }
+        }
+
+        if let path = components.path {
+            guard
+                IETF.RFC.`3986`.Grammar.isGrammarValid(
+                    path.utf8,
+                    allowedRawByte: { IETF.RFC.`3986`.Grammar.isPchar($0) || $0 == 0x2F }
+                )
+            else { return nil }
+
+            if components.scheme == nil, components.host == nil, !path.hasPrefix("/") {
+                let firstSegment = path.prefix(while: { $0 != "/" })
+                guard !firstSegment.contains(":") else { return nil }
+            }
+        }
+
+        if let query = components.query {
+            guard
+                IETF.RFC.`3986`.Grammar.isGrammarValid(
+                    query.utf8,
+                    allowedRawByte: IETF.RFC.`3986`.Grammar.isQueryOrFragmentChar
+                )
+            else { return nil }
+        }
+
+        if let fragment = components.fragment {
+            guard
+                IETF.RFC.`3986`.Grammar.isGrammarValid(
+                    fragment.utf8,
+                    allowedRawByte: IETF.RFC.`3986`.Grammar.isQueryOrFragmentChar
+                )
+            else { return nil }
+        }
+
+        return components
+    }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public init<Bytes: Swift::Collection>(ascii bytes: Bytes) throws(IETF.RFC.`3986`.Error)
+    where Bytes.Element == Byte {
+        let string = String(decoding: bytes, as: UTF8.self)
+        guard IETF.RFC.`3986`.isValidURI(string) else {
+            throw IETF.RFC.`3986`.Error.invalidURI(string)
+        }
+        self.init(__unchecked: (), value: string)
+    }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public init(_ value: some StringProtocol) throws(IETF.RFC.`3986`.Error) {
+        let stringValue = String(value)
+
+        if stringValue.isEmpty {
+            self.cache = Cache(value: stringValue)
+            return
+        }
+
+        guard let components = Cache._parseAndValidate(stringValue) else {
+            throw IETF.RFC.`3986`.Error.invalidURI(stringValue)
+        }
+        self.cache = Cache(value: stringValue, components: components)
+    }
+
+    init(
+        __unchecked _: Void,
+        value: String
+    ) {
+        self.cache = Cache(value: value)
+    }
+
+    public init(unchecked value: String) {
+        self.init(__unchecked: (), value: value)
+    }
+
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public var scheme: Scheme? {
+        cache.scheme
+    }
+
+    public var userinfo: Userinfo? {
+        cache.userinfo
+    }
+
+    public var host: Host? {
+        cache.host
+    }
+
+    public var port: Port? {
+        cache.port
+    }
+
+    public var path: Path? {
+        cache.path
+    }
+
+    public var query: Query? {
+        cache.query
+    }
+
+    public var fragment: Fragment? {
+        cache.fragment
+    }
+
+    fileprivate var validatedHostText: String? {
+        guard host != nil else { return nil }
+        return cache.components.host
+    }
+
+    fileprivate func authorityText(host: String, port: Port?) -> String {
+        var text = ""
+        if let userinfo {
+            text += "\(userinfo.rawValue)@"
+        }
+        text += host
+        if let port {
+            text += ":\(port)"
+        }
+        return text
+    }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public var isRelative: Bool {
+        scheme == nil
+    }
+
+    public var isSecure: Bool {
+        guard let uriScheme = scheme?.value else { return false }
+        return ["https", "wss", "ftps"].contains(uriScheme)
+    }
+
+    public var isHTTP: Bool {
+        guard let uriScheme = scheme?.value else { return false }
+        return uriScheme == "http" || uriScheme == "https"
+    }
+
+    public var base: IETF.RFC.`3986`.URI? {
+        guard let uriScheme = scheme,
+            let uriHost = validatedHostText
+        else { return nil }
+
+        var baseString = "\(uriScheme.value)://\(uriHost)"
+        if let uriPort = port {
+            baseString += ":\(uriPort.value)"
+        }
+        return IETF.RFC.`3986`.URI(unchecked: baseString)
+    }
+
+    public var pathAndQuery: String? {
+        guard let uriPath = path else { return nil }
+        if let uriQuery = query {
+            return "\(uriPath.description)?\(uriQuery.description)"
+        }
+        return uriPath.description
+    }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public func normalized() -> IETF.RFC.`3986`.URI {
+
+        let normalizedScheme = scheme?.value.lowercased()
+        let normalizedHost = validatedHostText?.lowercased()
+        var normalizedPort = port
+        var normalizedPath = path?.description
+        var normalizedQuery = query?.description
+        let normalizedFragment = fragment?.value
+
+        if let scheme = normalizedScheme, let port = normalizedPort {
+            let isDefaultPort =
+                (scheme == "http" && port == 80) || (scheme == "https" && port == 443)
+                || (scheme == "ftp" && port == 21)
+            if isDefaultPort {
+                normalizedPort = nil
+            }
+        }
+
+        if let pathString = normalizedPath, !pathString.isEmpty {
+            normalizedPath = IETF.RFC.`3986`.removeDotSegments(fromText: pathString)
+        }
+
+        if let pathString = normalizedPath {
+            normalizedPath = IETF.RFC.`3986`.normalizePercentEncoding(pathString)
+        }
+        if let queryString = normalizedQuery {
+            normalizedQuery = IETF.RFC.`3986`.normalizePercentEncoding(queryString)
+        }
+
+        var result = ""
+        if let scheme = normalizedScheme {
+            result += "\(scheme):"
+        }
+        if let host = normalizedHost {
+            result += "//\(authorityText(host: host, port: normalizedPort))"
+        }
+        if let path = normalizedPath {
+            result += path
+        }
+        if let query = normalizedQuery {
+            result += "?\(query)"
+        }
+        if let fragment = normalizedFragment {
+            result += "#\(fragment)"
+        }
+
+        return IETF.RFC.`3986`.URI(unchecked: result)
+    }
+
+    public func normalizePercentEncoding() -> IETF.RFC.`3986`.URI {
+        var normalizedPath = path?.description
+        var normalizedQuery = query?.description
+
+        if let pathString = normalizedPath {
+            normalizedPath = IETF.RFC.`3986`.normalizePercentEncoding(pathString)
+        }
+
+        if let queryString = normalizedQuery {
+            normalizedQuery = IETF.RFC.`3986`.normalizePercentEncoding(queryString)
+        }
+
+        var result = ""
+        if let scheme = scheme?.value {
+            result += "\(scheme):"
+        }
+
+        if let host = validatedHostText {
+            result += "//\(authorityText(host: host, port: port))"
+        }
+
+        if let path = normalizedPath {
+            result += path
+        }
+        if let query = normalizedQuery {
+            result += "?\(query)"
+        }
+        if let fragment = fragment?.value {
+            result += "#\(fragment)"
+        }
+
+        return IETF.RFC.`3986`.URI(unchecked: result)
+    }
+
+    public func resolve(_ reference: IETF.RFC.`3986`.URI) throws(IETF.RFC.`3986`.Error) -> IETF.RFC.`3986`.URI {
+        try resolve(reference.value)
+    }
+
+    public func resolve(_ reference: some StringProtocol) throws(IETF.RFC.`3986`.Error) -> IETF.RFC.`3986`.URI {
+        let base = cache.components
+        let ref = try IETF.RFC.`3986`.URI(reference).cache.components
+        let refPath = ref.path ?? ""
+
+        let scheme: String?
+        let authority: String?
+        let path: String
+        let query: String?
+
+        if let refScheme = ref.scheme {
+            scheme = refScheme
+            authority = ref.authority
+            path = IETF.RFC.`3986`.removeDotSegments(fromText: refPath)
+            query = ref.query
+        } else if let refAuthority = ref.authority {
+            scheme = base.scheme
+            authority = refAuthority
+            path = IETF.RFC.`3986`.removeDotSegments(fromText: refPath)
+            query = ref.query
+        } else if refPath.isEmpty {
+            scheme = base.scheme
+            authority = base.authority
+            path = base.path ?? ""
+            query = ref.query ?? base.query
+        } else if refPath.hasPrefix("/") {
+            scheme = base.scheme
+            authority = base.authority
+            path = IETF.RFC.`3986`.removeDotSegments(fromText: refPath)
+            query = ref.query
+        } else {
+            scheme = base.scheme
+            authority = base.authority
+            path = IETF.RFC.`3986`.removeDotSegments(fromText: Self.merge(base: base, reference: refPath))
+            query = ref.query
+        }
+
+        var result = ""
+        if let scheme {
+            result += "\(scheme):"
+        }
+        if let authority {
+            result += "//\(authority)"
+        }
+        result += path
+        if let query {
+            result += "?\(query)"
+        }
+        if let fragment = ref.fragment {
+            result += "#\(fragment)"
+        }
+        return IETF.RFC.`3986`.URI(unchecked: result)
+    }
+
+    private static func merge(base: Cache.ParsedComponents, reference: String) -> String {
+        let basePath = base.path ?? ""
+        if base.authority != nil, basePath.isEmpty {
+            return "/\(reference)"
+        }
+        guard let lastSlash = basePath.lastIndex(of: "/") else {
+            return reference
+        }
+        return String(basePath[...lastSlash]) + reference
+    }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public func appendingPathComponent(_ component: some StringProtocol) -> IETF.RFC.`3986`.URI {
+        var result = ""
+
+        if let uriScheme = scheme {
+            result += "\(uriScheme.value):"
+        }
+
+        if let uriHost = validatedHostText {
+            result += "//\(authorityText(host: uriHost, port: port))"
+        }
+
+        let encodedComponent = String(
+            decoding: IETF.RFC.`3986`.percentEncode(Array(component.utf8), allowing: .pathSegment),
+            as: UTF8.self
+        )
+
+        let currentPath = path?.description ?? ""
+        let separator = currentPath.hasSuffix("/") ? "" : "/"
+        result += currentPath + separator + encodedComponent
+
+        if let uriQuery = query {
+            result += "?\(uriQuery.description)"
+        }
+        if let uriFragment = fragment {
+            result += "#\(uriFragment.value)"
+        }
+
+        return IETF.RFC.`3986`.URI(unchecked: result)
+    }
+
+    public func appendingQueryItem(
+        name: some StringProtocol,
+        value: (some StringProtocol)?
+    ) -> IETF.RFC.`3986`.URI {
+        var result = ""
+
+        if let uriScheme = scheme {
+            result += "\(uriScheme.value):"
+        }
+
+        if let uriHost = validatedHostText {
+            result += "//\(authorityText(host: uriHost, port: port))"
+        }
+
+        if let uriPath = path {
+            result += uriPath.description
+        }
+
+        let encodedName = String(
+            decoding: IETF.RFC.`3986`.percentEncode(Array(name.utf8), allowing: .queryComponent),
+            as: UTF8.self
+        )
+        let encodedValue = value.map {
+            String(
+                decoding: IETF.RFC.`3986`.percentEncode(Array($0.utf8), allowing: .queryComponent),
+                as: UTF8.self
+            )
+        }
+
+        if let currentQuery = query?.description {
+            result += "?\(currentQuery)&\(encodedName)"
+            if let value = encodedValue {
+                result += "=\(value)"
+            }
+        } else {
+            result += "?\(encodedName)"
+            if let value = encodedValue {
+                result += "=\(value)"
+            }
+        }
+
+        if let uriFragment = fragment {
+            result += "#\(uriFragment.value)"
+        }
+
+        return IETF.RFC.`3986`.URI(unchecked: result)
+    }
+
+    public func settingFragment(_ fragment: Fragment?) -> IETF.RFC.`3986`.URI {
+        var result = ""
+
+        if let uriScheme = scheme {
+            result += "\(uriScheme.value):"
+        }
+
+        if let uriHost = validatedHostText {
+            result += "//\(authorityText(host: uriHost, port: port))"
+        }
+
+        if let uriPath = path {
+            result += uriPath.description
+        }
+
+        if let uriQuery = query {
+            result += "?\(uriQuery.description)"
+        }
+
+        if let newFragment = fragment {
+            result += "#\(newFragment.value)"
+        }
+
+        return IETF.RFC.`3986`.URI(unchecked: result)
+    }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public static func == (lhs: IETF.RFC.`3986`.URI, rhs: IETF.RFC.`3986`.URI) -> Bool {
+        lhs.value == rhs.value
+    }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(value)
+    }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public static func / (
+        base: IETF.RFC.`3986`.URI,
+        reference: String
+    ) throws(IETF.RFC.`3986`.Error) -> IETF.RFC.`3986`.URI {
+        try base.resolve(reference)
+    }
+
+    public static func / (
+        base: IETF.RFC.`3986`.URI,
+        reference: IETF.RFC.`3986`.URI
+    ) throws(IETF.RFC.`3986`.Error) -> IETF.RFC.`3986`.URI {
+        try base.resolve(reference)
+    }
+}
+
+extension IETF.RFC.`3986`.URI {
+
+    public typealias Representable = IETF.RFC.`3986`.URIRepresentable
+}
+
+extension IETF.RFC.`3986`.URI: IETF.RFC.`3986`.URIRepresentable {
+    public var uri: IETF.RFC.`3986`.URI {
+        self
+    }
+}
+
+extension IETF.RFC.`3986`.URI: CustomStringConvertible {
+    public var description: String {
+        value
+    }
+}
+
+extension IETF.RFC.`3986`.URI: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        var parts: [String] = ["RFC 3986.URI"]
+
+        if let scheme {
+            parts.append("scheme: \(scheme)")
+        }
+        if let host = validatedHostText {
+            parts.append("host: \(host)")
+        }
+        if let port {
+            parts.append("port: \(port)")
+        }
+        if let path, !path.isEmpty {
+            parts.append("path: \(path)")
+        }
+        if let query {
+            parts.append("query: \(query)")
+        }
+        if let fragment {
+            parts.append("fragment: \(fragment)")
+        }
+
+        return parts.joined(separator: ", ")
+    }
+}
+
+extension IETF.RFC.`3986`.URI: Comparable {
+
+    public static func < (lhs: IETF.RFC.`3986`.URI, rhs: IETF.RFC.`3986`.URI) -> Bool {
+        lhs.value < rhs.value
+    }
+}
+
+extension IETF.RFC.`3986` {
+
+    /// RFC 3986 Section 5.2.4 applied to `path`.
+    public static func removeDotSegments(from path: URI.Path) -> URI.Path {
+        let text = removeDotSegments(fromText: path.description)
+        let isAbsolute = text.hasPrefix("/")
+        let body = isAbsolute ? text.dropFirst() : text[...]
+        let segments: [String] = body.isEmpty ? [] : body.split(separator: "/", omittingEmptySubsequences: false).map { String($0) }
+        return URI.Path(__unchecked: (), segments: segments, isAbsolute: isAbsolute)
+    }
+
+    static func removeDotSegments(fromText path: String) -> String {
+        var input = path
+        var output = ""
+
+        while !input.isEmpty {
+
+            if input.hasPrefix("../") {
+                input.removeFirst(3)
+            } else if input.hasPrefix("./") {
+                input.removeFirst(2)
+            }
+
+            else if input.hasPrefix("/./") {
+                input = "/" + input.dropFirst(3)
+            } else if input == "/." {
+                input = "/"
+            }
+
+            else if input.hasPrefix("/../") {
+                input = "/" + input.dropFirst(4)
+                output = String(output[..<(output.lastIndex(of: "/") ?? output.startIndex)])
+            } else if input == "/.." {
+                input = "/"
+                output = String(output[..<(output.lastIndex(of: "/") ?? output.startIndex)])
+            }
+
+            else if input == "." || input == ".." {
+                input = ""
+            }
+
+            else {
+
+                let startIndex = input.index(after: input.startIndex)
+                if let slashIndex = input[startIndex...].firstIndex(of: "/") {
+                    let segment = String(input[..<slashIndex])
+                    output += segment
+                    input = String(input[slashIndex...])
+                } else {
+                    output += input
+                    input = ""
+                }
+            }
+        }
+
+        return output
+    }
+
+}
+
+extension IETF.RFC.`3986` {
+
+    public static func isValidURI(_ string: String) -> Bool {
+
+        if string.isEmpty { return true }
+
+        return IETF.RFC.`3986`.URI.Cache._parseAndValidate(string) != nil
+    }
+
+    public static func isValidHTTP<Representable: URIRepresentable>(_ uri: Representable) -> Bool {
+        guard let scheme = uri.uri.scheme else { return false }
+        return scheme.value == "http" || scheme.value == "https"
+    }
+
+    public static func isValidHTTP(_ string: String) -> Bool {
+        guard isValidURI(string) else { return false }
+        let uri: URI
+        do throws(IETF.RFC.`3986`.Error) {
+            uri = try URI(string)
+        } catch {
+            return false
+        }
+        return uri.scheme?.value == "http" || uri.scheme?.value == "https"
+    }
+}

@@ -19,7 +19,7 @@ extension `URI Concurrent Reading Tests` {
 
         @Test
         func `Concurrent reads of every component agree`() async throws {
-            let uri = try RFC_3986.URI("https://user@example.com:8080/path/to/thing?key=value#frag")
+            let uri = try IETF.RFC.`3986`.URI("https://user@example.com:8080/path/to/thing?key=value#frag")
 
             let readings = await withTaskGroup(of: Components.self, returning: [Components].self) { group in
                 for _ in 0..<2_000 {

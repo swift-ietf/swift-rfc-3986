@@ -14,7 +14,7 @@ extension `URI from Text Tests` {
             ("#", ""),
         ])
         func `Fragment-only URI`(input: String, expectedFragment: String) throws {
-            let uri = try RFC_3986.URI(input)
+            let uri = try IETF.RFC.`3986`.URI(input)
             #expect(uri.fragment?.value == expectedFragment)
             #expect(uri.scheme == nil)
             #expect(uri.host == nil)
@@ -26,7 +26,7 @@ extension `URI from Text Tests` {
             ("?", ""),
         ])
         func `Query-only URI`(input: String, expectedQuery: String) throws {
-            let uri = try RFC_3986.URI(input)
+            let uri = try IETF.RFC.`3986`.URI(input)
             #expect(uri.query?.description == expectedQuery)
             #expect(uri.scheme == nil)
             #expect(uri.host == nil)
@@ -43,7 +43,7 @@ extension `URI from Text Tests` {
             expectedPassword: String?,
             expectedHost: String
         ) throws {
-            let uri = try RFC_3986.URI(input)
+            let uri = try IETF.RFC.`3986`.URI(input)
             #expect(uri.userinfo?.user == expectedUser)
             #expect(uri.userinfo?.password == expectedPassword)
             #expect(uri.host.flatMap(\.registeredNameValue) == expectedHost)
@@ -51,7 +51,7 @@ extension `URI from Text Tests` {
 
         @Test
         func `URI with all components`() throws {
-            let uri = try RFC_3986.URI(
+            let uri = try IETF.RFC.`3986`.URI(
                 "https://user:pass@example.com:8080/path?query=value#fragment"
             )
 
@@ -71,23 +71,23 @@ extension `URI from Text Tests` {
             "http://host with spaces.com",
         ])
         func `Invalid URI text throws`(input: String) {
-            #expect(throws: RFC_3986.Error.self) {
-                try RFC_3986.URI(input)
+            #expect(throws: IETF.RFC.`3986`.Error.self) {
+                try IETF.RFC.`3986`.URI(input)
             }
         }
 
         @Test
         func `Building the same URI twice yields the same value`() throws {
             let string = "https://example.com"
-            let first = try RFC_3986.URI(string)
-            let second = try RFC_3986.URI(string)
+            let first = try IETF.RFC.`3986`.URI(string)
+            let second = try IETF.RFC.`3986`.URI(string)
 
             #expect(first.value == second.value)
         }
 
         @Test
         func `Normalizing percent-encoding on a URI`() throws {
-            let uri = try RFC_3986.URI("https://example.com/hello%2dworld")
+            let uri = try IETF.RFC.`3986`.URI("https://example.com/hello%2dworld")
 
             #expect(uri.normalizePercentEncoding().value == "https://example.com/hello-world")
             #expect(uri.isHTTP == true)

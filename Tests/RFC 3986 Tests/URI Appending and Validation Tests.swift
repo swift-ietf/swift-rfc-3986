@@ -10,7 +10,7 @@ extension `URI Appending and Validation Tests` {
 
         @Test
         func `Appending a path component percent-encodes structural characters`() throws {
-            let base = try RFC_3986.URI("https://example.com/api")
+            let base = try IETF.RFC.`3986`.URI("https://example.com/api")
             let appended = base.appendingPathComponent("../../etc/passwd?x=1#y")
 
             #expect(appended.value == "https://example.com/api/..%2F..%2Fetc%2Fpasswd%3Fx=1%23y")
@@ -21,7 +21,7 @@ extension `URI Appending and Validation Tests` {
 
         @Test
         func `Appending a query item percent-encodes structural characters in the value`() throws {
-            let base = try RFC_3986.URI("https://example.com/path")
+            let base = try IETF.RFC.`3986`.URI("https://example.com/path")
             let appended = base.appendingQueryItem(name: "a", value: "1&admin=true#frag")
 
             #expect(appended.query?.description == "a=1%26admin%3Dtrue%23frag")
@@ -30,7 +30,7 @@ extension `URI Appending and Validation Tests` {
 
         @Test
         func `Appending a query item percent-encodes structural characters in the name`() throws {
-            let base = try RFC_3986.URI("https://example.com/path")
+            let base = try IETF.RFC.`3986`.URI("https://example.com/path")
             let appended = base.appendingQueryItem(name: "a&injected=1", value: "x")
 
             #expect(appended.query?.description == "a%26injected%3D1=x")
@@ -44,21 +44,21 @@ extension `URI Appending and Validation Tests` {
 
         @Test
         func `Malformed percent-encoding is not a valid URI`() {
-            #expect(!RFC_3986.isValidURI("http://example.com/100%offsale"))
+            #expect(!IETF.RFC.`3986`.isValidURI("http://example.com/100%offsale"))
         }
 
         @Test
         func `A colon folded into the host by an unparseable port is not a valid URI`() {
-            #expect(!RFC_3986.isValidURI("http://example.com:notaport/path"))
+            #expect(!IETF.RFC.`3986`.isValidURI("http://example.com:notaport/path"))
         }
 
         @Test
         func `Construction throws for the same grammar violations validation rejects`() {
-            #expect(throws: RFC_3986.Error.self) {
-                try RFC_3986.URI("http://example.com/100%offsale")
+            #expect(throws: IETF.RFC.`3986`.Error.self) {
+                try IETF.RFC.`3986`.URI("http://example.com/100%offsale")
             }
-            #expect(throws: RFC_3986.Error.self) {
-                try RFC_3986.URI("http://example.com:notaport/path")
+            #expect(throws: IETF.RFC.`3986`.Error.self) {
+                try IETF.RFC.`3986`.URI("http://example.com:notaport/path")
             }
         }
     }
@@ -70,32 +70,32 @@ extension `URI Appending and Validation Tests` {
 
         @Test
         func `Normalizing keeps the userinfo`() throws {
-            let uri = try RFC_3986.URI("HTTPS://user:pw@Example.COM:443/a/./b")
+            let uri = try IETF.RFC.`3986`.URI("HTTPS://user:pw@Example.COM:443/a/./b")
             #expect(uri.normalized().value == "https://user:pw@example.com/a/b")
         }
 
         @Test
         func `Appending a path component keeps the userinfo`() throws {
-            let uri = try RFC_3986.URI("https://user@example.com:8443/api")
+            let uri = try IETF.RFC.`3986`.URI("https://user@example.com:8443/api")
             #expect(uri.appendingPathComponent("v1").value == "https://user@example.com:8443/api/v1")
         }
 
         @Test
         func `Appending a query item keeps the userinfo`() throws {
-            let uri = try RFC_3986.URI("https://user@example.com/path")
+            let uri = try IETF.RFC.`3986`.URI("https://user@example.com/path")
             #expect(uri.appendingQueryItem(name: "a", value: "1").value == "https://user@example.com/path?a=1")
         }
 
         @Test
         func `Setting a fragment keeps the userinfo`() throws {
-            let uri = try RFC_3986.URI("https://user@example.com/path")
-            let fragment = try RFC_3986.URI.Fragment("top")
+            let uri = try IETF.RFC.`3986`.URI("https://user@example.com/path")
+            let fragment = try IETF.RFC.`3986`.URI.Fragment("top")
             #expect(uri.settingFragment(fragment).value == "https://user@example.com/path#top")
         }
 
         @Test
         func `Resolving a network-path reference keeps the reference's userinfo`() throws {
-            let base = try RFC_3986.URI("https://example.com/a")
+            let base = try IETF.RFC.`3986`.URI("https://example.com/a")
             #expect(try base.resolve("//user@other.example:8080/b").value == "https://user@other.example:8080/b")
         }
     }
@@ -107,19 +107,19 @@ extension `URI Appending and Validation Tests` {
 
         @Test(arguments: ["a&&b", "&", "=x", "a&", "&a", "a=&=b"])
         func `The URI's query is present`(query: String) throws {
-            let uri = try RFC_3986.URI("https://example.com/?\(query)")
+            let uri = try IETF.RFC.`3986`.URI("https://example.com/?\(query)")
             #expect(uri.query?.rawValue == query)
         }
 
         @Test
         func `Empty pairs carry no parameter`() throws {
-            let query = try RFC_3986.URI.Query("a&&b&")
+            let query = try IETF.RFC.`3986`.URI.Query("a&&b&")
             #expect(query.parameters.map(\.key) == ["a", "b"])
         }
 
         @Test
         func `A pair with an empty key keeps its value`() throws {
-            let query = try RFC_3986.URI.Query("=x")
+            let query = try IETF.RFC.`3986`.URI.Query("=x")
             #expect(query.parameters.map(\.key) == [""])
             #expect(query.parameters.map(\.value) == ["x"])
         }

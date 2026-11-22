@@ -60,12 +60,12 @@ extension `Reference Resolution Tests` {
 
         @Test(arguments: normal)
         func `Normal examples resolve as section 5.4.1 states`(reference: String, expected: String) throws {
-            #expect(try RFC_3986.URI(Self.base).resolve(reference).value == expected)
+            #expect(try IETF.RFC.`3986`.URI(Self.base).resolve(reference).value == expected)
         }
 
         @Test(arguments: abnormal)
         func `Abnormal examples resolve as section 5.4.2 states`(reference: String, expected: String) throws {
-            #expect(try RFC_3986.URI(Self.base).resolve(reference).value == expected)
+            #expect(try IETF.RFC.`3986`.URI(Self.base).resolve(reference).value == expected)
         }
     }
 }
@@ -76,23 +76,23 @@ extension `Reference Resolution Tests` {
 
         @Test
         func `A relative path against an authority with an empty path gains a leading slash`() throws {
-            #expect(try RFC_3986.URI("http://a").resolve("g").value == "http://a/g")
+            #expect(try IETF.RFC.`3986`.URI("http://a").resolve("g").value == "http://a/g")
         }
 
         @Test
         func `A reference with a scheme has its dot segments removed`() throws {
-            #expect(try RFC_3986.URI("http://a/b").resolve("http://x/a/../b").value == "http://x/b")
+            #expect(try IETF.RFC.`3986`.URI("http://a/b").resolve("http://x/a/../b").value == "http://x/b")
         }
 
         @Test
         func `An empty authority is kept`() throws {
-            #expect(try RFC_3986.URI("file:///x/y").resolve("z").value == "file:///x/z")
+            #expect(try IETF.RFC.`3986`.URI("file:///x/y").resolve("z").value == "file:///x/z")
         }
 
         @Test
         func `A relative path climbing past its first segment empties the output`() {
-            #expect(RFC_3986.removeDotSegments(fromText: "a/../b") == "/b")
-            #expect(RFC_3986.removeDotSegments(fromText: "a/..") == "/")
+            #expect(IETF.RFC.`3986`.removeDotSegments(fromText: "a/../b") == "/b")
+            #expect(IETF.RFC.`3986`.removeDotSegments(fromText: "a/..") == "/")
         }
     }
 }

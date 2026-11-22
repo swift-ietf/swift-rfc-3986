@@ -10,51 +10,51 @@ extension `URI Tests` {
 
         @Test
         func `Valid HTTP URI`() {
-            #expect(RFC_3986.isValidURI("https://example.com"))
-            #expect(RFC_3986.isValidURI("http://example.com/path"))
-            #expect(RFC_3986.isValidURI("https://example.com:8080/path?query=value"))
+            #expect(IETF.RFC.`3986`.isValidURI("https://example.com"))
+            #expect(IETF.RFC.`3986`.isValidURI("http://example.com/path"))
+            #expect(IETF.RFC.`3986`.isValidURI("https://example.com:8080/path?query=value"))
         }
 
         @Test
         func `Valid HTTPS URI`() {
-            #expect(RFC_3986.isValidHTTP("https://example.com"))
-            #expect(RFC_3986.isValidHTTP("http://example.com"))
-            #expect(!RFC_3986.isValidHTTP("ftp://example.com"))
+            #expect(IETF.RFC.`3986`.isValidHTTP("https://example.com"))
+            #expect(IETF.RFC.`3986`.isValidHTTP("http://example.com"))
+            #expect(!IETF.RFC.`3986`.isValidHTTP("ftp://example.com"))
         }
 
         @Test
         func `Valid URN URI`() {
-            #expect(RFC_3986.isValidURI("urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6"))
-            #expect(RFC_3986.isValidURI("urn:isbn:0451450523"))
+            #expect(IETF.RFC.`3986`.isValidURI("urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6"))
+            #expect(IETF.RFC.`3986`.isValidURI("urn:isbn:0451450523"))
         }
 
         @Test
         func `Valid mailto URI`() {
-            #expect(RFC_3986.isValidURI("mailto:user@example.com"))
+            #expect(IETF.RFC.`3986`.isValidURI("mailto:user@example.com"))
         }
 
         @Test
         func `Valid FTP URI`() {
-            #expect(RFC_3986.isValidURI("ftp://ftp.example.com/file.txt"))
+            #expect(IETF.RFC.`3986`.isValidURI("ftp://ftp.example.com/file.txt"))
         }
 
         @Test
         func `Valid URI - relative references`() {
 
-            #expect(RFC_3986.isValidURI("/path/to/resource"))
-            #expect(RFC_3986.isValidURI("?query=value"))
-            #expect(RFC_3986.isValidURI("#fragment"))
-            #expect(RFC_3986.isValidURI("../relative/path"))
+            #expect(IETF.RFC.`3986`.isValidURI("/path/to/resource"))
+            #expect(IETF.RFC.`3986`.isValidURI("?query=value"))
+            #expect(IETF.RFC.`3986`.isValidURI("#fragment"))
+            #expect(IETF.RFC.`3986`.isValidURI("../relative/path"))
 
-            #expect(RFC_3986.isValidURI("example.com"))
+            #expect(IETF.RFC.`3986`.isValidURI("example.com"))
         }
 
         @Test
         func `Valid URI - empty string (same document reference)`() {
 
-            #expect(RFC_3986.isValidURI(""))
+            #expect(IETF.RFC.`3986`.isValidURI(""))
 
-            let uri = try? RFC_3986.URI("")
+            let uri = try? IETF.RFC.`3986`.URI("")
             #expect(uri != nil)
             #expect(uri?.value.isEmpty == true)
         }
@@ -62,14 +62,14 @@ extension `URI Tests` {
         @Test
         func `Invalid URI - non-ASCII characters`() {
 
-            #expect(!RFC_3986.isValidURI("https://example.com/寿司"))
-            #expect(!RFC_3986.isValidURI("https://例え.jp"))
+            #expect(!IETF.RFC.`3986`.isValidURI("https://example.com/寿司"))
+            #expect(!IETF.RFC.`3986`.isValidURI("https://例え.jp"))
         }
 
         @Test
         func `Valid URI - percent-encoded`() {
 
-            #expect(RFC_3986.isValidURI("https://example.com/%E5%AF%BF%E5%8F%B8"))
+            #expect(IETF.RFC.`3986`.isValidURI("https://example.com/%E5%AF%BF%E5%8F%B8"))
         }
     }
 }
@@ -80,30 +80,30 @@ extension `URI Tests` {
 
         @Test
         func `Create URI from string literal`() throws {
-            let uri = try RFC_3986.URI("https://example.com")
+            let uri = try IETF.RFC.`3986`.URI("https://example.com")
             #expect(uri.value == "https://example.com")
         }
 
         @Test
         func `Create URI with validation`() throws {
             let string = "https://example.com/path"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             #expect(uri.value == "https://example.com/path")
         }
 
         @Test
         func `Create URI fails with invalid input`() {
             let string = "not a uri"
-            #expect(throws: RFC_3986.Error.self) {
-                try RFC_3986.URI(string)
+            #expect(throws: IETF.RFC.`3986`.Error.self) {
+                try IETF.RFC.`3986`.URI(string)
             }
         }
 
         @Test
         func `Create URI fails with non-ASCII`() {
             let string = "https://example.com/寿司"
-            #expect(throws: RFC_3986.Error.self) {
-                try RFC_3986.URI(string)
+            #expect(throws: IETF.RFC.`3986`.Error.self) {
+                try IETF.RFC.`3986`.URI(string)
             }
         }
     }
@@ -116,7 +116,7 @@ extension `URI Tests` {
         @Test
         func `Normalize scheme to lowercase`() throws {
             let string = "HTTPS://example.com"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             let normalized = uri.normalized()
             #expect(normalized.value.hasPrefix("https://"))
         }
@@ -124,14 +124,14 @@ extension `URI Tests` {
         @Test
         func `Normalize host to lowercase`() throws {
             let string = "https://EXAMPLE.COM"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             let normalized = uri.normalized()
             #expect(normalized.value.contains("example.com"))
         }
 
         @Test
         func `Normalize an IPv6 literal by case only, keeping its written form`() throws {
-            let uri = try RFC_3986.URI("HTTP://[2001:0DB8::1]:80/a/./b")
+            let uri = try IETF.RFC.`3986`.URI("HTTP://[2001:0DB8::1]:80/a/./b")
             let normalized = uri.normalized()
             #expect(normalized.value == "http://[2001:0db8::1]/a/b")
             #expect(normalized.host == uri.host)
@@ -139,10 +139,10 @@ extension `URI Tests` {
 
         @Test
         func `Only a URI whose host the domain accepts has a base`() throws {
-            let accepted = try RFC_3986.URI("https://Example.COM:8080/path?query#fragment")
+            let accepted = try IETF.RFC.`3986`.URI("https://Example.COM:8080/path?query#fragment")
             #expect(accepted.base?.value == "https://Example.COM:8080")
 
-            let rejected = RFC_3986.URI(unchecked: "https://exa mple.com:8080/path")
+            let rejected = IETF.RFC.`3986`.URI(unchecked: "https://exa mple.com:8080/path")
             #expect(rejected.host == nil)
             #expect(rejected.base == nil)
         }
@@ -150,7 +150,7 @@ extension `URI Tests` {
         @Test
         func `Remove default HTTP port`() throws {
             let string = "http://example.com:80/path"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             let normalized = uri.normalized()
             #expect(!normalized.value.contains(":80"))
         }
@@ -158,7 +158,7 @@ extension `URI Tests` {
         @Test
         func `Remove default HTTPS port`() throws {
             let string = "https://example.com:443/path"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             let normalized = uri.normalized()
             #expect(!normalized.value.contains(":443"))
         }
@@ -166,7 +166,7 @@ extension `URI Tests` {
         @Test
         func `Remove default FTP port`() throws {
             let string = "ftp://example.com:21/file.txt"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             let normalized = uri.normalized()
             #expect(!normalized.value.contains(":21"))
         }
@@ -174,7 +174,7 @@ extension `URI Tests` {
         @Test
         func `Keep non-default port`() throws {
             let string = "https://example.com:8080/path"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             let normalized = uri.normalized()
             #expect(normalized.value.contains(":8080"))
         }
@@ -182,7 +182,7 @@ extension `URI Tests` {
         @Test
         func `Remove dot segments from path`() throws {
             let string = "https://example.com/a/b/c/./../../g"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             let normalized = uri.normalized()
             #expect(normalized.value.contains("/a/g"))
         }
@@ -190,7 +190,7 @@ extension `URI Tests` {
         @Test
         func `Remove leading dot segment`() throws {
             let string = "https://example.com/./a/b"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             let normalized = uri.normalized()
             #expect(normalized.value.contains("/a/b"))
         }
@@ -198,7 +198,7 @@ extension `URI Tests` {
         @Test
         func `Remove double dot segments`() throws {
             let string = "https://example.com/a/../b"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             let normalized = uri.normalized()
             #expect(normalized.value.contains("/b"))
             #expect(!normalized.value.contains("/a/"))
@@ -213,49 +213,49 @@ extension `URI Tests` {
         @Test
         func `Parse scheme`() throws {
             let string = "https://example.com"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             #expect(uri.scheme?.value == "https")
         }
 
         @Test
         func `Parse host`() throws {
             let string = "https://example.com/path"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             #expect(uri.host == .registeredName("example.com"))
         }
 
         @Test
         func `Parse port`() throws {
             let string = "https://example.com:8080/path"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             #expect(uri.port == 8080)
         }
 
         @Test
         func `Parse path`() throws {
             let string = "https://example.com/path/to/resource"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             #expect(uri.path?.description == "/path/to/resource")
         }
 
         @Test
         func `Parse query`() throws {
             let string = "https://example.com/path?key=value&foo=bar"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             #expect(uri.query?.description == "key=value&foo=bar")
         }
 
         @Test
         func `Parse fragment`() throws {
             let string = "https://example.com/path#section"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             #expect(uri.fragment?.value == "section")
         }
 
         @Test
         func `Parse all components`() throws {
             let string = "https://example.com:8080/path?query=value#section"
-            let uri = try RFC_3986.URI(string)
+            let uri = try IETF.RFC.`3986`.URI(string)
             #expect(uri.scheme?.value == "https")
             #expect(uri.host == .registeredName("example.com"))
             #expect(uri.port == 8080)
@@ -272,57 +272,57 @@ extension `URI Tests` {
 
         @Test
         func `A path keeps its form through the algorithm`() throws {
-            #expect(RFC_3986.removeDotSegments(from: try RFC_3986.URI.Path("/a/b/.")).description == "/a/b/")
-            #expect(RFC_3986.removeDotSegments(from: try RFC_3986.URI.Path("mid/content=5/../6")).description == "mid/6")
-            #expect(RFC_3986.removeDotSegments(from: try RFC_3986.URI.Path("/")).description == "/")
+            #expect(IETF.RFC.`3986`.removeDotSegments(from: try IETF.RFC.`3986`.URI.Path("/a/b/.")).description == "/a/b/")
+            #expect(IETF.RFC.`3986`.removeDotSegments(from: try IETF.RFC.`3986`.URI.Path("mid/content=5/../6")).description == "mid/6")
+            #expect(IETF.RFC.`3986`.removeDotSegments(from: try IETF.RFC.`3986`.URI.Path("/")).description == "/")
         }
 
         @Test
         func `Remove single dot`() {
             let input = "/a/./b"
-            let output = RFC_3986.removeDotSegments(fromText: input)
+            let output = IETF.RFC.`3986`.removeDotSegments(fromText: input)
             #expect(output == "/a/b")
         }
 
         @Test
         func `Remove double dots`() {
             let input = "/a/b/../c"
-            let output = RFC_3986.removeDotSegments(fromText: input)
+            let output = IETF.RFC.`3986`.removeDotSegments(fromText: input)
             #expect(output == "/a/c")
         }
 
         @Test
         func `Complex path normalization`() {
             let input = "/a/b/c/./../../g"
-            let output = RFC_3986.removeDotSegments(fromText: input)
+            let output = IETF.RFC.`3986`.removeDotSegments(fromText: input)
             #expect(output == "/a/g")
         }
 
         @Test
         func `Leading dots`() {
             let input = "../a/b"
-            let output = RFC_3986.removeDotSegments(fromText: input)
+            let output = IETF.RFC.`3986`.removeDotSegments(fromText: input)
             #expect(output == "a/b")
         }
 
         @Test
         func `Trailing dot`() {
             let input = "/a/b/."
-            let output = RFC_3986.removeDotSegments(fromText: input)
+            let output = IETF.RFC.`3986`.removeDotSegments(fromText: input)
             #expect(output == "/a/b/")
         }
 
         @Test
         func `RFC 3986 Example 1`() {
             let input = "/a/b/c/./../../g"
-            let output = RFC_3986.removeDotSegments(fromText: input)
+            let output = IETF.RFC.`3986`.removeDotSegments(fromText: input)
             #expect(output == "/a/g")
         }
 
         @Test
         func `RFC 3986 Example 2`() {
             let input = "mid/content=5/../6"
-            let output = RFC_3986.removeDotSegments(fromText: input)
+            let output = IETF.RFC.`3986`.removeDotSegments(fromText: input)
             #expect(output == "mid/6")
         }
     }
@@ -334,7 +334,7 @@ extension `URI Tests` {
 
         @Test
         func `Normalizes path percent-encoding`() throws {
-            let uri = try RFC_3986.URI("https://example.com/hello%2dworld")
+            let uri = try IETF.RFC.`3986`.URI("https://example.com/hello%2dworld")
             let normalized = uri.normalizePercentEncoding()
 
             #expect(normalized.path?.description == "/hello-world")
@@ -343,7 +343,7 @@ extension `URI Tests` {
 
         @Test
         func `Normalizes query percent-encoding`() throws {
-            let uri = try RFC_3986.URI("https://example.com?key%3dvalue")
+            let uri = try IETF.RFC.`3986`.URI("https://example.com?key%3dvalue")
             let normalized = uri.normalizePercentEncoding()
 
             #expect(normalized.query?.description.contains("%3D") == true)
@@ -351,7 +351,7 @@ extension `URI Tests` {
 
         @Test
         func `Uppercases hex digits`() throws {
-            let uri = try RFC_3986.URI("https://example.com/test%2fpath")
+            let uri = try IETF.RFC.`3986`.URI("https://example.com/test%2fpath")
             let normalized = uri.normalizePercentEncoding()
 
             #expect(normalized.value.contains("%2F"))
@@ -360,7 +360,7 @@ extension `URI Tests` {
 
         @Test
         func `Returns new URI instance`() throws {
-            let uri = try RFC_3986.URI("https://example.com/test%2dpath")
+            let uri = try IETF.RFC.`3986`.URI("https://example.com/test%2dpath")
             let normalized = uri.normalizePercentEncoding()
 
             #expect(uri.value != normalized.value)
@@ -370,7 +370,7 @@ extension `URI Tests` {
 
         @Test
         func `Normalizes both path and query`() throws {
-            let uri = try RFC_3986.URI("https://example.com/test%2dpath?key%2dname=value")
+            let uri = try IETF.RFC.`3986`.URI("https://example.com/test%2dpath?key%2dname=value")
             let normalized = uri.normalizePercentEncoding()
 
             #expect(normalized.path?.description == "/test-path")

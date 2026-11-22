@@ -10,7 +10,7 @@ extension `README Tests` {
 
         @Test
         func `Reading the components of a URI`() throws {
-            let uri = try RFC_3986.URI(
+            let uri = try IETF.RFC.`3986`.URI(
                 "https://user@example.com:8080/path/to/thing?key=value#section"
             )
 
@@ -24,22 +24,22 @@ extension `README Tests` {
 
         @Test
         func `Normalizing a URI`() throws {
-            let uri = try RFC_3986.URI("HTTPS://EXAMPLE.COM:443/path")
+            let uri = try IETF.RFC.`3986`.URI("HTTPS://EXAMPLE.COM:443/path")
 
             #expect(uri.normalized().value == "https://example.com/path")
         }
 
         @Test
         func `Resolving a relative reference`() throws {
-            let base = try RFC_3986.URI("http://example.com/path/to/resource")
+            let base = try IETF.RFC.`3986`.URI("http://example.com/path/to/resource")
 
             #expect(try base.resolve("../other").value == "http://example.com/path/other")
         }
 
         @Test
         func `Percent-encoding and decoding bytes`() {
-            let encoded = RFC_3986.percentEncode(Array("hello world?".utf8))
-            let decoded = RFC_3986.percentDecode(Array("caf%C3%A9".utf8))
+            let encoded = IETF.RFC.`3986`.percentEncode(Array("hello world?".utf8))
+            let decoded = IETF.RFC.`3986`.percentDecode(Array("caf%C3%A9".utf8))
 
             #expect(String(decoding: encoded, as: UTF8.self) == "hello%20world%3F")
             #expect(String(decoding: decoded, as: UTF8.self) == "café")
@@ -47,8 +47,8 @@ extension `README Tests` {
 
         @Test
         func `A URI is ASCII only`() {
-            #expect(RFC_3986.isValidURI("https://example.com/%E5%AF%BF%E5%8F%B8"))
-            #expect(!RFC_3986.isValidURI("https://example.com/寿司"))
+            #expect(IETF.RFC.`3986`.isValidURI("https://example.com/%E5%AF%BF%E5%8F%B8"))
+            #expect(!IETF.RFC.`3986`.isValidURI("https://example.com/寿司"))
         }
     }
 }
