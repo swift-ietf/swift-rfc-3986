@@ -9,7 +9,7 @@ extension IETF.RFC.`3986`.URI {
 
         case ipv4(IETF.RFC.`791`.IPv4.Address)
 
-        case ipv6(IETF.RFC.`4007`.IPv6.ScopedAddress)
+        case ipv6(IETF.RFC.`4007`.IPv6.Address)
 
         case registeredName(String)
     }
@@ -77,15 +77,15 @@ extension IETF.RFC.`3986`.URI.Host {
             let innerString = String(decoding: innerCodes.lazy.map({ $0.underlying }), as: UTF8.self)
 
             let addressBytes: ArraySlice<Byte>
-            let zone: IETF.RFC.`4007`.IPv6.ScopedAddress.Zone?
+            let zone: IETF.RFC.`4007`.IPv6.Address.Zone?
             if let percentIndex = decodedBytes.firstIndex(of: ASCII.Code.percentSign.byte) {
                 let zoneBytes = decodedBytes[decodedBytes.index(after: percentIndex)...]
                 guard !zoneBytes.isEmpty else {
                     throw Error.invalidIPv6(innerString, reason: "Missing zone identifier after '%25'")
                 }
                 addressBytes = decodedBytes[..<percentIndex]
-                do throws(IETF.RFC.`4007`.IPv6.ScopedAddress.Zone.Error) {
-                    zone = try IETF.RFC.`4007`.IPv6.ScopedAddress.Zone(String(decoding: zoneBytes, as: UTF8.self))
+                do throws(IETF.RFC.`4007`.IPv6.Address.Zone.Error) {
+                    zone = try IETF.RFC.`4007`.IPv6.Address.Zone(String(decoding: zoneBytes, as: UTF8.self))
                 } catch {
                     throw Error.invalidIPv6(innerString, reason: "Invalid zone identifier")
                 }
@@ -96,7 +96,7 @@ extension IETF.RFC.`3986`.URI.Host {
 
             do throws(IETF.RFC.`4291`.IPv6.Address.Error) {
                 let address = try IETF.RFC.`4291`.IPv6.Address(ascii: addressBytes)
-                self = .ipv6(IETF.RFC.`4007`.IPv6.ScopedAddress(address: address, zone: zone))
+                self = .ipv6(IETF.RFC.`4007`.IPv6.Address(address: address, zone: zone))
                 return
             } catch {
                 throw Error.invalidIPv6(innerString, reason: "Invalid IPv6 address")
@@ -163,7 +163,7 @@ extension IETF.RFC.`3986`.URI.Host {
         return nil
     }
 
-    public var ipv6ScopedAddress: IETF.RFC.`4007`.IPv6.ScopedAddress? {
+    public var ipv6ScopedAddress: IETF.RFC.`4007`.IPv6.Address? {
         if case .ipv6(let scopedAddress) = self {
             return scopedAddress
         }
