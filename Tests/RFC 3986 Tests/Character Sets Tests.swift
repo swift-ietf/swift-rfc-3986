@@ -2,9 +2,9 @@ import Testing
 
 @testable import RFC_3986
 
-enum `CharacterSets Tests` {}
+enum `Character Sets Tests` {}
 
-extension `CharacterSets Tests` {
+extension `Character Sets Tests` {
     @Suite
     struct `Character Sets` {
 
@@ -42,7 +42,7 @@ extension `CharacterSets Tests` {
     }
 }
 
-extension `CharacterSets Tests` {
+extension `Character Sets Tests` {
     @Suite
     struct `CharacterSet SetAlgebra Conformance` {
 
@@ -105,7 +105,7 @@ extension `CharacterSets Tests` {
     }
 }
 
-extension `CharacterSets Tests` {
+extension `Character Sets Tests` {
     @Suite
     struct `URI Resolution - RFC 3986 Section 5.4` {
 
